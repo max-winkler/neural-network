@@ -10,13 +10,32 @@ Matrix::Matrix(size_t m, size_t n) : m(m), n(n)
   memset(data, 0., m*n*sizeof(double));
 }
 
+Matrix::Matrix(const Matrix& other) : m(other.m), n(other.n)
+{
+  data = new double[m*n];
+  memcpy(data, other.data, m*n*sizeof(double));
+}
+
 Matrix::~Matrix()
 {
   delete[] data;
 }
 
+Matrix& Matrix::operator=(const Matrix& other)
+{
+  m = other.m; n = other.n;
+  data = new double[m*n];
+  memcpy(data, other.data, m*n*sizeof(double));
+  return *this;
+}
+
 MatrixRow::MatrixRow(double* data_ptr) : data_ptr(data_ptr)
 {}
+
+std::pair<size_t, size_t> Matrix::size() const { return std::pair<size_t, size_t>(m, n); }
+size_t Matrix::nRows() const {return m;}
+size_t Matrix::nCols() const {return n;}
+
 
 MatrixRow Matrix::operator[](size_t i)
 {

@@ -1,4 +1,4 @@
-OBJ = 	src/Vector.o src/Matrix.o
+OBJ = 	src/Vector.o src/Matrix.o src/NeuralNetwork.o
 CPP_INCLUDE = -Iinclude
 CPP_FLAGS = -g
 
@@ -8,3 +8,8 @@ CPP_FLAGS = -g
 default: $(OBJ)
 	g++ -c test/LinAlg.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/LinAlg.o
 	g++ test/LinAlg.o ${OBJ} -o linalg_test
+	g++ -c test/NeuralNetwork.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/NeuralNetwork.o	
+	g++ test/NeuralNetwork.o ${OBJ} -o neuralnetwork_test
+
+clean:
+	rm src/*.o

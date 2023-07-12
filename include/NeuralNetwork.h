@@ -1,10 +1,27 @@
 #ifndef _NEURALNETWORK_H_
 #define _NEURALNETWORK_H_
 
+#include <vector>
+
+#include "Matrix.h"
+#include "Vector.h"
+
+typedef std::vector<size_t> Dimension;
+
 class NeuralNetwork {
  public:
- private:
+  NeuralNetwork(Dimension);
+
+  void setParameters(size_t, const Matrix&, const Vector&);
   
-}
+ private:
+  // Store dimension of neural network
+  std::vector<size_t> width;
+  size_t layers;
+
+  // Weights and biases
+  std::vector<Matrix> weight;
+  std::vector<Vector> bias;  
+};
 
 #endif

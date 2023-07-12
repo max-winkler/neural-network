@@ -19,8 +19,15 @@ class Matrix
  public:
   // Constructor and destructor
   Matrix(size_t, size_t);
+  Matrix(const Matrix&);
   ~Matrix();
+  Matrix& operator=(const Matrix&);
 
+  // Simple getter functions
+  std::pair<size_t, size_t> size() const;
+  size_t nRows() const;
+  size_t nCols() const;
+  
   // Element acces
   MatrixRow operator[](size_t);
   const MatrixRow operator[](size_t) const;  

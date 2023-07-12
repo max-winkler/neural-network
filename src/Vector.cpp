@@ -20,6 +20,14 @@ Vector::~Vector()
   delete[] data;
 }
 
+Vector& Vector::operator=(const Vector& other)
+{
+  n = other.n;
+  data = new double[n];
+  memcpy(data, other.data, n*sizeof(double));
+  return *this;
+}
+
 size_t Vector::size() const
 {
   return n;
