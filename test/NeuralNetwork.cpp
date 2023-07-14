@@ -5,6 +5,7 @@
 
 int main()
 {
+  // Create neural network
   Dimension layers;
   layers.push_back(2); // input layer
   layers.push_back(3); // hidden layer
@@ -29,10 +30,15 @@ int main()
 
   std::cout << net;
 
-  Vector x(2);
-  x = {0.8, -0.5};
+  // Evaluation
+  Vector x({0.8, -0.5});
   double res = net.eval(x);
 
   std::cout << "Evaluation: " << res << std::endl;
+
+  // Training
+  std::vector<TrainingData> trainingData;
+  trainingData.push_back(TrainingData({1., 0.5}, 2.));
+  
   return 0;
 }

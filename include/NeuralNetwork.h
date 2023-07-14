@@ -6,6 +6,7 @@
 #include "Matrix.h"
 #include "Vector.h"
 #include "Activation.h"
+#include "TrainingData.h"
 
 typedef std::vector<size_t> Dimension;
 

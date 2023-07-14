@@ -1,4 +1,4 @@
-OBJ = 	src/Vector.o src/Matrix.o src/NeuralNetwork.o src/Activation.o
+OBJ = 	src/Vector.o src/Matrix.o src/NeuralNetwork.o src/Activation.o src/TrainingData.o
 CPP_INCLUDE = -Iinclude
 CPP_FLAGS = -g
 

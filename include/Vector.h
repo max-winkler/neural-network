@@ -10,6 +10,7 @@ class Vector {
   // Constructor and destructor
   Vector(size_t);
   Vector(const Vector&);
+  Vector(std::initializer_list<double>);
   ~Vector();
 
   Vector& operator=(const Vector&);

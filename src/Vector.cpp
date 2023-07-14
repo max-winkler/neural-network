@@ -15,6 +15,16 @@ Vector::Vector(const Vector& other) : n(other.n)
   memcpy(data, other.data, n*sizeof(double));
 }
 
+Vector::Vector(std::initializer_list<double> val) : n(val.size())
+{
+  data = new double[n];
+  
+  size_t i=0;
+  for(auto x = val.begin(); x!=val.end(); ++x, ++i)
+    data[i] = *x;
+}
+
+
 Vector::~Vector()
 {
   delete[] data;
@@ -32,6 +42,8 @@ Vector& Vector::operator=(const Vector& other)
 
 Vector& Vector::operator=(std::initializer_list<double> val)
 {
+  delete[] data;
+  
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
