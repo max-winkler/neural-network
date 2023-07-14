@@ -1,0 +1,4 @@
+*~
+*.o
+linalg_test
+neuralnetwork_test
