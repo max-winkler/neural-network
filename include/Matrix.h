@@ -22,7 +22,8 @@ class Matrix
   Matrix(const Matrix&);
   ~Matrix();
   Matrix& operator=(const Matrix&);
-
+  Matrix& operator=(std::initializer_list<double>);
+    
   // Simple getter functions
   std::pair<size_t, size_t> size() const;
   size_t nRows() const;

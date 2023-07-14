@@ -23,6 +23,10 @@ int main()
   A[2][4] = 1.092312100;
   std::cout << "A =\n" << A;
 
+  Matrix B(2,2);
+  B = {1.,2.,3.,4.};
+  std::cout << "B =\n" << B;
+  
   // Matrix vector operations
   Vector c = A*b;
   std::cout << "c = " << c << std::endl;

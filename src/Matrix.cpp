@@ -32,6 +32,16 @@ Matrix& Matrix::operator=(const Matrix& other)
 MatrixRow::MatrixRow(double* data_ptr) : data_ptr(data_ptr)
 {}
 
+Matrix& Matrix::operator=(std::initializer_list<double> val)
+{
+  size_t i=0;
+  for(auto x = val.begin(); x!=val.end(); ++x, ++i)
+    data[i] = *x;
+
+  return *this;
+}
+
+
 std::pair<size_t, size_t> Matrix::size() const { return std::pair<size_t, size_t>(m, n); }
 size_t Matrix::nRows() const {return m;}
 size_t Matrix::nCols() const {return n;}

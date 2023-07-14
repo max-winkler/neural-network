@@ -13,7 +13,7 @@ class Vector {
   ~Vector();
 
   Vector& operator=(const Vector&);
-  
+  Vector& operator=(std::initializer_list<double>);
   // Simple getter functions
   size_t size() const;
 

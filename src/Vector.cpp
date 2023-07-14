@@ -22,9 +22,20 @@ Vector::~Vector()
 
 Vector& Vector::operator=(const Vector& other)
 {
+  delete[] data;
+  
   n = other.n;
   data = new double[n];
   memcpy(data, other.data, n*sizeof(double));
+  return *this;
+}
+
+Vector& Vector::operator=(std::initializer_list<double> val)
+{
+  size_t i=0;
+  for(auto x = val.begin(); x!=val.end(); ++x, ++i)
+    data[i] = *x;
+
   return *this;
 }
 
