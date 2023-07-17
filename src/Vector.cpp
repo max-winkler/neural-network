@@ -43,6 +43,7 @@ Vector& Vector::operator=(const Vector& other)
 Vector& Vector::operator=(std::initializer_list<double> val)
 {
   delete[] data;
+  data = new double[val.size()];
   
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)

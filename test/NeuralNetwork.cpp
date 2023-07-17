@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
 
 #include "NeuralNetwork.h"
 
@@ -36,9 +38,23 @@ int main()
 
   std::cout << "Evaluation: " << res << std::endl;
 
-  // Training
+  // Generate training data
+  srand(time(NULL));
+  const size_t sample_size = 100;
+
   std::vector<TrainingData> trainingData;
-  trainingData.push_back(TrainingData({1., 0.5}, 2.));
+    
+  for(size_t i=0; i<sample_size; ++i)
+    {
+      double x = -2+4.*double(rand())/RAND_MAX;
+      double y = -2+4.*double(rand())/RAND_MAX;
+
+      double label = x*x-y*y < 1 ? 1. : 0.;
+
+      trainingData.push_back(TrainingData({x, y}, label));
+    }   
+
+  net.train(trainingData);
   
   return 0;
 }

@@ -56,6 +56,11 @@ double NeuralNetwork::eval(const Vector& x) const
   return x_tmp[0];
 }
 
+void NeuralNetwork::train(const std::vector<TrainingData>& data)
+{
+  // TODO: Implement training algorithm
+}
+
 std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net) 
 {
   os << "Neural network with (" << (net.layers) << " layers)\n";

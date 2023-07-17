@@ -17,6 +17,8 @@ class NeuralNetwork {
   void setParameters(size_t, const Matrix&, const Vector&, ActivationFunction);
 
   double eval(const Vector&) const;
+
+  void train(const std::vector<TrainingData>&);
   
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
   
