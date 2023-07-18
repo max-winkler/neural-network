@@ -5,6 +5,9 @@
 
 #include "Matrix.h"
 
+// Forward declarations
+class DiagonalMatrix;
+
 class Vector {
  public:
   // Constructor and destructor
@@ -26,13 +29,22 @@ class Vector {
   // Vector operations
   Vector operator+(const Vector&) const;
   Vector operator-(const Vector&) const;
+  Vector& operator+=(const Vector&);
   
   // Console output via output stream
   friend std::ostream& operator<<(std::ostream&, const Vector&);
 
+  // friend classes
+  friend class DiagonalMatrix;
+  
   // Matrix-vector operations
   friend Vector Matrix::operator*(const Vector&) const;
   Vector operator*(const Matrix&) const;
+  Vector operator*(const DiagonalMatrix&) const;
+  
+  // free functions
+  friend Matrix outer(const Vector&, const Vector&);
+
  private:
   
   double* data;
@@ -42,6 +54,8 @@ class Vector {
 class DiagonalMatrix {
 public:
   DiagonalMatrix(const Vector&);
+
+  friend class Vector;
 private:
   size_t n;
   Vector diagonal;

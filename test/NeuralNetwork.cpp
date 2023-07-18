@@ -25,7 +25,7 @@ int main()
   Matrix W2(1,3);
   Vector B2(1);
 
-  W2 = {-2.3981, 1.3791};
+  W2 = {-2.3981, 1.3791, 0.2318};
   B2 = {1.6378};
 
   net.setParameters(1, W2, B2, ActivationFunction::NONE);
@@ -40,7 +40,7 @@ int main()
 
   // Generate training data
   srand(time(NULL));
-  const size_t sample_size = 100;
+  const size_t sample_size = 1;
 
   std::vector<TrainingData> trainingData;
     

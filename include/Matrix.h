@@ -36,10 +36,16 @@ class Matrix
 
   // Matrix-vector operations
   Vector operator*(const Vector&) const; ;
-      
+
+  // Matrix-matrix operations
+  Matrix& operator+=(const Matrix&);    
+  
   // Console output
   friend std::ostream& operator<<(std::ostream&, const Matrix&);
 
+  // free functions
+  friend Matrix outer(const Vector&, const Vector&);
+  
   friend class Vector;
  private:
   // Dimension of matrix

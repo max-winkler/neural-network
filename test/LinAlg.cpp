@@ -31,18 +31,20 @@ int main()
   Vector c = A*b;
   std::cout << "c = " << c << std::endl;
 
-  // Vector vector operations
-  Vector d(3);
-  d[1] = 3.213897421;
-  d[2] = 0.213098412;
+  Vector d = c*A;
   std::cout << "d = " << d << std::endl;
-  
-  Vector e = c + d;
+
+  // Vector vector operations
+  Vector e(3);
+  e[1] = 3.213897421;
+  e[2] = 0.213098412;
   std::cout << "e = " << e << std::endl;
-
-
-  Vector f = e*A;
-  std::cout << "f = " << f << std::endl;
   
+  Vector f = c + e;
+  std::cout << "f = " << f << std::endl;
+
+  Vector g(f);
+  g += c;
+  std::cout << "g = " << g << std::endl;
   return 0;
 }

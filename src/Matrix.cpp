@@ -92,6 +92,23 @@ Vector Matrix::operator*(const Vector& b) const
   return c;
 }
 
+Matrix& Matrix::operator+=(const Matrix& B)
+{
+  if(B.n != n || B.m != m)
+    {
+      std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
+      std::cerr << "  (" << m << ", " << n << ") vs. (" << B.m << ", " << B.n << ")\n";
+    }
+
+  double* data_ptr;
+  const double* B_data_ptr;
+
+  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+m*n; ++data_ptr, ++B_data_ptr)
+    *data_ptr += *B_data_ptr;
+  
+  return *this;
+}
+
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
 {
   for(size_t i=0; i<matrix.m; ++i)
@@ -102,4 +119,22 @@ std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
       os << "]\n";
     }
   return os;
+}
+
+Matrix outer(const Vector& x, const Vector& y)
+{
+  size_t m = x.size();
+  size_t n = y.size();
+  
+  Matrix A(x.size(), y.size());
+
+  double* x_data;
+  double* y_data;
+  double* A_data = A.data;
+  
+  for(x_data = x.data; x_data != x.data+m; ++x_data)
+    for(y_data = y.data; y_data != y.data+n; ++y_data, ++A_data)
+      (*A_data) = (*x_data) * (*y_data);
+
+  return A;
 }

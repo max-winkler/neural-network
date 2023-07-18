@@ -58,34 +58,68 @@ double NeuralNetwork::eval(const Vector& x) const
 
 void NeuralNetwork::train(const std::vector<TrainingData>& data)
 {
-  Vector x(width[0]);
-  size_t idx=0; // index of the sample  
-  std::vector<Vector> z(layers);
-  std::vector<Vector> y(layers+1);
+  size_t n_data = data.size();
+  
+  std::vector<std::vector<Vector>> z(layers);
+  std::vector<std::vector<Vector>> y(layers+1);
 
-  y[0] = data[idx].x;
-  double f;
-
-  // objective evaluation
-  for(size_t l=0; l<layers; ++l)
+  // Allocate memory for auxiliary vectors
+  for(size_t l=0; l<layers+1; ++l)
     {
-      z[l] = weight[l]*y[l] + bias[l];
-      y[l+1] = activate(z[l], activation[l]);
+      if(l<layers)
+        z[l] = std::vector<Vector>(n_data);
+      y[l] = std::vector<Vector>(n_data);
     }
 
+  for(size_t idx=0; idx<n_data; ++idx)
+    y[0][idx] = data[idx].x;
+  
+  double f;
+  
+  // objective evaluation
+  for(size_t l=0; l<layers; ++l)    
+    for(size_t idx=0; idx<n_data; ++idx)
+      {
+        z[l][idx] = weight[l]*y[l][idx] + bias[l];
+        y[l+1][idx] = activate(z[l][idx], activation[l]);
+      }
+  
   // gradient evaluation
-  std::vector<Vector> Dy(layers);
-  std::vector<Matrix> Dweight(layers);
-  std::vector<Vector> Dgrad(layers);
-  std::vector<Vector> Dz(layers);
+  std::vector<Vector> Dy(n_data);
+  std::vector<Vector> Dz(n_data);
+  
+  std::vector<Matrix> Dweight(layers);  
+  std::vector<Vector> Dbias(layers);
 
-  Dy[layers-1] = y[layers] - Vector({data[idx].y});
+  // Initialize gradient to zero
+  for(size_t l=0; l<layers; ++l)
+    {
+      Dweight[l] = Matrix(width[l+1], width[l]);
+      Dbias[l] = Vector(width[l+1]);
+    }
+
+  for(size_t idx=0; idx<n_data; ++idx)
+    Dy[idx] = y[layers][idx] - Vector({data[idx].y});
   
   for(size_t l=layers; l-- >0; )
     {
-      DiagonalMatrix(Dactivate(z[l-1], activation[l-1]));
+      for(size_t idx=0; idx<n_data; ++idx)
+        {
+	Dz[idx] = Dy[idx] * DiagonalMatrix(Dactivate(z[l][idx], activation[l]));
+	Dy[idx] = Dz[idx] * weight[l];	
+	
+	// Gradient w.r.t. weight and bias
+	Dweight[l] += outer(Dz[idx], y[l][idx]);
+	Dbias[l] += Dz[idx];
+        }
     }
-  
+
+  // for debugging -> remove later
+  for(size_t l=0; l<layers; ++l)
+    {
+      std::cout << "Db[" << l << "] = " << Dbias[l] << std::endl;
+      std::cout << "DW[" << l << "] = \n" << Dweight[l] << std::endl;
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net) 

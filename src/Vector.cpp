@@ -149,6 +149,45 @@ Vector Vector::operator*(const Matrix& A) const
   return y;
 }
 
+Vector Vector::operator*(const DiagonalMatrix& A) const
+{
+  size_t n = A.n;
+
+  if(this->n != n)
+    {
+      std::cerr << "Error: Vector and matrix have incompatible size for multiplication.\n";
+      std::cerr << "  (" << this->n << ")  vs. (" << n << "," << n << ")\n";
+      return Vector(0);
+    }
+  
+  Vector y(n);
+
+  double* A_col;
+  double* x_data;
+      
+  for(size_t i=0; i<n; ++i)
+    y[i] = A.diagonal[i]*data[i];
+
+  return y;
+}
+
+Vector& Vector::operator+=(const Vector& B)
+{
+  if(B.n != n)
+    {
+      std::cerr << "Error: Vectors have incompatible dimension for summation.\n";
+      std::cerr << "  (" << n << ") vs. (" << B.n  << ")\n";
+    }
+
+  double* data_ptr;
+  const double* B_data_ptr;
+
+  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+n; ++data_ptr, ++B_data_ptr)
+    *data_ptr += *B_data_ptr;
+  
+  return *this;
+}
+
 DiagonalMatrix::DiagonalMatrix(const Vector& vec) : n(vec.size()), diagonal(vec)
 {
 }
