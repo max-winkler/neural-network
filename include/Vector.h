@@ -8,6 +8,7 @@
 class Vector {
  public:
   // Constructor and destructor
+  Vector();
   Vector(size_t);
   Vector(const Vector&);
   Vector(std::initializer_list<double>);
@@ -24,14 +25,27 @@ class Vector {
 
   // Vector operations
   Vector operator+(const Vector&) const;
+  Vector operator-(const Vector&) const;
   
   // Console output via output stream
   friend std::ostream& operator<<(std::ostream&, const Vector&);
+
+  // Matrix-vector operations
   friend Vector Matrix::operator*(const Vector&) const;
+  Vector operator*(const Matrix&) const;
  private:
   
   double* data;
   size_t n;
 };
+
+class DiagonalMatrix {
+public:
+  DiagonalMatrix(const Vector&);
+private:
+  size_t n;
+  Vector diagonal;
+};
+
 
 #endif

@@ -1,8 +1,8 @@
 #include "NeuralNetwork.h"
 
 NeuralNetwork::NeuralNetwork(std::vector<size_t> width_) : width(width_),
-							   weight(), bias(), activation(),
-							   layers(width_.size())
+					         weight(), bias(), activation(),
+					         layers(width_.size())
 {
   // Add output dimension
   width.push_back(1);
@@ -58,7 +58,34 @@ double NeuralNetwork::eval(const Vector& x) const
 
 void NeuralNetwork::train(const std::vector<TrainingData>& data)
 {
-  // TODO: Implement training algorithm
+  Vector x(width[0]);
+  size_t idx=0; // index of the sample  
+  std::vector<Vector> z(layers);
+  std::vector<Vector> y(layers+1);
+
+  y[0] = data[idx].x;
+  double f;
+
+  // objective evaluation
+  for(size_t l=0; l<layers; ++l)
+    {
+      z[l] = weight[l]*y[l] + bias[l];
+      y[l+1] = activate(z[l], activation[l]);
+    }
+
+  // gradient evaluation
+  std::vector<Vector> Dy(layers);
+  std::vector<Matrix> Dweight(layers);
+  std::vector<Vector> Dgrad(layers);
+  std::vector<Vector> Dz(layers);
+
+  Dy[layers-1] = y[layers] - Vector({data[idx].y});
+  
+  for(size_t l=layers; l-- >0; )
+    {
+      DiagonalMatrix(Dactivate(z[l-1], activation[l-1]));
+    }
+  
 }
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net) 

@@ -18,6 +18,7 @@ class Matrix
 {
  public:
   // Constructor and destructor
+  Matrix();
   Matrix(size_t, size_t);
   Matrix(const Matrix&);
   ~Matrix();
@@ -34,10 +35,12 @@ class Matrix
   const MatrixRow operator[](size_t) const;  
 
   // Matrix-vector operations
-  Vector operator*(const Vector&) const;
-  
+  Vector operator*(const Vector&) const; ;
+      
   // Console output
   friend std::ostream& operator<<(std::ostream&, const Matrix&);
+
+  friend class Vector;
  private:
   // Dimension of matrix
   size_t m, n;

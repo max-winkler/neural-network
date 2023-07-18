@@ -39,6 +39,10 @@ int main()
   
   Vector e = c + d;
   std::cout << "e = " << e << std::endl;
+
+
+  Vector f = e*A;
+  std::cout << "f = " << f << std::endl;
   
   return 0;
 }

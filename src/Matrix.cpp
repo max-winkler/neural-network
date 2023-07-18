@@ -4,6 +4,12 @@
 #include "Matrix.h"
 #include "Vector.h"
 
+Matrix::Matrix() : n(1), m(1)
+{
+  data = new double[1];
+  data[0] = 0.;
+}
+
 Matrix::Matrix(size_t m, size_t n) : m(m), n(n)
 {
   data = new double[m*n];
@@ -41,7 +47,6 @@ Matrix& Matrix::operator=(std::initializer_list<double> val)
   return *this;
 }
 
-
 std::pair<size_t, size_t> Matrix::size() const { return std::pair<size_t, size_t>(m, n); }
 size_t Matrix::nRows() const {return m;}
 size_t Matrix::nCols() const {return n;}
@@ -66,7 +71,8 @@ Vector Matrix::operator*(const Vector& b) const
 {
   if(n != b.n)
     {
-      std::cerr << "Matrix and vector have incompatible size: (" << m << "," << n << ") vs. (" << b.n << ")\n";
+      std::cerr << "Error: Matrix and vector have incompatible size for multiplication.\n";
+      std::cerr << "  (" << m << "," << n << ") vs. (" << b.n << ")\n";
       return Vector(0);
     }
 

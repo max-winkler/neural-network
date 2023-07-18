@@ -3,6 +3,12 @@
 
 #include "Vector.h"
 
+Vector::Vector() : n(1)
+{
+  data = new double[1];
+  data[0] = 0.;
+}
+
 Vector::Vector(size_t n) : n(n)
 {
   data = new double[n];
@@ -84,6 +90,25 @@ Vector Vector::operator+(const Vector& other) const
   return c;
 }
 
+Vector Vector::operator-(const Vector& other) const
+{
+  // TODO: Implement an axpy method and replace + and - by calls to axpy
+  if(n != other.n)
+    {
+      std::cerr << "Error: Vector sized are incompatible for summation: (" << n << ") vs. (" << other.n << ")\n";
+      return Vector(0);
+    }
+
+  Vector c(n);
+  for(double *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
+      data_ptr != data+n;
+      ++data_ptr, ++data_ptr_other, ++data_ptr_c)
+    {
+      (*data_ptr_c) = (*data_ptr)-(*data_ptr_other);
+    }
+  return c;
+}
+
 std::ostream& operator<<(std::ostream& os, const Vector& vector)
 {
   os << "[ ";
@@ -94,4 +119,36 @@ std::ostream& operator<<(std::ostream& os, const Vector& vector)
   os << "]";
   
   return os;
+}
+
+Vector Vector::operator*(const Matrix& A) const
+{
+  size_t m = A.nRows(), n = A.nCols();
+
+  if(this->n != m)
+    {
+      std::cerr << "Error: Vector and matrix have incompatible size for multiplication.\n";
+      std::cerr << "  (" << this->n << ")  vs. (" << m << "," << n << ")\n";
+      return Vector(0);
+    }
+  
+  Vector y(n);
+
+  double* A_col;
+  double* x_data;
+      
+  for(size_t i=0; i<n; ++i)
+    {
+      double val=0;
+      for(A_col = A.data + i, x_data = data; x_data != data+m; x_data++, A_col+=n)
+        val += (*A_col)*(*x_data);
+
+      y[i] = val;
+    }
+
+  return y;
+}
+
+DiagonalMatrix::DiagonalMatrix(const Vector& vec) : n(vec.size()), diagonal(vec)
+{
 }

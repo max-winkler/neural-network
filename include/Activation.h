@@ -13,5 +13,7 @@ enum ActivationFunction
 
 double activate(double x, ActivationFunction act);
 Vector activate(const Vector& x, ActivationFunction act);
+double Dactivate(double x, ActivationFunction act);
+Vector Dactivate(const Vector& x, ActivationFunction act);
 
 #endif
