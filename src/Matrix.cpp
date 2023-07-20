@@ -67,6 +67,11 @@ double& MatrixRow::operator[](size_t j)
   return data_ptr[j];
 }
 
+const double& MatrixRow::operator[](size_t j) const
+{
+  return data_ptr[j];
+}
+
 Vector Matrix::operator*(const Vector& b) const
 {
   if(n != b.n)

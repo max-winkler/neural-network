@@ -10,6 +10,7 @@ class MatrixRow
  public:
   MatrixRow(double*);
   double& operator[](size_t);
+  const double& operator[](size_t) const;
  private:
   double* data_ptr;
 };

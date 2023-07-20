@@ -7,7 +7,7 @@ double activate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::NONE:
       return x;
     case ActivationFunction::SIGMOID:
-      return 1./(1+exp(-x));
+      return 1./(1.+exp(-x));
     case ActivationFunction::TANH:
       return 2./(1.+exp(-2.*x)) - 1.;
     }
@@ -31,9 +31,9 @@ double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
   switch(act)
     {
     case ActivationFunction::NONE:
-      return 1;
+      return 1.;
     case ActivationFunction::SIGMOID:
-      return exp(-x)/pow(1+exp(-x), 2.);
+      return exp(-x)/pow(1.+exp(-x), 2.);
     case ActivationFunction::TANH:
       return 4.*exp(-2.*x)/pow(1+exp(-2.*x), 2.);
     }

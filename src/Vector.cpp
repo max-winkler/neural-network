@@ -161,9 +161,6 @@ Vector Vector::operator*(const DiagonalMatrix& A) const
     }
   
   Vector y(n);
-
-  double* A_col;
-  double* x_data;
       
   for(size_t i=0; i<n; ++i)
     y[i] = A.diagonal[i]*data[i];

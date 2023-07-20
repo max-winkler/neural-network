@@ -1,20 +1,22 @@
 #include "NeuralNetwork.h"
 
+#include <fstream>
+
 NeuralNetwork::NeuralNetwork(std::vector<size_t> width_) : width(width_),
-					         weight(), bias(), activation(),
 					         layers(width_.size())
 {
   // Add output dimension
   width.push_back(1);
 
-  weight.reserve(layers);
-  bias.reserve(layers);
-  activation.reserve(layers);
+  params.weight.reserve(layers);
+  params.bias.reserve(layers);
+  params.activation.reserve(layers);
   
   for(Dimension::const_iterator it = width.begin(); it+1 != width.end(); ++it)
     {
-      weight.push_back(Matrix(*(it+1), *it));
-      bias.push_back(Vector(*(it+1)));
+      params.weight.push_back(Matrix(*(it+1), *it));
+      params.bias.push_back(Vector(*(it+1)));
+      params.activation.push_back((it+1!=width.end()) ? ActivationFunction::SIGMOID : ActivationFunction::NONE);
     }
 }
 
@@ -42,16 +44,16 @@ void NeuralNetwork::setParameters(size_t layer, const Matrix& matrix, const Vect
       return;
     }
   
-  weight[layer] = matrix;
-  bias[layer] = vector;
-  activation[layer] = act;
+  params.weight[layer] = matrix;
+  params.bias[layer] = vector;
+  params.activation[layer] = act;
 }
 
 double NeuralNetwork::eval(const Vector& x) const
 {
   Vector x_tmp(x);
   for(size_t l=0; l<layers; ++l)    
-    x_tmp = activate(weight[l] * x_tmp + bias[l], activation[l]);
+    x_tmp = activate(params.weight[l] * x_tmp + params.bias[l], params.activation[l]);
 
   return x_tmp[0];
 }
@@ -59,7 +61,7 @@ double NeuralNetwork::eval(const Vector& x) const
 void NeuralNetwork::train(const std::vector<TrainingData>& data)
 {
   size_t n_data = data.size();
-  
+    
   std::vector<std::vector<Vector>> z(layers);
   std::vector<std::vector<Vector>> y(layers+1);
 
@@ -71,31 +73,97 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data)
       y[l] = std::vector<Vector>(n_data);
     }
 
+  std::ofstream os;
+  os.open("training.csv");  
+  
+  double learning_rate = 1.e-2;
+  double grad_norm = 1.;
+
+  size_t i=0;
+  while(grad_norm > 1.e-5 && i++ < 1e6)
+    {
+      double f = eval_functional(params, data, y, z);
+      
+      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z);
+      NeuralNetworkParameters params_new;
+
+      grad_norm = sqrt(grad_params.dot(grad_params));
+      
+      // for testing only. remove later
+      // gradient_test(grad_params, data);
+      // return;
+      
+      double f_new = 2*f;
+      while(learning_rate > 1.e-10 && f_new > f)
+        {
+	params_new = params + (-learning_rate)*grad_params;
+	f_new = eval_functional(params_new, data, y, z);
+	learning_rate /= 2.;
+        }
+      params = params_new;
+
+      if(i%100 == 0)
+        {
+	std::cout << "Iteration " << i << std::endl;
+	std::cout << "functional value : " << f << std::endl;
+	std::cout << "learning rate    : " << 2.*learning_rate << std::endl;
+	std::cout << "gradient norm    : " << grad_norm << std::endl;
+	std::cout << "=========================================" << std::endl;
+        }
+
+      os << i << ", " << f << ", " << grad_norm << std::endl;
+      
+      learning_rate *= 4.;
+    }
+  os.close();
+}
+
+double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
+			        const std::vector<TrainingData>& data,
+			        std::vector<std::vector<Vector>>& y,
+			        std::vector<std::vector<Vector>>& z) const
+{
+  size_t n_data = data.size();
+
   for(size_t idx=0; idx<n_data; ++idx)
     y[0][idx] = data[idx].x;
-  
-  double f;
-  
-  // objective evaluation
+    
   for(size_t l=0; l<layers; ++l)    
     for(size_t idx=0; idx<n_data; ++idx)
       {
-        z[l][idx] = weight[l]*y[l][idx] + bias[l];
-        y[l+1][idx] = activate(z[l][idx], activation[l]);
+        z[l][idx] = params.weight[l]*y[l][idx] + params.bias[l];
+        y[l+1][idx] = activate(z[l][idx], params.activation[l]);
       }
   
-  // gradient evaluation
+  double f = 0.;
+  for(size_t idx=0; idx<n_data; ++idx)
+    f += 0.5*pow(y[layers][idx][0] - data[idx].y, 2.);
+
+  return f;
+}
+
+NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParameters& params,
+					   const std::vector<TrainingData>& data,
+					   const std::vector<std::vector<Vector>>& y,
+					   const std::vector<std::vector<Vector>>& z) const
+{
+  size_t n_data = data.size();
+  
+  NeuralNetworkParameters grad_params;
+
+  grad_params.weight = std::vector<Matrix>(layers);  
+  grad_params.bias = std::vector<Vector>(layers);
+  grad_params.activation = std::vector<ActivationFunction>(layers);
+    
   std::vector<Vector> Dy(n_data);
   std::vector<Vector> Dz(n_data);
-  
-  std::vector<Matrix> Dweight(layers);  
-  std::vector<Vector> Dbias(layers);
-
-  // Initialize gradient to zero
+ 
+  // Initialize gradient
   for(size_t l=0; l<layers; ++l)
     {
-      Dweight[l] = Matrix(width[l+1], width[l]);
-      Dbias[l] = Vector(width[l+1]);
+      grad_params.weight[l] = Matrix(width[l+1], width[l]);
+      grad_params.bias[l] = Vector(width[l+1]);
+      grad_params.activation[l] = params.activation[l];
     }
 
   for(size_t idx=0; idx<n_data; ++idx)
@@ -105,21 +173,16 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data)
     {
       for(size_t idx=0; idx<n_data; ++idx)
         {
-	Dz[idx] = Dy[idx] * DiagonalMatrix(Dactivate(z[l][idx], activation[l]));
-	Dy[idx] = Dz[idx] * weight[l];	
+	Dz[idx] = Dy[idx] * DiagonalMatrix(Dactivate(z[l][idx], params.activation[l]));
+	Dy[idx] = Dz[idx] * params.weight[l];	
 	
 	// Gradient w.r.t. weight and bias
-	Dweight[l] += outer(Dz[idx], y[l][idx]);
-	Dbias[l] += Dz[idx];
+	grad_params.weight[l] += outer(Dz[idx], y[l][idx]);	
+	grad_params.bias[l] += Dz[idx];
         }
     }
 
-  // for debugging -> remove later
-  for(size_t l=0; l<layers; ++l)
-    {
-      std::cout << "Db[" << l << "] = " << Dbias[l] << std::endl;
-      std::cout << "DW[" << l << "] = \n" << Dweight[l] << std::endl;
-    }
+  return grad_params;
 }
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net) 
@@ -131,6 +194,157 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net)
   for(size_t i=1; i<net.layers-1; ++i)    
     os << net.width[i] << ", ";
   os << net.width[net.layers-1] << std::endl;
+  os << "  Weights and biases      : ";
+  os << net.params;
   
+  return os;
+}
+
+ScaledNeuralNetworkParameters::ScaledNeuralNetworkParameters(double scale ,
+						 const NeuralNetworkParameters& params)
+  : scale(scale), params(&params)
+{
+}
+
+ScaledNeuralNetworkParameters operator*(double scale, const NeuralNetworkParameters& params)
+{
+  return ScaledNeuralNetworkParameters(scale, params);
+}
+
+NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const ScaledNeuralNetworkParameters& rhs)
+{
+  NeuralNetworkParameters params;
+
+  size_t layers = lhs.weight.size();
+    
+  params.weight.reserve(layers);
+  params.bias.reserve(layers);
+  params.activation.reserve(layers);
+
+  for(size_t l=0; l<layers; ++l)
+    {
+      size_t m = lhs.weight[l].nRows();
+      size_t n = lhs.weight[l].nCols();
+      
+      params.weight.push_back(Matrix(m, n));
+      params.bias.push_back(Vector(m));
+      params.activation.push_back(lhs.activation[l]);
+			    
+      for(size_t i=0; i<m; ++i)
+        {
+	for(size_t j=0; j<n; ++j)
+	  {
+	    params.weight[l][i][j] = lhs.weight[l][i][j] + rhs.scale * rhs.params->weight[l][i][j];
+	  }
+	params.bias[l][i] = lhs.bias[l][i] + rhs.scale * rhs.params->bias[l][i];
+        }
+    }
+  return params;
+}
+
+void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
+			    const std::vector<TrainingData>& data) const
+{
+  // Initialize a direction
+  NeuralNetworkParameters direction;
+
+  direction.weight.reserve(layers);
+  direction.bias.reserve(layers);
+  direction.activation.reserve(layers);
+  
+  for(size_t l=0; l<layers; ++l)
+    {
+      size_t m = params.weight[l].nRows();
+      size_t n = params.weight[l].nCols();
+
+      Matrix weight(m, n);
+      Vector bias(m);
+      
+      for(size_t i=0; i<m; ++i)
+        {
+	for(size_t j=0; j<n; ++j)
+	  {
+	    weight[i][j] = 1.;
+	  }
+	bias[i] = 1.;
+        }
+      
+      direction.weight.push_back(weight);
+      direction.bias.push_back(bias);
+      direction.activation.push_back(params.activation[l]);
+    }
+
+  std::cout << "Neural network parameters:\n";
+  std::cout << params << std::endl;
+
+  std::cout << "Gradient parameters:\n";
+  std::cout << grad_params << std::endl;
+
+  std::cout << "Direction parameters:\n";
+  std::cout << direction << std::endl;
+  
+  double deriv_exact = grad_params.dot(direction);
+
+  size_t n_data = data.size();
+    
+  std::vector<std::vector<Vector>> z(layers);
+  std::vector<std::vector<Vector>> y(layers+1);
+
+  // Allocate memory for auxiliary vectors
+  for(size_t l=0; l<layers+1; ++l)
+    {
+      if(l<layers)
+        z[l] = std::vector<Vector>(n_data);
+      y[l] = std::vector<Vector>(n_data);
+    }
+
+  double f = eval_functional(params, data, y, z);  
+            
+  for(double s=1.; s>1.e-9; s*=0.5)
+    {
+      NeuralNetworkParameters params_s = params + s*direction;
+  
+      double f_s = eval_functional(params_s, data, y, z);      
+      double deriv_fd = (f_s - f)/s;
+
+      std::cout << "  derivative by gradient: " << deriv_exact
+	      << " vs. by difference quotient: " << deriv_fd
+	      << " relative error: " << std::abs(deriv_exact - deriv_fd)/deriv_exact << std::endl;
+      
+    }
+}
+
+double NeuralNetworkParameters::dot(const NeuralNetworkParameters& rhs) const
+{
+  double d = 0.;
+
+  size_t layers = weight.size();
+  for(size_t l=0; l<layers; ++l)
+    {
+      size_t m = weight[l].nRows();
+      size_t n = weight[l].nCols();
+      
+      for(size_t i=0; i<m; ++i)
+        {
+	for(size_t j=0; j<n; ++j)
+	  d += weight[l][i][j] * rhs.weight[l][i][j];
+	
+	d += bias[l][i] * rhs.bias[l][i];
+        }
+    }
+  
+  return d;
+}
+
+std::ostream& operator<<(std::ostream& os, const NeuralNetworkParameters& params)
+{
+  size_t layers = params.weight.size();
+
+  for(size_t l=0; l<layers; ++l)
+    {
+      os << "W" << l << " =\n" << params.weight[l];
+      os << "B" << l << " =\n" << params.bias[l] << std::endl << std::endl;;
+      os << "Activation  (" << l << "): " << params.activation[l] << std::endl;
+    }
   return os;
 }
