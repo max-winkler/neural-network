@@ -5,7 +5,7 @@
 #include <numeric>
 #include <chrono>
 
-NeuralNetwork::NeuralNetwork() : initialized(false), layers(0), rnd_gen(std::random_device()())
+NeuralNetwork::NeuralNetwork() : initialized(false), width(), layers(0), rnd_gen(std::random_device()())
 {
 }
 
@@ -39,6 +39,10 @@ void NeuralNetwork::initialize()
   // Add output dimension
   width.push_back(1);
 
+  // Reserve memory for parameters
+  params.weight.reserve(layers);
+  params.bias.reserve(layers);
+  
   // Build up weight matrices and bias vectors
   for(Dimension::const_iterator it = width.begin(); it+1 != width.end(); ++it)
     {
@@ -121,7 +125,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
 
   size_t i=0;
   // TODO: Find a better stopping criterion
-  while(i++ < 1e5)
+  while(i++ < 1e4)
     {
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
       
@@ -133,8 +137,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
       grad_norm = sqrt(grad_params.dot(grad_params));
       
       // for testing only. remove later
-      // gradient_test(grad_params, data, data_idx, batch_size);
-      // return;
+      //gradient_test(grad_params, data, data_idx, batch_size);
+      //return;
       
       double f_new = 2*f;
       while(learning_rate > 1.e-10 && f_new > f)
@@ -145,7 +149,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
         }
       params = params_new;
 
-      if(i%1000 == 0)
+      if(i%1 == 0)
         {
 	std::cout << "Iteration " << i << std::endl;
 	std::cout << "functional value : " << f << std::endl;

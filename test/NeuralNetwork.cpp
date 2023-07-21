@@ -11,6 +11,7 @@ int main()
   // Create neural network
   NeuralNetwork net;
   net.addLayer(2, ActivationFunction::NONE); // input layer
+  net.addLayer(3, ActivationFunction::SIGMOID); // hidden layer
   net.addLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addLayer(3, ActivationFunction::SIGMOID); // hidden layer
   net.initialize();
@@ -46,7 +47,7 @@ int main()
   os_training.close();
 
   // Train neural network
-  net.train(trainingData, 128);
+  net.train(trainingData, 64);
 
   // Plot classification function
   std::ofstream outfile;
