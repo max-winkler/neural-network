@@ -9,36 +9,11 @@
 int main()
 {
   // Create neural network
-  Dimension layers;
-  layers.push_back(2); // input layer
-  layers.push_back(4); // hidden layer
-  layers.push_back(3); // hidden layer
-    
-  NeuralNetwork net(layers);
-  
-  Matrix W1(4,2);
-  Vector B1(4);
-
-  W1 = {1.2139, 0.9372, 2.3817, -0.1927, -1.2983, 3.2739, 0.2837, 0.1673};
-  B1 = {0.2397, 1.9104, -4.8739, -1.2379};
-
-  net.setParameters(0, W1, B1, ActivationFunction::SIGMOID);
-    
-  Matrix W2(3,4);
-  Vector B2(3);
-
-  W2 = {1.2139, 0.9372, 2.3817, -0.1927, -1.2983, 3.2739, 1.3298, 2.8372, -1.2837, 1.2736, -2.1872, -0.2736};
-  B2 = {0.2397, 1.9104, -4.8739};
-  
-  net.setParameters(1, W2, B2, ActivationFunction::SIGMOID);
-
-  Matrix W3(1,3);
-  Vector B3(1);
-
-  W3 = {-2.3981, 1.3791, 0.2318};
-  B3 = {1.6378};
-
-  net.setParameters(2, W3, B3, ActivationFunction::NONE);  
+  NeuralNetwork net;
+  net.addLayer(2, ActivationFunction::NONE); // input layer
+  net.addLayer(4, ActivationFunction::SIGMOID); // hidden layer
+  net.addLayer(3, ActivationFunction::SIGMOID); // hidden layer
+  net.initialize();
     
   std::cout << net;
 
@@ -71,7 +46,7 @@ int main()
   os_training.close();
 
   // Train neural network
-  net.train(trainingData, 100);
+  net.train(trainingData, 128);
 
   // Plot classification function
   std::ofstream outfile;

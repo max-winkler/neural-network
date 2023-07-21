@@ -3,12 +3,15 @@
 #include <fstream>
 #include <algorithm>
 #include <numeric>
-#include <random>
 #include <chrono>
 
-NeuralNetwork::NeuralNetwork(std::vector<size_t> width_) : width(width_),
-					         layers(width_.size())
+NeuralNetwork::NeuralNetwork() : initialized(false), layers(0), rnd_gen(std::random_device()())
 {
+}
+
+NeuralNetwork::NeuralNetwork(std::vector<size_t> width_)
+  : initialized(true), width(width_), layers(width_.size()), rnd_gen(std::random_device()())
+{  
   // Add output dimension
   width.push_back(1);
 
@@ -22,6 +25,36 @@ NeuralNetwork::NeuralNetwork(std::vector<size_t> width_) : width(width_),
       params.bias.push_back(Vector(*(it+1)));
       params.activation.push_back((it+1!=width.end()) ? ActivationFunction::SIGMOID : ActivationFunction::NONE);
     }
+}
+
+void NeuralNetwork::addLayer(size_t width, ActivationFunction act)
+{
+  this->width.push_back(width);
+  params.activation.push_back(act);
+  ++layers;
+}
+
+void NeuralNetwork::initialize()
+{
+  // Add output dimension
+  width.push_back(1);
+
+  // Build up weight matrices and bias vectors
+  for(Dimension::const_iterator it = width.begin(); it+1 != width.end(); ++it)
+    {
+      size_t m=*(it+1), n=*it;
+
+      // Initialize random matrix
+      Matrix W(m, n);
+      for(size_t i=0; i<m; ++i)
+	for(size_t j=0; j<n; ++j)
+	  W[i][j] = random_real(rnd_gen);
+	  
+      params.weight.push_back(W);
+      params.bias.push_back(Vector(m));
+    }  
+  
+  initialized = true;
 }
 
 void NeuralNetwork::setParameters(size_t layer, const Matrix& matrix, const Vector& vector, ActivationFunction act)
@@ -73,13 +106,10 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   std::vector<std::vector<Vector>> z;
   std::vector<std::vector<Vector>> y;
 
-  // Random shuffle for stochastic gradient implementation
+  // Index set for training data
   std::vector<size_t> data_idx(n_data);
   std::iota(data_idx.begin(), data_idx.end(), 0);
-  
-  std::random_device rd;
-  std::mt19937 g(rd());
-  
+    
   // Initialize time measurement
   std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
   
@@ -93,8 +123,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   // TODO: Find a better stopping criterion
   while(i++ < 1e5)
     {
-      std::shuffle(data_idx.begin(), data_idx.end(), g);
-        
+      std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
+      
       double f = eval_functional(params, data, y, z, data_idx, batch_size);
       
       NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, batch_size);
@@ -103,15 +133,15 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
       grad_norm = sqrt(grad_params.dot(grad_params));
       
       // for testing only. remove later
-      //gradient_test(grad_params, data, data_idx, batch_size);
-      //return;
+      // gradient_test(grad_params, data, data_idx, batch_size);
+      // return;
       
       double f_new = 2*f;
       while(learning_rate > 1.e-10 && f_new > f)
         {
-	params_new = params + (-learning_rate)*grad_params;
-	f_new = eval_functional(params_new, data, y, z, data_idx, batch_size);
-	learning_rate /= 2.;
+	  params_new = params + (-learning_rate)*grad_params;
+	  f_new = eval_functional(params_new, data, y, z, data_idx, batch_size);
+	  learning_rate /= 2.;
         }
       params = params_new;
 

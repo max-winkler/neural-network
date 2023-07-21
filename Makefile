@@ -1,6 +1,6 @@
 OBJ = 	src/Vector.o src/Matrix.o src/NeuralNetwork.o src/Activation.o src/TrainingData.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -O3
+CPP_FLAGS = -g
 
 %.o: %.cpp
 	g++ -c $< ${CPP_INCLUDE} ${CPP_FLAGS} -o $@

@@ -35,7 +35,7 @@ double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::SIGMOID:
       return exp(-x)/pow(1.+exp(-x), 2.);
     case ActivationFunction::TANH:
-      return 4.*exp(-2.*x)/pow(1+exp(-2.*x), 2.);
+      return 4.*exp(-2.*x)/pow(1.+exp(-2.*x), 2.);
     }
   
   return 0.;

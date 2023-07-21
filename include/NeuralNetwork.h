@@ -2,6 +2,7 @@
 #define _NEURALNETWORK_H_
 
 #include <vector>
+#include <random>
 
 #include "Matrix.h"
 #include "Vector.h"
@@ -38,8 +39,12 @@ struct ScaledNeuralNetworkParameters
 class NeuralNetwork
 {
  public:
+  NeuralNetwork();
   NeuralNetwork(Dimension);
 
+  void addLayer(size_t, ActivationFunction);
+  void initialize();
+  
   void setParameters(size_t, const Matrix&, const Vector&, ActivationFunction);
 
   double eval(const Vector&) const;
@@ -68,10 +73,15 @@ class NeuralNetwork
   // Store dimension of neural network
   std::vector<size_t> width;
   size_t layers;
-
+  bool initialized;
+  
   // Weights and biases  
   NeuralNetworkParameters params;
 
+  // Random number generator
+  std::mt19937 rnd_gen;
+  std::uniform_real_distribution<> random_real;
+  
   // for debugging and testing
   void gradient_test(const NeuralNetworkParameters&,
 		     const std::vector<TrainingData>&,
