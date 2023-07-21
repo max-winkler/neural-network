@@ -7,6 +7,7 @@
 
 // Forward declarations
 class DiagonalMatrix;
+class Rank1Matrix;
 
 class Vector {
  public:
@@ -35,6 +36,7 @@ class Vector {
   friend std::ostream& operator<<(std::ostream&, const Vector&);
 
   // friend classes
+  friend class Matrix;
   friend class DiagonalMatrix;
   
   // Matrix-vector operations
@@ -43,14 +45,16 @@ class Vector {
   Vector operator*(const DiagonalMatrix&) const;
   
   // free functions
-  friend Matrix outer(const Vector&, const Vector&);
-
+  friend Rank1Matrix outer(const Vector&, const Vector&);
+  friend DiagonalMatrix diag(const Vector&);
+  
  private:
   
   double* data;
   size_t n;
 };
 
+// Class representing a diagonal matrix
 class DiagonalMatrix {
 public:
   DiagonalMatrix(const Vector&);
@@ -58,7 +62,19 @@ public:
   friend class Vector;
 private:
   size_t n;
-  Vector diagonal;
+  const Vector* diagonal;
+};
+
+class Rank1Matrix {
+public:
+  Rank1Matrix(const Vector&, const Vector&);
+
+  friend class Vector;
+  friend class Matrix;
+private:
+  size_t m, n;
+  const Vector* u;
+  const Vector* v;
 };
 
 

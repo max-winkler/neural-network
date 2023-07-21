@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <random>
+#include <chrono>
 
 NeuralNetwork::NeuralNetwork(std::vector<size_t> width_) : width(width_),
 					         layers(width_.size())
@@ -79,13 +80,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   std::random_device rd;
   std::mt19937 g(rd());
   
-  /*
-  std::cout << "Data indices:\n";
-  for(std::vector<size_t>::const_iterator it = data_idx.begin();
-      it!= data_idx.end(); ++it)
-    std::cout << *it << " ";
-  std::cout << std::endl;
-  */
+  // Initialize time measurement
+  std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
   
   std::ofstream os;
   os.open("training.csv");  
@@ -94,6 +90,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   double grad_norm = 1.;
 
   size_t i=0;
+  // TODO: Find a better stopping criterion
   while(i++ < 1e5)
     {
       std::shuffle(data_idx.begin(), data_idx.end(), g);
@@ -106,8 +103,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
       grad_norm = sqrt(grad_params.dot(grad_params));
       
       // for testing only. remove later
-      // gradient_test(grad_params, data);
-      // return;
+      //gradient_test(grad_params, data, data_idx, batch_size);
+      //return;
       
       double f_new = 2*f;
       while(learning_rate > 1.e-10 && f_new > f)
@@ -132,6 +129,12 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
       learning_rate *= 4.;
     }
   os.close();
+
+  std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+
+  std::cout << "Learning process finished after "
+	    << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count()
+	    << "[ms]" << std::endl;
 }
 
 double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
@@ -274,15 +277,17 @@ NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const Scal
 }
 
 void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
-			    const std::vector<TrainingData>& data) const
-{
+				  const std::vector<TrainingData>& data,
+				  const std::vector<size_t>& data_idx,
+				  size_t batch_size) const
+{  
   // Initialize a direction
   NeuralNetworkParameters direction;
-  /*
+  
   direction.weight.reserve(layers);
   direction.bias.reserve(layers);
   direction.activation.reserve(layers);
-  
+ 
   for(size_t l=0; l<layers; ++l)
     {
       size_t m = params.weight[l].nRows();
@@ -329,21 +334,20 @@ void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
       y[l] = std::vector<Vector>(n_data);
     }
 
-  double f = eval_functional(params, data, y, z);  
+  double f = eval_functional(params, data, y, z, data_idx, batch_size);  
             
-  for(double s=1.; s>1.e-9; s*=0.5)
+  for(double s=1.; s>1.e-12; s*=0.5)
     {
       NeuralNetworkParameters params_s = params + s*direction;
   
-      double f_s = eval_functional(params_s, data, y, z);      
+      double f_s = eval_functional(params_s, data, y, z, data_idx, batch_size);      
       double deriv_fd = (f_s - f)/s;
 
       std::cout << "  derivative by gradient: " << deriv_exact
 	      << " vs. by difference quotient: " << deriv_fd
 	      << " relative error: " << std::abs(deriv_exact - deriv_fd)/deriv_exact << std::endl;
       
-    }
-  */
+    }  
 }
 
 double NeuralNetworkParameters::dot(const NeuralNetworkParameters& rhs) const

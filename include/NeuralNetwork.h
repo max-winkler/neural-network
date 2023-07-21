@@ -73,7 +73,10 @@ class NeuralNetwork
   NeuralNetworkParameters params;
 
   // for debugging and testing
-  void gradient_test(const NeuralNetworkParameters&, const std::vector<TrainingData>&) const;
+  void gradient_test(const NeuralNetworkParameters&,
+		     const std::vector<TrainingData>&,
+		     const std::vector<size_t>&,
+		     size_t) const;
 };
 
 #endif

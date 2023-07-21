@@ -163,7 +163,7 @@ Vector Vector::operator*(const DiagonalMatrix& A) const
   Vector y(n);
       
   for(size_t i=0; i<n; ++i)
-    y[i] = A.diagonal[i]*data[i];
+    y[i] = (*A.diagonal)[i]*data[i];
 
   return y;
 }
@@ -185,6 +185,21 @@ Vector& Vector::operator+=(const Vector& B)
   return *this;
 }
 
-DiagonalMatrix::DiagonalMatrix(const Vector& vec) : n(vec.size()), diagonal(vec)
+DiagonalMatrix::DiagonalMatrix(const Vector& x)
+  : diagonal(&x), n(x.size())
 {
+}
+
+Rank1Matrix::Rank1Matrix(const Vector& u, const Vector& v)
+  : u(&u), v(&v), m(u.size()), n(v.size())
+{}
+
+DiagonalMatrix diag(const Vector& x)
+{
+  return DiagonalMatrix(x);
+}
+
+Rank1Matrix outer(const Vector& x, const Vector& y)
+{
+  return Rank1Matrix(x, y);
 }

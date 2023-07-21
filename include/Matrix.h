@@ -4,6 +4,7 @@
 #include <iostream>
 
 class Vector;
+class Rank1Matrix;
 
 class MatrixRow
 {
@@ -39,13 +40,11 @@ class Matrix
   Vector operator*(const Vector&) const; ;
 
   // Matrix-matrix operations
-  Matrix& operator+=(const Matrix&);    
+  Matrix& operator+=(const Matrix&);
+  Matrix& operator+=(const Rank1Matrix&);
   
   // Console output
   friend std::ostream& operator<<(std::ostream&, const Matrix&);
-
-  // free functions
-  friend Matrix outer(const Vector&, const Vector&);
   
   friend class Vector;
  private:
