@@ -15,7 +15,6 @@ int main()
   layers.push_back(3); // hidden layer
     
   NeuralNetwork net(layers);
-
   
   Matrix W1(4,2);
   Vector B1(4);
@@ -39,9 +38,8 @@ int main()
   W3 = {-2.3981, 1.3791, 0.2318};
   B3 = {1.6378};
 
-  net.setParameters(2, W3, B3, ActivationFunction::NONE);
-  
-  
+  net.setParameters(2, W3, B3, ActivationFunction::NONE);  
+    
   std::cout << net;
 
   // Evaluation
@@ -52,7 +50,7 @@ int main()
 
   // Generate training data
   srand(time(NULL));
-  const size_t sample_size = 100;
+  const size_t sample_size = 10000;
 
   std::vector<TrainingData> trainingData;
 
@@ -64,7 +62,7 @@ int main()
       double x = -2+4.*double(rand())/RAND_MAX;
       double y = -2+4.*double(rand())/RAND_MAX;
 
-      double label = x*x+y*y < 1 ? 1. : 0.;
+      double label = pow(x/1.5, 2.) + pow(y/0.8, 2.) < 1 ? 1. : 0.;
 
       os_training << x << ", " << y << ", " << label << std::endl;
       
@@ -73,7 +71,7 @@ int main()
   os_training.close();
 
   // Train neural network
-  net.train(trainingData);
+  net.train(trainingData, 100);
 
   // Plot classification function
   std::ofstream outfile;

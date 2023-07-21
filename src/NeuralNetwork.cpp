@@ -1,6 +1,9 @@
 #include "NeuralNetwork.h"
 
 #include <fstream>
+#include <algorithm>
+#include <numeric>
+#include <random>
 
 NeuralNetwork::NeuralNetwork(std::vector<size_t> width_) : width(width_),
 					         layers(width_.size())
@@ -58,21 +61,32 @@ double NeuralNetwork::eval(const Vector& x) const
   return x_tmp[0];
 }
 
-void NeuralNetwork::train(const std::vector<TrainingData>& data)
+void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_size)
 {
   size_t n_data = data.size();
-    
-  std::vector<std::vector<Vector>> z(layers);
-  std::vector<std::vector<Vector>> y(layers+1);
+  
+  if(batch_size == 0)
+    batch_size = n_data;
+      
+  // Auxiliary variables reused in backpropagation
+  std::vector<std::vector<Vector>> z;
+  std::vector<std::vector<Vector>> y;
 
-  // Allocate memory for auxiliary vectors
-  for(size_t l=0; l<layers+1; ++l)
-    {
-      if(l<layers)
-        z[l] = std::vector<Vector>(n_data);
-      y[l] = std::vector<Vector>(n_data);
-    }
-
+  // Random shuffle for stochastic gradient implementation
+  std::vector<size_t> data_idx(n_data);
+  std::iota(data_idx.begin(), data_idx.end(), 0);
+  
+  std::random_device rd;
+  std::mt19937 g(rd());
+  
+  /*
+  std::cout << "Data indices:\n";
+  for(std::vector<size_t>::const_iterator it = data_idx.begin();
+      it!= data_idx.end(); ++it)
+    std::cout << *it << " ";
+  std::cout << std::endl;
+  */
+  
   std::ofstream os;
   os.open("training.csv");  
   
@@ -80,11 +94,13 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data)
   double grad_norm = 1.;
 
   size_t i=0;
-  while(grad_norm > 1.e-5 && i++ < 1e6)
+  while(i++ < 1e5)
     {
-      double f = eval_functional(params, data, y, z);
+      std::shuffle(data_idx.begin(), data_idx.end(), g);
+        
+      double f = eval_functional(params, data, y, z, data_idx, batch_size);
       
-      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z);
+      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, batch_size);
       NeuralNetworkParameters params_new;
 
       grad_norm = sqrt(grad_params.dot(grad_params));
@@ -97,12 +113,12 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data)
       while(learning_rate > 1.e-10 && f_new > f)
         {
 	params_new = params + (-learning_rate)*grad_params;
-	f_new = eval_functional(params_new, data, y, z);
+	f_new = eval_functional(params_new, data, y, z, data_idx, batch_size);
 	learning_rate /= 2.;
         }
       params = params_new;
 
-      if(i%100 == 0)
+      if(i%1000 == 0)
         {
 	std::cout << "Iteration " << i << std::endl;
 	std::cout << "functional value : " << f << std::endl;
@@ -121,23 +137,36 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data)
 double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
 			        const std::vector<TrainingData>& data,
 			        std::vector<std::vector<Vector>>& y,
-			        std::vector<std::vector<Vector>>& z) const
+			        std::vector<std::vector<Vector>>& z,
+			        const std::vector<size_t>& data_indices,
+			        size_t batch_size) const
 {
   size_t n_data = data.size();
 
-  for(size_t idx=0; idx<n_data; ++idx)
-    y[0][idx] = data[idx].x;
+  y = std::vector<std::vector<Vector>>(layers+1);
+  z = std::vector<std::vector<Vector>>(layers);
+  
+  // Allocate memory for auxiliary vectors
+  for(size_t l=0; l<layers+1; ++l)
+    {
+      if(l<layers)
+        z[l] = std::vector<Vector>(batch_size);
+      y[l] = std::vector<Vector>(batch_size);
+    }
+  
+  for(size_t idx=0; idx<batch_size; ++idx)
+    y[0][idx] = data[data_indices[idx]].x;
     
   for(size_t l=0; l<layers; ++l)    
-    for(size_t idx=0; idx<n_data; ++idx)
-      {
+    for(size_t idx=0; idx<batch_size; ++idx)
+      {        
         z[l][idx] = params.weight[l]*y[l][idx] + params.bias[l];
         y[l+1][idx] = activate(z[l][idx], params.activation[l]);
       }
   
   double f = 0.;
-  for(size_t idx=0; idx<n_data; ++idx)
-    f += 0.5*pow(y[layers][idx][0] - data[idx].y, 2.);
+  for(size_t idx=0; idx<batch_size; ++idx)
+    f += 0.5*pow(y[layers][idx][0] - data[data_indices[idx]].y, 2.);
 
   return f;
 }
@@ -145,7 +174,9 @@ double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
 NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParameters& params,
 					   const std::vector<TrainingData>& data,
 					   const std::vector<std::vector<Vector>>& y,
-					   const std::vector<std::vector<Vector>>& z) const
+					   const std::vector<std::vector<Vector>>& z,
+					   const std::vector<size_t>& data_indices,
+					   size_t batch_size) const
 {
   size_t n_data = data.size();
   
@@ -166,12 +197,12 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
       grad_params.activation[l] = params.activation[l];
     }
 
-  for(size_t idx=0; idx<n_data; ++idx)
-    Dy[idx] = y[layers][idx] - Vector({data[idx].y});
+  for(size_t idx=0; idx<batch_size; ++idx)
+    Dy[idx] = y[layers][idx] - Vector({data[data_indices[idx]].y});
   
   for(size_t l=layers; l-- >0; )
     {
-      for(size_t idx=0; idx<n_data; ++idx)
+      for(size_t idx=0; idx<batch_size; ++idx)
         {
 	Dz[idx] = Dy[idx] * DiagonalMatrix(Dactivate(z[l][idx], params.activation[l]));
 	Dy[idx] = Dz[idx] * params.weight[l];	
@@ -247,7 +278,7 @@ void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
 {
   // Initialize a direction
   NeuralNetworkParameters direction;
-
+  /*
   direction.weight.reserve(layers);
   direction.bias.reserve(layers);
   direction.activation.reserve(layers);
@@ -312,6 +343,7 @@ void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
 	      << " relative error: " << std::abs(deriv_exact - deriv_fd)/deriv_exact << std::endl;
       
     }
+  */
 }
 
 double NeuralNetworkParameters::dot(const NeuralNetworkParameters& rhs) const

@@ -44,19 +44,23 @@ class NeuralNetwork
 
   double eval(const Vector&) const;
 
-  void train(const std::vector<TrainingData>&);
+  void train(const std::vector<TrainingData>&, size_t batch_size=0);
 
   // functional evaluation (for training routine)
   double eval_functional(const NeuralNetworkParameters&,
 		     const std::vector<TrainingData>&,
 		     std::vector<std::vector<Vector>>&,
-		     std::vector<std::vector<Vector>>&) const;
+		     std::vector<std::vector<Vector>>&,
+		     const std::vector<size_t>&,
+		     size_t) const;
 
   // gradient ecaluation (for training routine)
   NeuralNetworkParameters eval_gradient(const NeuralNetworkParameters&,
 				const std::vector<TrainingData>&,
 				const std::vector<std::vector<Vector>>&,
-				const std::vector<std::vector<Vector>>&) const;
+				const std::vector<std::vector<Vector>>&,
+				const std::vector<size_t>&,
+				size_t) const;
     
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
   
