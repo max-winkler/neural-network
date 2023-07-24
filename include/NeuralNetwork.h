@@ -20,12 +20,15 @@ struct NeuralNetworkParameters
   std::vector<ActivationFunction> activation;
 
   double dot(const NeuralNetworkParameters&) const;
+
+  NeuralNetworkParameters& operator=(const ScaledNeuralNetworkParameters&);
   
   // why friend? all attributes are public
   friend ScaledNeuralNetworkParameters operator*(double, const NeuralNetworkParameters&);
-  // implement later if needed
-  //friend NeuralNetworkParameters operator+(const NeuralNetworkParameters&, const NeuralNetworkParameters&); 
+  
+  friend NeuralNetworkParameters operator+(const NeuralNetworkParameters&, const NeuralNetworkParameters&);  
   friend NeuralNetworkParameters operator+(const NeuralNetworkParameters&, const ScaledNeuralNetworkParameters&);
+  
   friend std::ostream& operator<<(std::ostream&, const NeuralNetworkParameters&);
 };
 
@@ -34,6 +37,8 @@ struct ScaledNeuralNetworkParameters
   ScaledNeuralNetworkParameters(double, const NeuralNetworkParameters&);
   double scale;
   const NeuralNetworkParameters* params;
+
+  friend NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters&, const ScaledNeuralNetworkParameters&);
 };
 
 class NeuralNetwork

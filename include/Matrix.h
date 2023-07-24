@@ -25,6 +25,7 @@ class Matrix
   Matrix(const Matrix&);
   ~Matrix();
   Matrix& operator=(const Matrix&);
+  Matrix& operator=(Matrix&&);
   Matrix& operator=(std::initializer_list<double>);
     
   // Simple getter functions
@@ -36,6 +37,9 @@ class Matrix
   MatrixRow operator[](size_t);
   const MatrixRow operator[](size_t) const;  
 
+  // Matrix operations
+  Matrix& operator*=(double);
+  
   // Matrix-vector operations
   Vector operator*(const Vector&) const; ;
 

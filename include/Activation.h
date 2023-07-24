@@ -7,7 +7,7 @@
 
 enum ActivationFunction
   {
-    NONE, SIGMOID, TANH
+    NONE, SIGMOID, TANH, RELU
   };
 
 

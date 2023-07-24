@@ -101,31 +101,48 @@ double NeuralNetwork::eval(const Vector& x) const
 
 void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_size)
 {
+  // Parameters for momentum method
+  const double momentum = 0.4;
+    
+  const size_t max_it = 1e5;
+  
   size_t n_data = data.size();
   
   if(batch_size == 0)
     batch_size = n_data;
       
   // Auxiliary variables reused in backpropagation
-  std::vector<std::vector<Vector>> z;
-  std::vector<std::vector<Vector>> y;
-
+  std::vector<std::vector<Vector>> z(layers);
+  std::vector<std::vector<Vector>> y(layers+1);
+  
+  // Allocate memory for auxiliary vectors
+  for(size_t l=0; l<layers+1; ++l)
+    {
+      if(l<layers)
+        z[l] = std::vector<Vector>(batch_size);
+      y[l] = std::vector<Vector>(batch_size);
+    }
+  
   // Index set for training data
   std::vector<size_t> data_idx(n_data);
   std::iota(data_idx.begin(), data_idx.end(), 0);
     
   // Initialize time measurement
   std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
-  
+
+  // Increment (used in momentum method)
+  NeuralNetworkParameters increment;
+
+  // Monitor algorithm progress  
   std::ofstream os;
   os.open("training.csv");  
   
-  double learning_rate = 1.e-2;
+  double learning_rate = 1.e-3;
   double grad_norm = 1.;
 
   size_t i=0;
   // TODO: Find a better stopping criterion
-  while(i++ < 1e4)
+  while(i++ <max_it && grad_norm > 1.e-10)
     {
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
       
@@ -141,15 +158,20 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
       //return;
       
       double f_new = 2*f;
-      while(learning_rate > 1.e-10 && f_new > f)
+      //      while(learning_rate > 1.e-10 && f_new > f)
         {
-	  params_new = params + (-learning_rate)*grad_params;
-	  f_new = eval_functional(params_new, data, y, z, data_idx, batch_size);
-	  learning_rate /= 2.;
+	if(i>1)
+	  increment = (-learning_rate)*grad_params + momentum*increment;
+	else	
+	  increment = (-learning_rate)*grad_params;
+	
+	params_new = params + increment;
+	f_new = eval_functional(params_new, data, y, z, data_idx, batch_size);
+	//	learning_rate /= 2.;
         }
       params = params_new;
 
-      if(i%1 == 0)
+      if(i%1000 == 0)
         {
 	std::cout << "Iteration " << i << std::endl;
 	std::cout << "functional value : " << f << std::endl;
@@ -160,7 +182,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
 
       os << i << ", " << f << ", " << grad_norm << std::endl;
       
-      learning_rate *= 4.;
+      //      learning_rate *= 4.;
     }
   os.close();
 
@@ -179,17 +201,6 @@ double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
 			        size_t batch_size) const
 {
   size_t n_data = data.size();
-
-  y = std::vector<std::vector<Vector>>(layers+1);
-  z = std::vector<std::vector<Vector>>(layers);
-  
-  // Allocate memory for auxiliary vectors
-  for(size_t l=0; l<layers+1; ++l)
-    {
-      if(l<layers)
-        z[l] = std::vector<Vector>(batch_size);
-      y[l] = std::vector<Vector>(batch_size);
-    }
   
   for(size_t idx=0; idx<batch_size; ++idx)
     y[0][idx] = data[data_indices[idx]].x;
@@ -268,6 +279,21 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net)
   return os;
 }
 
+NeuralNetworkParameters& NeuralNetworkParameters::operator=(const ScaledNeuralNetworkParameters& other)
+{  
+  weight = other.params->weight;
+  bias = other.params->bias;
+  activation = other.params->activation;
+
+  for(auto weight_it = weight.begin(); weight_it != weight.end(); ++weight_it)
+    (*weight_it) *= other.scale;
+
+  for(auto bias_it = bias.begin(); bias_it != bias.end(); ++bias_it)
+    (*bias_it) *= other.scale;
+  
+  return *this;
+}
+
 ScaledNeuralNetworkParameters::ScaledNeuralNetworkParameters(double scale ,
 						 const NeuralNetworkParameters& params)
   : scale(scale), params(&params)
@@ -277,6 +303,37 @@ ScaledNeuralNetworkParameters::ScaledNeuralNetworkParameters(double scale ,
 ScaledNeuralNetworkParameters operator*(double scale, const NeuralNetworkParameters& params)
 {
   return ScaledNeuralNetworkParameters(scale, params);
+}
+
+NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const NeuralNetworkParameters& rhs)
+{
+  NeuralNetworkParameters params;
+
+  size_t layers = lhs.weight.size();
+    
+  params.weight.reserve(layers);
+  params.bias.reserve(layers);
+  params.activation.reserve(layers);
+
+  for(size_t l=0; l<layers; ++l)
+    {
+      size_t m = lhs.weight[l].nRows();
+      size_t n = lhs.weight[l].nCols();
+      
+      params.weight.push_back(Matrix(m, n));
+      params.bias.push_back(Vector(m));
+      params.activation.push_back(lhs.activation[l]);
+			    
+      for(size_t i=0; i<m; ++i)
+        {
+	for(size_t j=0; j<n; ++j)
+	  {
+	    params.weight[l][i][j] = lhs.weight[l][i][j] + rhs.weight[l][i][j];
+	  }
+	params.bias[l][i] = lhs.bias[l][i] + rhs.bias[l][i];
+        }
+    }
+  return params;
 }
 
 NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const ScaledNeuralNetworkParameters& rhs)
@@ -305,6 +362,37 @@ NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const Scal
 	    params.weight[l][i][j] = lhs.weight[l][i][j] + rhs.scale * rhs.params->weight[l][i][j];
 	  }
 	params.bias[l][i] = lhs.bias[l][i] + rhs.scale * rhs.params->bias[l][i];
+        }
+    }
+  return params;
+}
+
+NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters& lhs, const ScaledNeuralNetworkParameters& rhs)
+{
+  NeuralNetworkParameters params;
+
+  size_t layers = lhs.params->weight.size();
+    
+  params.weight.reserve(layers);
+  params.bias.reserve(layers);
+  params.activation.reserve(layers);
+
+  for(size_t l=0; l<layers; ++l)
+    {
+      size_t m = lhs.params->weight[l].nRows();
+      size_t n = lhs.params->weight[l].nCols();
+      
+      params.weight.push_back(Matrix(m, n));
+      params.bias.push_back(Vector(m));
+      params.activation.push_back(lhs.params->activation[l]);
+			    
+      for(size_t i=0; i<m; ++i)
+        {
+	for(size_t j=0; j<n; ++j)
+	  {
+	    params.weight[l][i][j] = lhs.scale * lhs.params->weight[l][i][j] + rhs.scale * rhs.params->weight[l][i][j];
+	  }
+	params.bias[l][i] = lhs.scale * lhs.params->bias[l][i] + rhs.scale * rhs.params->bias[l][i];
         }
     }
   return params;

@@ -1,5 +1,7 @@
 #include "Activation.h"
 
+#include <algorithm>
+
 double activate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)
@@ -10,6 +12,8 @@ double activate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
       return 1./(1.+exp(-x));
     case ActivationFunction::TANH:
       return 2./(1.+exp(-2.*x)) - 1.;
+    case ActivationFunction::RELU:
+      return std::max(0., x);
     }
   
   return 0.;
@@ -36,6 +40,8 @@ double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
       return exp(-x)/pow(1.+exp(-x), 2.);
     case ActivationFunction::TANH:
       return 4.*exp(-2.*x)/pow(1.+exp(-2.*x), 2.);
+    case ActivationFunction::RELU:
+      return x<=0. ? 0. : 1.;
     }
   
   return 0.;

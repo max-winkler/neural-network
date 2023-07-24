@@ -29,9 +29,27 @@ Matrix::~Matrix()
 
 Matrix& Matrix::operator=(const Matrix& other)
 {
-  m = other.m; n = other.n;
-  data = new double[m*n];
+  if(m != other.m || n != other.n)
+    {
+      delete[] data;
+      m = other.m; n = other.n;
+      data = new double[m*n];
+    }
+  
   memcpy(data, other.data, m*n*sizeof(double));
+  return *this;
+}
+
+Matrix& Matrix::operator=(Matrix&& other)  
+{
+  delete[] data;
+  
+  n = other.n;
+  m = other.m;
+  
+  data = other.data;
+  other.data = nullptr;
+  
   return *this;
 }
 
@@ -67,6 +85,14 @@ double& MatrixRow::operator[](size_t j)
   return data_ptr[j];
 }
 
+Matrix& Matrix::operator*=(double a)
+{
+  for(double* data_ptr = data; data_ptr != data+m*n; ++data_ptr)
+    (*data_ptr) *= a;
+  
+  return *this;  
+}
+  
 const double& MatrixRow::operator[](size_t j) const
 {
   return data_ptr[j];

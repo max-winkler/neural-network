@@ -19,6 +19,7 @@ class Vector {
   ~Vector();
 
   Vector& operator=(const Vector&);
+  Vector& operator=(Vector&&);
   Vector& operator=(std::initializer_list<double>);
   // Simple getter functions
   size_t size() const;
@@ -31,6 +32,7 @@ class Vector {
   Vector operator+(const Vector&) const;
   Vector operator-(const Vector&) const;
   Vector& operator+=(const Vector&);
+  Vector& operator*=(double);
   
   // Console output via output stream
   friend std::ostream& operator<<(std::ostream&, const Vector&);

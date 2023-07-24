@@ -38,11 +38,25 @@ Vector::~Vector()
 
 Vector& Vector::operator=(const Vector& other)
 {
+  if(n != other.n)
+    {
+      delete[] data;  
+      n = other.n;
+      data = new double[n];
+    }
+  
+  memcpy(data, other.data, n*sizeof(double));
+  return *this;
+}
+
+Vector& Vector::operator=(Vector&& other)
+{
   delete[] data;
   
   n = other.n;
-  data = new double[n];
-  memcpy(data, other.data, n*sizeof(double));
+  data = other.data;
+  other.data = nullptr;
+
   return *this;
 }
 
@@ -183,6 +197,12 @@ Vector& Vector::operator+=(const Vector& B)
     *data_ptr += *B_data_ptr;
   
   return *this;
+}
+
+Vector& Vector::operator*=(double a)
+{
+  for(double* data_ptr = data; data_ptr != data + n; ++data_ptr)
+    (*data_ptr) *= a;
 }
 
 DiagonalMatrix::DiagonalMatrix(const Vector& x)
