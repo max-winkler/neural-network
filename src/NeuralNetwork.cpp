@@ -102,9 +102,9 @@ double NeuralNetwork::eval(const Vector& x) const
 void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_size)
 {
   // Parameters for momentum method
-  const double momentum = 0.4;
+  const double momentum = 0.9;
     
-  const size_t max_it = 1e5;
+  const size_t max_it = 1e3;
   
   size_t n_data = data.size();
   
@@ -234,8 +234,8 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
   grad_params.bias = std::vector<Vector>(layers);
   grad_params.activation = std::vector<ActivationFunction>(layers);
     
-  std::vector<Vector> Dy(n_data);
-  std::vector<Vector> Dz(n_data);
+  std::vector<Vector> Dy(batch_size);
+  std::vector<Vector> Dz(batch_size);
  
   // Initialize gradient
   for(size_t l=0; l<layers; ++l)
