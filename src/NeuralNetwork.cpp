@@ -30,23 +30,25 @@ NeuralNetwork::NeuralNetwork(std::vector<size_t> width_)
 void NeuralNetwork::addLayer(size_t width, ActivationFunction act)
 {
   this->width.push_back(width);
-  params.activation.push_back(act);
-  ++layers;
+
+  // input layer has no activation function
+  if(this->width.size() > 1)
+    {
+      params.activation.push_back(act);
+      ++layers;
+    }
 }
 
-void NeuralNetwork::addClassificationLayer()
+void NeuralNetwork::addClassificationLayer(size_t width)
 {
-  this->width.push_back(width.back());
+  this->width.push_back(width);
   params.activation.push_back(ActivationFunction::SOFTMAX);
   ++layers;
   
 }
 
 void NeuralNetwork::initialize()
-{
-  // Add output dimension
-  width.push_back(1);
-
+{ 
   // Reserve memory for parameters
   params.weight.reserve(layers);
   params.bias.reserve(layers);
@@ -112,7 +114,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   // Parameters for momentum method
   const double momentum = 0.9;
     
-  const size_t max_it = 5e4;
+  const size_t max_it = 1e4;
   
   size_t n_data = data.size();
   
@@ -162,8 +164,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
       grad_norm = sqrt(grad_params.dot(grad_params));
       
       // for testing only. remove later
-      //gradient_test(grad_params, data, data_idx, batch_size);
-      //return;
+      // gradient_test(grad_params, data, data_idx, batch_size);
+      // return;
       
       double f_new = 2*f;
       //      while(learning_rate > 1.e-10 && f_new > f)
@@ -260,7 +262,18 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
     {
       for(size_t idx=0; idx<batch_size; ++idx)
         {
-	Dz[idx] = Dy[idx] * DiagonalMatrix(Dactivate(z[l][idx], params.activation[l]));
+	switch(params.activation[l])
+	  {
+	  case ActivationFunction::SOFTMAX:
+	    // Activation functions taking all components into account
+	    Dz[idx] = Dy[idx] * DactivateCoupled(z[l][idx], params.activation[l]);
+	    
+	    break;
+
+	  default:
+	    // Activation functions applied component-wise
+	    Dz[idx] = Dy[idx] * diag(Dactivate(z[l][idx], params.activation[l]));
+	  }
 	Dy[idx] = Dz[idx] * params.weight[l];	
 	
 	// Gradient w.r.t. weight and bias
@@ -509,8 +522,8 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetworkParameters& params
   for(size_t l=0; l<layers; ++l)
     {
       os << "W" << l << " =\n" << params.weight[l];
-      os << "B" << l << " =\n" << params.bias[l] << std::endl << std::endl;;
-      os << "Activation  (" << l << "): " << params.activation[l] << std::endl;
+      os << "B" << l << " =\n" << params.bias[l] << std::endl;
+      os << "Activation  (" << l << "): " << params.activation[l] << std::endl << std::endl;
     }
   return os;
 }

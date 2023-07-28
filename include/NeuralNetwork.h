@@ -48,7 +48,7 @@ class NeuralNetwork
   NeuralNetwork(Dimension);
 
   void addLayer(size_t, ActivationFunction);
-  void addClassificationLayer();
+  void addClassificationLayer(size_t);
   
   void initialize();
   

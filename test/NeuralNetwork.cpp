@@ -11,12 +11,14 @@ int main()
   // Create neural network
   
   NeuralNetwork net;
-  net.addLayer(2, ActivationFunction::SIGMOID); // input layer
+  net.addLayer(2, ActivationFunction::NONE); // input layer
   net.addLayer(6, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(12, ActivationFunction::SIGMOID); // hidden layer
   // net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(6, ActivationFunction::NONE); // hidden layer
+  //net.addLayer(12, ActivationFunction::SIGMOID); // hidden layer
+  // net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
+  net.addLayer(4, ActivationFunction::SIGMOID); // hidden layer
+  net.addLayer(1, ActivationFunction::NONE); // output layer
+  
   net.initialize();
   
   std::cout << net;
@@ -38,14 +40,14 @@ int main()
   
   for(size_t i=0; i<sample_size; ++i)
     {
-      double x = -2+4.*double(rand())/RAND_MAX;
-      double y = -2+4.*double(rand())/RAND_MAX;
+      double x = -2. + 4.*double(rand())/RAND_MAX;
+      double y = -2. + 4.*double(rand())/RAND_MAX;
 
       Vector label({-1.});
       if(pow((x-0.8)/0.8, 2.) + pow(y/1.5, 2.) < 1 || (x<-0.3 && x>-1.8 && y>-1.2 && y < 1.4))
         label[0] = 1.;
 
-      os_training << x << ", " << y << ", " << label << std::endl;
+      os_training << x << ", " << y << ", " << label[0] << std::endl;
       
       training_data.push_back(TrainingData({x, y}, label));
     }

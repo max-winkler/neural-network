@@ -24,9 +24,20 @@ Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGM
   size_t n = x.size();
   Vector y(n);
 
-  for(size_t i=0; i<n; ++i)    
-    y[i] = activate(x[i], act);
-
+  if(act == ActivationFunction::SOFTMAX)
+    {
+      double sum = 0.;
+      for(size_t i=0; i<n; ++i)
+        sum += exp(x[i]);
+      for(size_t i=0; i<n; ++i)
+        y[i] = exp(x[i])/sum;
+    }
+  else
+    {
+      // Component-wise applied activation functions
+      for(size_t i=0; i<n; ++i)    
+        y[i] = activate(x[i], act);
+    }
   return y;
 }
 
@@ -56,4 +67,21 @@ Vector Dactivate(const Vector& x, ActivationFunction act=ActivationFunction::SIG
     y[i] = Dactivate(x[i], act);
 
   return y;
+}
+
+Matrix DactivateCoupled(const Vector& x, ActivationFunction act)
+{
+  size_t n = x.size();
+  Matrix J(n, n);
+
+  // TODO: Assemble the fucking matrix here
+  double e_sum = 0.;
+  for(size_t i=0; i<n; ++i)
+    e_sum += exp(x[i]);
+
+  for(size_t i=0; i<n; ++i)
+    for(size_t j=0; j<n; ++j)
+      J[i][j] = (exp(x[i]) / e_sum) * ((i==j ? 1. : 0) - (exp(x[j]) / e_sum));
+
+  return J;	       
 }

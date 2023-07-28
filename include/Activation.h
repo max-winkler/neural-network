@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "Vector.h"
+#include "Matrix.h"
 
 enum ActivationFunction
   {
@@ -11,9 +12,10 @@ enum ActivationFunction
   };
 
 
-double activate(double x, ActivationFunction act);
-Vector activate(const Vector& x, ActivationFunction act);
-double Dactivate(double x, ActivationFunction act);
-Vector Dactivate(const Vector& x, ActivationFunction act);
+double activate(double, ActivationFunction);
+Vector activate(const Vector&, ActivationFunction);
+double Dactivate(double, ActivationFunction);
+Vector Dactivate(const Vector&, ActivationFunction);
+Matrix DactivateCoupled(const Vector&, ActivationFunction);
 
 #endif

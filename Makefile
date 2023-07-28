@@ -11,7 +11,7 @@ default: $(OBJ)
 	g++ -c test/NeuralNetwork.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/NeuralNetwork.o	
 	g++ test/NeuralNetwork.o ${OBJ} -o neuralnetwork_test
 	g++ -c test/Classification.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Classification.o	
-	g++ test/Classification.o ${OBJ} -o classification_test
+	g++ test/Classification.o ${OBJ} -lpng -o classification_test
 
 clean:
 	rm src/*.o
