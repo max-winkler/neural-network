@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstring>
 #include <iomanip>
 
@@ -222,4 +223,12 @@ DiagonalMatrix diag(const Vector& x)
 Rank1Matrix outer(const Vector& x, const Vector& y)
 {
   return Rank1Matrix(x, y);
+}
+
+double norm(const Vector& x, double p)
+{
+  double val = 0.;
+  for(double* it = x.data; it != x.data+x.n; ++it)
+    val += pow(*it, 2.);
+  return sqrt(val);
 }

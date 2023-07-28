@@ -23,7 +23,7 @@ int main()
 
   // Evaluation
   Vector x({0.8, -0.5});
-  double res = net.eval(x);
+  Vector res = net.eval(x);
 
   std::cout << "Evaluation: " << res << std::endl;
 
@@ -41,9 +41,9 @@ int main()
       double x = -2+4.*double(rand())/RAND_MAX;
       double y = -2+4.*double(rand())/RAND_MAX;
 
-      double label = -1.;
-      if(pow((x-0.5)/0.8, 2.) + pow(y/1.5, 2.) < 1 || (x<-0.5 && x>-1.8 && y>-0.8 && y < 0.8))
-        label = 1.;
+      Vector label({-1.});
+      if(pow((x-0.8)/0.8, 2.) + pow(y/1.5, 2.) < 1 || (x<-0.3 && x>-1.8 && y>-1.2 && y < 1.4))
+        label[0] = 1.;
 
       os_training << x << ", " << y << ", " << label << std::endl;
       
@@ -66,9 +66,10 @@ int main()
         {
 	double y = -2.+4.*double(j)/plot_fineness;
 
-	double f = net.eval(Vector{x, y});
-	outfile << x << ", " << y << ", " << f << std::endl;
+	Vector f = net.eval(Vector{x, y});
+	outfile << x << ", " << y << ", " << f[0] << std::endl;
         }
+      outfile << std::endl;
     }
   outfile.close();
 
@@ -76,8 +77,8 @@ int main()
   size_t wrong_classified = 0;
   for(auto it = training_data.begin(); it != training_data.end(); ++it)
     {      
-      double y = net.eval(it->x)>0? 1. : -1.;
-      if(std::abs(y - it->y) > 1.e-8)
+      double y = (net.eval(it->x))[0] > 0 ? 1. : -1.;
+      if(std::abs(y - it->y[0]) > 1.e-8)
         wrong_classified++;
     }
   

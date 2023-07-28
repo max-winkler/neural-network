@@ -49,7 +49,7 @@ class Vector {
   // free functions
   friend Rank1Matrix outer(const Vector&, const Vector&);
   friend DiagonalMatrix diag(const Vector&);
-  
+  friend double norm(const Vector&, double p=2.);
  private:
   
   double* data;

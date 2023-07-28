@@ -34,6 +34,14 @@ void NeuralNetwork::addLayer(size_t width, ActivationFunction act)
   ++layers;
 }
 
+void NeuralNetwork::addClassificationLayer()
+{
+  this->width.push_back(width.back());
+  params.activation.push_back(ActivationFunction::SOFTMAX);
+  ++layers;
+  
+}
+
 void NeuralNetwork::initialize()
 {
   // Add output dimension
@@ -90,13 +98,13 @@ void NeuralNetwork::setParameters(size_t layer, const Matrix& matrix, const Vect
   params.activation[layer] = act;
 }
 
-double NeuralNetwork::eval(const Vector& x) const
+Vector NeuralNetwork::eval(const Vector& x) const
 {
   Vector x_tmp(x);
   for(size_t l=0; l<layers; ++l)    
     x_tmp = activate(params.weight[l] * x_tmp + params.bias[l], params.activation[l]);
 
-  return x_tmp[0];
+  return x_tmp;
 }
 
 void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_size)
@@ -104,7 +112,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   // Parameters for momentum method
   const double momentum = 0.9;
     
-  const size_t max_it = 1e3;
+  const size_t max_it = 5e4;
   
   size_t n_data = data.size();
   
@@ -214,7 +222,7 @@ double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
   
   double f = 0.;
   for(size_t idx=0; idx<batch_size; ++idx)
-    f += 0.5*pow(y[layers][idx][0] - data[data_indices[idx]].y, 2.);
+    f += 0.5*pow(norm(y[layers][idx] - data[data_indices[idx]].y), 2.);
 
   return f;
 }

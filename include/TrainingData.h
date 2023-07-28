@@ -6,10 +6,10 @@
 class TrainingData
 {
  public:
-  TrainingData(const Vector&, double);
+  TrainingData(const Vector&, const Vector&);
   
   Vector x;
-  double y;
+  Vector y;
 };
 
 #endif

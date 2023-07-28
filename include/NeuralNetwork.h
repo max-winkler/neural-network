@@ -20,7 +20,7 @@ struct NeuralNetworkParameters
   std::vector<ActivationFunction> activation;
 
   double dot(const NeuralNetworkParameters&) const;
-
+  
   NeuralNetworkParameters& operator=(const ScaledNeuralNetworkParameters&);
   
   // why friend? all attributes are public
@@ -48,11 +48,13 @@ class NeuralNetwork
   NeuralNetwork(Dimension);
 
   void addLayer(size_t, ActivationFunction);
+  void addClassificationLayer();
+  
   void initialize();
   
   void setParameters(size_t, const Matrix&, const Vector&, ActivationFunction);
 
-  double eval(const Vector&) const;
+  Vector eval(const Vector&) const;
 
   void train(const std::vector<TrainingData>&, size_t batch_size=0);
 
