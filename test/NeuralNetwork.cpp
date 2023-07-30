@@ -54,7 +54,7 @@ int main()
   os_training.close();
 
   // Train neural network
-  net.train(training_data, 256);
+  net.train(training_data);
 
   // Plot classification function
   std::ofstream outfile;

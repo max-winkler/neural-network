@@ -41,12 +41,20 @@ struct ScaledNeuralNetworkParameters
   friend NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters&, const ScaledNeuralNetworkParameters&);
 };
 
+struct OptimizationOptions
+{
+  OptimizationOptions();
+  
+  size_t max_iter;
+  size_t batch_size;    
+};
+
 class NeuralNetwork
 {
  public:
   NeuralNetwork();
   NeuralNetwork(Dimension);
-
+  
   void addLayer(size_t, ActivationFunction);
   void addClassificationLayer(size_t);
   
@@ -56,7 +64,7 @@ class NeuralNetwork
 
   Vector eval(const Vector&) const;
 
-  void train(const std::vector<TrainingData>&, size_t batch_size=0);
+  void train(const std::vector<TrainingData>&, OptimizationOptions options=OptimizationOptions());
 
   // functional evaluation (for training routine)
   double eval_functional(const NeuralNetworkParameters&,

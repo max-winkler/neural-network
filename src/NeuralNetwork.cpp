@@ -109,17 +109,15 @@ Vector NeuralNetwork::eval(const Vector& x) const
   return x_tmp;
 }
 
-void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_size)
+void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method
   const double momentum = 0.9;
-    
-  const size_t max_it = 1e4;
   
   size_t n_data = data.size();
   
-  if(batch_size == 0)
-    batch_size = n_data;
+  if(options.batch_size == 0)
+    options.batch_size = n_data;
       
   // Auxiliary variables reused in backpropagation
   std::vector<std::vector<Vector>> z(layers);
@@ -129,8 +127,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
   for(size_t l=0; l<layers+1; ++l)
     {
       if(l<layers)
-        z[l] = std::vector<Vector>(batch_size);
-      y[l] = std::vector<Vector>(batch_size);
+        z[l] = std::vector<Vector>(options.batch_size);
+      y[l] = std::vector<Vector>(options.batch_size);
     }
   
   // Index set for training data
@@ -152,19 +150,19 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
 
   size_t i=0;
   // TODO: Find a better stopping criterion
-  while(i++ <max_it && grad_norm > 1.e-10)
+  while(i++ < options.max_iter && grad_norm > 1.e-10)
     {
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
       
-      double f = eval_functional(params, data, y, z, data_idx, batch_size);
+      double f = eval_functional(params, data, y, z, data_idx, options.batch_size);
       
-      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, batch_size);
+      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, options.batch_size);
       NeuralNetworkParameters params_new;
 
       grad_norm = sqrt(grad_params.dot(grad_params));
       
       // for testing only. remove later
-      // gradient_test(grad_params, data, data_idx, batch_size);
+      // gradient_test(grad_params, data, data_idx, options.batch_size);
       // return;
       
       double f_new = 2*f;
@@ -176,7 +174,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, size_t batch_si
 	  increment = (-learning_rate)*grad_params;
 	
 	params_new = params + increment;
-	f_new = eval_functional(params_new, data, y, z, data_idx, batch_size);
+	f_new = eval_functional(params_new, data, y, z, data_idx, options.batch_size);
 	//	learning_rate /= 2.;
         }
       params = params_new;
@@ -527,3 +525,6 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetworkParameters& params
     }
   return os;
 }
+
+OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128)
+{}

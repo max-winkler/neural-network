@@ -14,8 +14,10 @@ int main()
   
   NeuralNetwork net;
   net.addLayer(2, ActivationFunction::NONE); // input layer
-  net.addLayer(4, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(6, ActivationFunction::SIGMOID); // hidden layer
+  net.addLayer(4, ActivationFunction::TANH); // hidden layer
+  net.addLayer(6, ActivationFunction::TANH); // hidden layer
+  net.addLayer(6, ActivationFunction::TANH); // hidden layer
+  net.addLayer(4, ActivationFunction::RELU); // hidden layer
   net.addClassificationLayer(3); // output layer
   
   net.initialize();
@@ -34,9 +36,9 @@ int main()
       double y = double(rand())/RAND_MAX;
 
       size_t c;
-      if(y <= 0.5*(1-x))
+      if(y <= pow(1-x, 3.))
         c = 0;
-      else if(y >= 16*x/3-3)
+      else if(y >= 3*x-1)
         c = 1;
       else
         c = 2;
@@ -48,7 +50,7 @@ int main()
     }
 
   // Train neural network
-  net.train(training_data, 128);
+  net.train(training_data);
 
   // Write classification to PNG file
   FILE *fp = fopen("classification.png", "wb");
@@ -76,8 +78,8 @@ int main()
   
   for(int i=0; i<height; ++i)
     {
-      row_pointers[i] = new png_byte[3*width];
-      png_bytep row = row_pointers[i];
+      row_pointers[height-1-i] = new png_byte[3*width];
+      png_bytep row = row_pointers[height-1-i];
       
       for(int j=0; j<width; ++j)
         {
