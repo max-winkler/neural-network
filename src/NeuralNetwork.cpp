@@ -154,15 +154,15 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
     {
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
       
-      double f = eval_functional(params, data, y, z, data_idx, options.batch_size);
+      double f = eval_functional(params, data, y, z, data_idx, options);
       
-      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, options.batch_size);
+      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, options);
       NeuralNetworkParameters params_new;
 
       grad_norm = sqrt(grad_params.dot(grad_params));
       
       // for testing only. remove later
-      // gradient_test(grad_params, data, data_idx, options.batch_size);
+      // gradient_test(grad_params, data, data_idx, options);
       // return;
       
       double f_new = 2*f;
@@ -174,7 +174,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	  increment = (-learning_rate)*grad_params;
 	
 	params_new = params + increment;
-	f_new = eval_functional(params_new, data, y, z, data_idx, options.batch_size);
+	f_new = eval_functional(params_new, data, y, z, data_idx, options);
 	//	learning_rate /= 2.;
         }
       params = params_new;
@@ -206,22 +206,22 @@ double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
 			        std::vector<std::vector<Vector>>& y,
 			        std::vector<std::vector<Vector>>& z,
 			        const std::vector<size_t>& data_indices,
-			        size_t batch_size) const
+			        OptimizationOptions options) const
 {
   size_t n_data = data.size();
   
-  for(size_t idx=0; idx<batch_size; ++idx)
+  for(size_t idx=0; idx<options.batch_size; ++idx)
     y[0][idx] = data[data_indices[idx]].x;
     
   for(size_t l=0; l<layers; ++l)    
-    for(size_t idx=0; idx<batch_size; ++idx)
+    for(size_t idx=0; idx<options.batch_size; ++idx)
       {        
         z[l][idx] = params.weight[l]*y[l][idx] + params.bias[l];
         y[l+1][idx] = activate(z[l][idx], params.activation[l]);
       }
   
   double f = 0.;
-  for(size_t idx=0; idx<batch_size; ++idx)
+  for(size_t idx=0; idx<options.batch_size; ++idx)
     f += 0.5*pow(norm(y[layers][idx] - data[data_indices[idx]].y), 2.);
 
   return f;
@@ -232,7 +232,7 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
 					   const std::vector<std::vector<Vector>>& y,
 					   const std::vector<std::vector<Vector>>& z,
 					   const std::vector<size_t>& data_indices,
-					   size_t batch_size) const
+					   OptimizationOptions options) const
 {
   size_t n_data = data.size();
   
@@ -242,8 +242,8 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
   grad_params.bias = std::vector<Vector>(layers);
   grad_params.activation = std::vector<ActivationFunction>(layers);
     
-  std::vector<Vector> Dy(batch_size);
-  std::vector<Vector> Dz(batch_size);
+  std::vector<Vector> Dy(options.batch_size);
+  std::vector<Vector> Dz(options.batch_size);
  
   // Initialize gradient
   for(size_t l=0; l<layers; ++l)
@@ -253,12 +253,12 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
       grad_params.activation[l] = params.activation[l];
     }
 
-  for(size_t idx=0; idx<batch_size; ++idx)
+  for(size_t idx=0; idx<options.batch_size; ++idx)
     Dy[idx] = y[layers][idx] - Vector({data[data_indices[idx]].y});
   
   for(size_t l=layers; l-- >0; )
     {
-      for(size_t idx=0; idx<batch_size; ++idx)
+      for(size_t idx=0; idx<options.batch_size; ++idx)
         {
 	switch(params.activation[l])
 	  {
@@ -420,7 +420,7 @@ NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters& lhs, cons
 void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
 				  const std::vector<TrainingData>& data,
 				  const std::vector<size_t>& data_idx,
-				  size_t batch_size) const
+				  OptimizationOptions options) const
 {  
   // Initialize a direction
   NeuralNetworkParameters direction;
@@ -475,13 +475,13 @@ void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
       y[l] = std::vector<Vector>(n_data);
     }
 
-  double f = eval_functional(params, data, y, z, data_idx, batch_size);  
+  double f = eval_functional(params, data, y, z, data_idx, options);  
             
   for(double s=1.; s>1.e-12; s*=0.5)
     {
       NeuralNetworkParameters params_s = params + s*direction;
   
-      double f_s = eval_functional(params_s, data, y, z, data_idx, batch_size);      
+      double f_s = eval_functional(params_s, data, y, z, data_idx, options);      
       double deriv_fd = (f_s - f)/s;
 
       std::cout << "  derivative by gradient: " << deriv_exact
@@ -526,5 +526,5 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetworkParameters& params
   return os;
 }
 
-OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128)
+OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128), loss_function(LossFunction::MSE)
 {}
