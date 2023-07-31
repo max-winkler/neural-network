@@ -46,7 +46,12 @@ struct OptimizationOptions
   OptimizationOptions();
   
   size_t max_iter;
-  size_t batch_size;    
+  size_t batch_size;
+
+  enum LossFunction {
+    MSE, LOG
+  } loss_function;
+    
 };
 
 class NeuralNetwork
@@ -72,7 +77,7 @@ class NeuralNetwork
 		     std::vector<std::vector<Vector>>&,
 		     std::vector<std::vector<Vector>>&,
 		     const std::vector<size_t>&,
-		     size_t) const;
+		     OptimizationOptions) const;
 
   // gradient ecaluation (for training routine)
   NeuralNetworkParameters eval_gradient(const NeuralNetworkParameters&,
@@ -80,7 +85,7 @@ class NeuralNetwork
 				const std::vector<std::vector<Vector>>&,
 				const std::vector<std::vector<Vector>>&,
 				const std::vector<size_t>&,
-				size_t) const;
+				OptimizationOptions) const;
     
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
   
@@ -101,7 +106,7 @@ class NeuralNetwork
   void gradient_test(const NeuralNetworkParameters&,
 		     const std::vector<TrainingData>&,
 		     const std::vector<size_t>&,
-		     size_t) const;
+		     OptimizationOptions) const;
 };
 
 #endif

@@ -204,6 +204,7 @@ Vector& Vector::operator*=(double a)
 {
   for(double* data_ptr = data; data_ptr != data + n; ++data_ptr)
     (*data_ptr) *= a;
+  return *this;
 }
 
 DiagonalMatrix::DiagonalMatrix(const Vector& x)

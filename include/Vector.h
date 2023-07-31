@@ -9,6 +9,8 @@
 class DiagonalMatrix;
 class Rank1Matrix;
 
+double norm(const Vector&, double p=2.);
+
 class Vector {
  public:
   // Constructor and destructor
@@ -49,7 +51,7 @@ class Vector {
   // free functions
   friend Rank1Matrix outer(const Vector&, const Vector&);
   friend DiagonalMatrix diag(const Vector&);
-  friend double norm(const Vector&, double p=2.);
+  friend double norm(const Vector&, double);
  private:
   
   double* data;
