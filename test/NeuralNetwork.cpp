@@ -54,7 +54,10 @@ int main()
   os_training.close();
 
   // Train neural network
-  net.train(training_data);
+  OptimizationOptions options;
+  options.max_iter = 1.e5;
+  
+  net.train(training_data, options);
 
   // Plot classification function
   std::ofstream outfile;
