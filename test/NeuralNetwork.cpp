@@ -13,11 +13,9 @@ int main()
   NeuralNetwork net;
   net.addLayer(2, ActivationFunction::NONE); // input layer
   net.addLayer(6, ActivationFunction::SIGMOID); // hidden layer
-  // net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
-  //net.addLayer(12, ActivationFunction::SIGMOID); // hidden layer
-  // net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
+  net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
   net.addLayer(4, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(1, ActivationFunction::NONE); // output layer
+  net.addLayer(1, ActivationFunction::SIGMOID); // output layer
   
   net.initialize();
   
@@ -43,8 +41,8 @@ int main()
       double x = -2. + 4.*double(rand())/RAND_MAX;
       double y = -2. + 4.*double(rand())/RAND_MAX;
 
-      Vector label({-1.});
-      if(pow((x-0.8)/0.8, 2.) + pow(y/1.5, 2.) < 1 || (x<-0.3 && x>-1.8 && y>-1.2 && y < 1.4))
+      Vector label({0.});
+      if(pow((x-0.5)/0.8, 2.) + pow(y/1.5, 2.) < 1 || (x<-0.3 && x>-1.8 && y>-1.2 && y < 1.4))
         label[0] = 1.;
 
       os_training << x << ", " << y << ", " << label[0] << std::endl;
@@ -55,7 +53,9 @@ int main()
 
   // Train neural network
   OptimizationOptions options;
-  options.max_iter = 1.e5;
+  options.loss_function = OptimizationOptions::LossFunction::LOG;
+  options.max_iter = 5.e5;
+  options.learning_rate = 0.002;
   
   net.train(training_data, options);
 
@@ -82,7 +82,7 @@ int main()
   size_t wrong_classified = 0;
   for(auto it = training_data.begin(); it != training_data.end(); ++it)
     {      
-      double y = (net.eval(it->x))[0] > 0 ? 1. : -1.;
+      double y = (net.eval(it->x))[0] > 0.5 ? 1. : 0.;
       if(std::abs(y - it->y[0]) > 1.e-8)
         wrong_classified++;
     }

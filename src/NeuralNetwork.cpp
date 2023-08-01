@@ -145,7 +145,6 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   std::ofstream os;
   os.open("training.csv");  
   
-  double learning_rate = 1.e-3;
   double grad_norm = 1.;
 
   size_t i=0;
@@ -163,19 +162,19 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       
       // for testing only. remove later
       // gradient_test(grad_params, data, data_idx, options);
-      // return;
+      //return;
       
       double f_new = 2*f;
-      //      while(learning_rate > 1.e-10 && f_new > f)
+      //      while(options.learning_rate > 1.e-10 && f_new > f)
         {
 	if(i>1)
-	  increment = (-learning_rate)*grad_params + momentum*increment;
+	  increment = (-options.learning_rate)*grad_params + momentum*increment;
 	else	
-	  increment = (-learning_rate)*grad_params;
+	  increment = (-options.learning_rate)*grad_params;
 	
 	params_new = params + increment;
 	f_new = eval_functional(params_new, data, y, z, data_idx, options);
-	//	learning_rate /= 2.;
+	//	options.learning_rate /= 2.;
         }
       params = params_new;
 
@@ -183,14 +182,14 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
         {
 	std::cout << "Iteration " << i << std::endl;
 	std::cout << "functional value : " << f << std::endl;
-	std::cout << "learning rate    : " << 2.*learning_rate << std::endl;
+	std::cout << "learning rate    : " << options.learning_rate << std::endl;
 	std::cout << "gradient norm    : " << grad_norm << std::endl;
 	std::cout << "=========================================" << std::endl;
         }
 
       os << i << ", " << f << ", " << grad_norm << std::endl;
       
-      //      learning_rate *= 4.;
+      //      options.learning_rate *= 4.;
     }
   os.close();
 
@@ -202,37 +201,62 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 }
 
 double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
-			        const std::vector<TrainingData>& data,
-			        std::vector<std::vector<Vector>>& y,
-			        std::vector<std::vector<Vector>>& z,
-			        const std::vector<size_t>& data_indices,
-			        OptimizationOptions options) const
+				      const std::vector<TrainingData>& data,
+				      std::vector<std::vector<Vector>>& y,
+				      std::vector<std::vector<Vector>>& z,
+				      const std::vector<size_t>& data_indices,
+				      OptimizationOptions options) const
 {
   size_t n_data = data.size();
-  
+
+  // Set initial layer
   for(size_t idx=0; idx<options.batch_size; ++idx)
     y[0][idx] = data[data_indices[idx]].x;
-    
+
+  // Forward propagation
   for(size_t l=0; l<layers; ++l)    
     for(size_t idx=0; idx<options.batch_size; ++idx)
       {        
         z[l][idx] = params.weight[l]*y[l][idx] + params.bias[l];
         y[l+1][idx] = activate(z[l][idx], params.activation[l]);
       }
-  
+    
   double f = 0.;
   for(size_t idx=0; idx<options.batch_size; ++idx)
-    f += 0.5*pow(norm(y[layers][idx] - data[data_indices[idx]].y), 2.);
-
+    {
+      // Get true data and prediction
+      const Vector& Y = data[data_indices[idx]].y;
+      const Vector& P = y[layers][idx];
+	
+      switch(options.loss_function)
+	{
+	case OptimizationOptions::LossFunction::MSE:
+	  f += 0.5*pow(norm(Y-P), 2.);
+	  break;
+	case OptimizationOptions::LossFunction::LOG:
+	  // TODO: What happens for nL > 1?
+	  if(P[0] <= 0. || P[0] >= 1.)
+	    {
+	      std::cerr << "Error: Can not evaluate log loss function for argument p=" << P[0] << std::endl;
+	      std::cerr << "  to avoid this consider using the Sigmoid activation function in the output layer.\n";
+	      return 0;
+	    }
+	  f -= (Y[0] * log(P[0]) + (1-Y[0])*log(1-P[0])); 
+	  break;
+	default:
+	  std::cerr << "Error: Unknown loss function provided.\n";
+	  return 0;
+	}
+    }
   return f;
 }
 
 NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParameters& params,
-					   const std::vector<TrainingData>& data,
-					   const std::vector<std::vector<Vector>>& y,
-					   const std::vector<std::vector<Vector>>& z,
-					   const std::vector<size_t>& data_indices,
-					   OptimizationOptions options) const
+						     const std::vector<TrainingData>& data,
+						     const std::vector<std::vector<Vector>>& y,
+						     const std::vector<std::vector<Vector>>& z,
+						     const std::vector<size_t>& data_indices,
+						     OptimizationOptions options) const
 {
   size_t n_data = data.size();
   
@@ -253,30 +277,47 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
       grad_params.activation[l] = params.activation[l];
     }
 
+  // Set final value in backpropagation
   for(size_t idx=0; idx<options.batch_size; ++idx)
-    Dy[idx] = y[layers][idx] - Vector({data[data_indices[idx]].y});
+    {
+      const Vector& Y = data[data_indices[idx]].y;
+      const Vector& P = y[layers][idx];
+
+      switch(options.loss_function)
+	{
+	case OptimizationOptions::LossFunction::MSE:
+	  Dy[idx] = Y - P;
+	  break;
+	case OptimizationOptions::LossFunction::LOG:
+	  // TODO: What happens for nL > 1?
+	  Dy[idx][0] = (1.-Y[0]) / (1.-P[0]) - Y[0] / P[0];
+	  break;
+	}
+    }
   
+  // Do backpropagation
   for(size_t l=layers; l-- >0; )
     {
       for(size_t idx=0; idx<options.batch_size; ++idx)
         {
-	switch(params.activation[l])
-	  {
-	  case ActivationFunction::SOFTMAX:
-	    // Activation functions taking all components into account
-	    Dz[idx] = Dy[idx] * DactivateCoupled(z[l][idx], params.activation[l]);
+	  switch(params.activation[l])
+	    {
+	    case ActivationFunction::SOFTMAX:
+	      // Activation functions taking all components into account
+	      Dz[idx] = Dy[idx] * DactivateCoupled(z[l][idx], params.activation[l]);
 	    
-	    break;
+	      break;
 
-	  default:
-	    // Activation functions applied component-wise
-	    Dz[idx] = Dy[idx] * diag(Dactivate(z[l][idx], params.activation[l]));
-	  }
-	Dy[idx] = Dz[idx] * params.weight[l];	
+	    default:
+	      // Activation functions applied component-wise
+	      Dz[idx] = Dy[idx] * diag(Dactivate(z[l][idx], params.activation[l]));
+	    }
+
+	  Dy[idx] = Dz[idx] * params.weight[l];	
 	
-	// Gradient w.r.t. weight and bias
-	grad_params.weight[l] += outer(Dz[idx], y[l][idx]);	
-	grad_params.bias[l] += Dz[idx];
+	  // Gradient w.r.t. weight and bias
+	  grad_params.weight[l] += outer(Dz[idx], y[l][idx]);	
+	  grad_params.bias[l] += Dz[idx];
         }
     }
 
@@ -526,5 +567,6 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetworkParameters& params
   return os;
 }
 
-OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128), loss_function(LossFunction::MSE)
+OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),
+					     learning_rate(1.e-2), loss_function(LossFunction::MSE)
 {}

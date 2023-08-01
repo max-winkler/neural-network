@@ -50,7 +50,10 @@ int main()
     }
 
   // Train neural network
-  net.train(training_data);
+  OptimizationOptions options;
+  options.loss_function = OptimizationOptions::LossFunction::LOG;
+  
+  net.train(training_data, options);
 
   // Write classification to PNG file
   FILE *fp = fopen("classification.png", "wb");

@@ -47,7 +47,8 @@ struct OptimizationOptions
   
   size_t max_iter;
   size_t batch_size;
-
+  double learning_rate;
+  
   enum LossFunction {
     MSE, LOG
   } loss_function;
