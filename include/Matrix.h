@@ -19,11 +19,20 @@ class MatrixRow
 class Matrix
 {
  public:
-  // Constructor and destructor
+  // Standard constructors
   Matrix();
   Matrix(size_t, size_t);
+
+  // Read matrix from image pixels
+  Matrix(size_t, size_t, const unsigned char*);
+
+  // copy constructor
   Matrix(const Matrix&);
+
+  // destructor
   ~Matrix();
+
+  // Assignment operators
   Matrix& operator=(const Matrix&);
   Matrix& operator=(Matrix&&);
   Matrix& operator=(std::initializer_list<double>);
@@ -46,6 +55,11 @@ class Matrix
   // Matrix-matrix operations
   Matrix& operator+=(const Matrix&);
   Matrix& operator+=(const Rank1Matrix&);
+
+  // Convolution operations
+  Matrix convolve(const Matrix&, size_t S=1, size_t P=0) const;
+
+  void write_pixels(unsigned char*) const;
   
   // Console output
   friend std::ostream& operator<<(std::ostream&, const Matrix&);

@@ -16,6 +16,17 @@ Matrix::Matrix(size_t m, size_t n) : m(m), n(n)
   memset(data, 0., m*n*sizeof(double));
 }
 
+Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : m(m), n(n)
+{
+  data = new double[m*n];
+
+  double* data_ptr;
+  const unsigned char* pixel_ptr;
+  
+  for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+m*n; ++data_ptr, ++pixel_ptr)
+    *data_ptr = double(*pixel_ptr) / 255.;
+}
+
 Matrix::Matrix(const Matrix& other) : m(other.m), n(other.n)
 {
   data = new double[m*n];
@@ -160,6 +171,49 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
       }
   
   return *this;
+}
+
+Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
+{
+  // Size of current matrix and filter
+  const size_t n1 = m;
+  const size_t n2 = n;
+  const size_t m = K.nRows();
+
+  // Size of resulting matrix
+  const size_t n1_new = (n1-m+2*P)/S+1;
+  const size_t n2_new = (n2-m+2*P)/S;
+
+  Matrix A(n1_new, n2_new);
+
+  for(size_t i=-P; i<n1_new+P; i+=S)
+    {
+      for(size_t j=-P; j<n2_new+P; j+=S)
+	{
+	  for(size_t k=0; k<m; ++k)
+	    {
+	      for(size_t l=0; l<m; ++l)
+		{
+		  // Skip when matrix is accessed out of bounds (extend by zero)
+		  if(i+m-k < 0 || j+m-l < 0 || i+m-k >= n1 || j+m-l >= n2)
+		    continue;
+		  
+		  A[(i+P)/S][(j+P)/S] += K[k][l] * (*this)[i+m-k][j+m-l];
+		}
+	    }
+	}
+    }
+
+  return A;    
+}
+
+void Matrix::write_pixels(unsigned char* pixels) const
+{
+  unsigned char* pixel_ptr;
+  double* data_ptr;
+  size_t i=0; 
+  for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+m*n; ++data_ptr, ++pixel_ptr, ++i)
+    *pixel_ptr = (unsigned char)(255.*(*data_ptr));
 }
 
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
