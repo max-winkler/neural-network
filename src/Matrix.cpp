@@ -198,7 +198,7 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 		  if(i+m-k < 0 || j+m-l < 0 || i+m-k >= n1 || j+m-l >= n2)
 		    continue;
 		  
-		  A[(i+P)/S][(j+P)/S] += K[k][l] * (*this)[i+m-k][j+m-l];
+		  A[i/S+P][j/S+P] += K[k][l] * (*this)[i+m-k][j+m-l];
 		}
 	    }
 	}
