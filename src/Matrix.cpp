@@ -53,6 +53,9 @@ Matrix& Matrix::operator=(const Matrix& other)
 
 Matrix& Matrix::operator=(Matrix&& other)  
 {
+  if(this == &other)
+    std::cerr << "WARNING: Self assignment of matrix. This might fail.\n";
+  
   delete[] data;
   
   n = other.n;
@@ -182,13 +185,13 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 
   // Size of resulting matrix
   const size_t n1_new = (n1-m+2*P)/S+1;
-  const size_t n2_new = (n2-m+2*P)/S;
+  const size_t n2_new = (n2-m+2*P)/S+1;
 
   Matrix A(n1_new, n2_new);
 
-  for(size_t i=-P; i<n1_new+P; i+=S)
+  for(size_t i=-P; i+S<n1+P; i+=S)
     {
-      for(size_t j=-P; j<n2_new+P; j+=S)
+      for(size_t j=-P; j+S<n2+P; j+=S)
 	{
 	  for(size_t k=0; k<m; ++k)
 	    {

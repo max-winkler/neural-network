@@ -114,13 +114,13 @@ int main()
   Matrix K(3,3);
   K = {1, 2, 1, 2, 4, 2, 1, 2, 1};
   K *= (1./16);
-  image = image.convolve(K, 2);
-
+  image = image.convolve(K, 4);
 
   int width_new = image.nCols();
   int height_new = image.nRows();
-
-  std::cout << "Image size after convolution: " << width_new << " x " << height_new << std::endl;
+  
+  std::cout << "Image size before convolution: " << width << " x " << height << std::endl;
+  std::cout << "Image size after convolution : " << width_new << " x " << height_new << std::endl;
   
   delete[] image_data;
   image_data = new png_byte[height_new*width_new];
