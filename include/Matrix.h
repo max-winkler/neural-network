@@ -1,6 +1,9 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 
+#define POOLING_MAX 0
+#define POOLING_AVG 1
+
 #include <iostream>
 
 class Vector;
@@ -58,7 +61,8 @@ class Matrix
 
   // Convolution operations
   Matrix convolve(const Matrix&, size_t S=1, size_t P=0) const;
-
+  Matrix pool(int, size_t S=2, size_t P=0) const;
+  
   void write_pixels(unsigned char*) const;
   
   // Console output

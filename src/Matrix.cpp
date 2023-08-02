@@ -189,9 +189,9 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 
   Matrix A(n1_new, n2_new);
 
-  for(size_t i=-P; i+S<n1+P; i+=S)
+  for(size_t i=-P; i+S+m<n1+P; i+=S)
     {
-      for(size_t j=-P; j+S<n2+P; j+=S)
+      for(size_t j=-P; j+S+m<n2+P; j+=S)
 	{
 	  for(size_t k=0; k<m; ++k)
 	    {
@@ -210,13 +210,62 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
   return A;    
 }
 
+Matrix Matrix::pool(int type, size_t S, size_t P) const
+{
+  const size_t n1 = m;
+  const size_t n2 = n;
+
+  const size_t n1_new = (n1 + 2*P)/S;
+  const size_t n2_new = (n2 + 2*P)/S;  
+  
+  Matrix A(n1_new, n2_new);
+
+  for(size_t i=0; i < n1_new;  ++i)
+    {
+      for(size_t j=0; j < n2_new;  ++j)
+	{
+	  switch(type)
+	    {
+	    case POOLING_MAX:
+	      {
+		double max_val = 0.;
+	      
+		// Find maxiumum within the patch
+		for(int k=0; k<S; ++k)
+		  {
+		    for(int l=0; l<S; ++l)
+		      {
+			size_t i2 = i*S-P+k;
+			size_t j2 = j*S-P+l;
+
+			if(i2 < 0 || i2 >= n1 || j2 < 0 || j2 >= n2)
+			  continue;
+
+			double cur_val = (*this)[i2][j2];
+			if(cur_val > max_val)
+			  max_val = cur_val;
+		      }
+		  }
+	      
+		A[i][j] = max_val;
+		break;
+	      }
+	    default:
+	      std::cerr << "ERROR: Pooling type is not implemented yet.\n";
+	    }
+	}
+    }
+
+  return A;
+}
+
 void Matrix::write_pixels(unsigned char* pixels) const
 {
   unsigned char* pixel_ptr;
   double* data_ptr;
   size_t i=0; 
   for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+m*n; ++data_ptr, ++pixel_ptr, ++i)
-    *pixel_ptr = (unsigned char)(255.*(*data_ptr));
+    *pixel_ptr = (unsigned char)(255.*std::max(0.,std::min(1.,(*data_ptr))));
 }
 
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
