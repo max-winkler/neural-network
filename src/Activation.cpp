@@ -21,21 +21,20 @@ double activate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
 
 Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
-  size_t n = x.size();
-  Vector y(n);
+  Vector y(x.length());
 
   if(act == ActivationFunction::SOFTMAX)
     {
       double sum = 0.;
-      for(size_t i=0; i<n; ++i)
+      for(size_t i=0; i<x.length(); ++i)
         sum += exp(x[i]);
-      for(size_t i=0; i<n; ++i)
+      for(size_t i=0; i<x.length(); ++i)
         y[i] = exp(x[i])/sum;
     }
   else
     {
       // Component-wise applied activation functions
-      for(size_t i=0; i<n; ++i)    
+      for(size_t i=0; i<x.length(); ++i)    
         y[i] = activate(x[i], act);
     }
   return y;
@@ -60,10 +59,9 @@ double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
 
 Vector Dactivate(const Vector& x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
-  size_t n = x.size();
-  Vector y(n);
+  Vector y(x.length());
 
-  for(size_t i=0; i<n; ++i)    
+  for(size_t i=0; i<x.length(); ++i)    
     y[i] = Dactivate(x[i], act);
 
   return y;
@@ -71,7 +69,7 @@ Vector Dactivate(const Vector& x, ActivationFunction act=ActivationFunction::SIG
 
 Matrix DactivateCoupled(const Vector& x, ActivationFunction act)
 {
-  size_t n = x.size();
+  size_t n = x.nEntries();
   Matrix J(n, n);
 
   // TODO: Assemble the fucking matrix here

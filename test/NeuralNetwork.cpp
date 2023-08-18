@@ -11,11 +11,11 @@ int main()
   // Create neural network
   
   NeuralNetwork net;
-  net.addLayer(2, ActivationFunction::NONE); // input layer
-  net.addLayer(6, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(8, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(4, ActivationFunction::SIGMOID); // hidden layer
-  net.addLayer(1, ActivationFunction::SIGMOID); // output layer
+  net.addInputLayer(2); // input layer
+  net.addFullyConnectedLayer(6, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(8, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(1, ActivationFunction::NONE);    // output layer
   
   net.initialize();
   
@@ -47,7 +47,7 @@ int main()
 
       os_training << x << ", " << y << ", " << label[0] << std::endl;
       
-      training_data.push_back(TrainingData({x, y}, label));
+      training_data.push_back(TrainingData(Vector({x, y}), label));
     }
   os_training.close();
 

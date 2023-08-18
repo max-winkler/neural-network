@@ -4,49 +4,42 @@
 
 #include "Vector.h"
 
-Vector::Vector() : n(1)
+Vector::Vector() : DataArray(1)
 {
-  data = new double[1];
-  data[0] = 0.;
 }
 
-Vector::Vector(size_t n) : n(n)
+Vector::Vector(size_t n)
+  : DataArray(n)
+{}
+
+Vector::Vector(size_t n, const double* x)
+  : DataArray(n)
 {
-  data = new double[n];
-  memset(data, 0., n*sizeof(double));
+  memcpy(data, x, size*sizeof(double));  
 }
 
-Vector::Vector(const Vector& other) : n(other.n)
+Vector::Vector(const Vector& other)
+  : DataArray(other)
 {
-  data = new double[n];
-  memcpy(data, other.data, n*sizeof(double));
 }
 
-Vector::Vector(std::initializer_list<double> val) : n(val.size())
+Vector::Vector(std::initializer_list<double> val) : DataArray(val.size())
 {
-  data = new double[n];
-  
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
 }
 
-
-Vector::~Vector()
-{
-  delete[] data;
-}
-
 Vector& Vector::operator=(const Vector& other)
 {
-  if(n != other.n)
+  if(size != other.size)
     {
       delete[] data;  
-      n = other.n;
-      data = new double[n];
+      size = other.size;
+      data = new double[size];
     }
   
-  memcpy(data, other.data, n*sizeof(double));
+  memcpy(data, other.data, size*sizeof(double));
   return *this;
 }
 
@@ -54,7 +47,7 @@ Vector& Vector::operator=(Vector&& other)
 {
   delete[] data;
   
-  n = other.n;
+  size = other.size;
   data = other.data;
   other.data = nullptr;
 
@@ -63,9 +56,8 @@ Vector& Vector::operator=(Vector&& other)
 
 Vector& Vector::operator=(std::initializer_list<double> val)
 {
-  delete[] data;
-  data = new double[val.size()];
-  
+  size = val.size();
+  // TODO: Check if array large big enough?
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
@@ -73,31 +65,22 @@ Vector& Vector::operator=(std::initializer_list<double> val)
   return *this;
 }
 
-size_t Vector::size() const
+size_t Vector::length() const
 {
-  return n;
-}
-
-double& Vector::operator[](size_t i)
-{
-  return data[i];
-}
-const double& Vector::operator[](size_t i) const
-{
-  return data[i];
+  return size;
 }
 
 Vector Vector::operator+(const Vector& other) const
 {
-  if(n != other.n)
+  if(size != other.size)
     {
-      std::cerr << "Error: Vector sized are incompatible for summation: (" << n << ") vs. (" << other.n << ")\n";
+      std::cerr << "Error: Vector sized are incompatible for summation: (" << size << ") vs. (" << other.size << ")\n";
       return Vector(0);
     }
 
-  Vector c(n);
+  Vector c(size);
   for(double *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
-      data_ptr != data+n;
+      data_ptr != data+size;
       ++data_ptr, ++data_ptr_other, ++data_ptr_c)
     {
       (*data_ptr_c) = (*data_ptr)+(*data_ptr_other);
@@ -108,15 +91,15 @@ Vector Vector::operator+(const Vector& other) const
 Vector Vector::operator-(const Vector& other) const
 {
   // TODO: Implement an axpy method and replace + and - by calls to axpy
-  if(n != other.n)
+  if(size != other.size)
     {
-      std::cerr << "Error: Vector sized are incompatible for summation: (" << n << ") vs. (" << other.n << ")\n";
+      std::cerr << "Error: Vector sized are incompatible for summation: (" << size << ") vs. (" << other.size << ")\n";
       return Vector(0);
     }
 
-  Vector c(n);
+  Vector c(size);
   for(double *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
-      data_ptr != data+n;
+      data_ptr != data+size;
       ++data_ptr, ++data_ptr_other, ++data_ptr_c)
     {
       (*data_ptr_c) = (*data_ptr)-(*data_ptr_other);
@@ -127,7 +110,7 @@ Vector Vector::operator-(const Vector& other) const
 std::ostream& operator<<(std::ostream& os, const Vector& vector)
 {
   os << "[ ";
-  for(size_t i=0; i<vector.n; ++i)
+  for(size_t i=0; i<vector.size; ++i)
     {
       os << std::setw(7) << std::left << vector.data[i] << " ";
     }
@@ -140,10 +123,10 @@ Vector Vector::operator*(const Matrix& A) const
 {
   size_t m = A.nRows(), n = A.nCols();
 
-  if(this->n != m)
+  if(this->size != m)
     {
       std::cerr << "Error: Vector and matrix have incompatible size for multiplication.\n";
-      std::cerr << "  (" << this->n << ")  vs. (" << m << "," << n << ")\n";
+      std::cerr << "  (" << this->size << ")  vs. (" << m << "," << n << ")\n";
       return Vector(0);
     }
   
@@ -166,12 +149,12 @@ Vector Vector::operator*(const Matrix& A) const
 
 Vector Vector::operator*(const DiagonalMatrix& A) const
 {
-  size_t n = A.n;
+  size_t n = A.diagonal->size;
 
-  if(this->n != n)
+  if(this->size != n)
     {
       std::cerr << "Error: Vector and matrix have incompatible size for multiplication.\n";
-      std::cerr << "  (" << this->n << ")  vs. (" << n << "," << n << ")\n";
+      std::cerr << "  (" << this->size << ")  vs. (" << n << "," << n << ")\n";
       return Vector(0);
     }
   
@@ -185,16 +168,16 @@ Vector Vector::operator*(const DiagonalMatrix& A) const
 
 Vector& Vector::operator+=(const Vector& B)
 {
-  if(B.n != n)
+  if(B.size != size)
     {
       std::cerr << "Error: Vectors have incompatible dimension for summation.\n";
-      std::cerr << "  (" << n << ") vs. (" << B.n  << ")\n";
+      std::cerr << "  (" << size << ") vs. (" << B.size  << ")\n";
     }
 
   double* data_ptr;
   const double* B_data_ptr;
 
-  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+n; ++data_ptr, ++B_data_ptr)
+  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
     *data_ptr += *B_data_ptr;
   
   return *this;
@@ -202,19 +185,22 @@ Vector& Vector::operator+=(const Vector& B)
 
 Vector& Vector::operator*=(double a)
 {
-  for(double* data_ptr = data; data_ptr != data + n; ++data_ptr)
+  for(double* data_ptr = data; data_ptr != data + size; ++data_ptr)
     (*data_ptr) *= a;
   return *this;
 }
 
 DiagonalMatrix::DiagonalMatrix(const Vector& x)
-  : diagonal(&x), n(x.size())
+  : diagonal(&x)
 {
 }
 
 Rank1Matrix::Rank1Matrix(const Vector& u, const Vector& v)
-  : u(&u), v(&v), m(u.size()), n(v.size())
+  : u(&u), v(&v)
 {}
+
+size_t Rank1Matrix::nRows() const { return u->length();}
+size_t Rank1Matrix::nCols() const { return v->length();}
 
 DiagonalMatrix diag(const Vector& x)
 {
@@ -229,7 +215,7 @@ Rank1Matrix outer(const Vector& x, const Vector& y)
 double norm(const Vector& x, double p)
 {
   double val = 0.;
-  for(double* it = x.data; it != x.data+x.n; ++it)
+  for(double* it = x.data; it != x.data+x.size; ++it)
     val += pow(*it, 2.);
   return sqrt(val);
 }

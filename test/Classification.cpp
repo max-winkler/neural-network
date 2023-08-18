@@ -13,11 +13,11 @@ int main()
   // Create neural network
   
   NeuralNetwork net;
-  net.addLayer(2, ActivationFunction::NONE); // input layer
-  net.addLayer(4, ActivationFunction::TANH); // hidden layer
-  net.addLayer(6, ActivationFunction::TANH); // hidden layer
-  net.addLayer(6, ActivationFunction::TANH); // hidden layer
-  net.addLayer(4, ActivationFunction::RELU); // hidden layer
+  net.addInputLayer(2); // input layer
+  net.addFullyConnectedLayer(4, ActivationFunction::TANH); // hidden layer
+  net.addFullyConnectedLayer(6, ActivationFunction::TANH); // hidden layer
+  net.addFullyConnectedLayer(6, ActivationFunction::TANH); // hidden layer
+  net.addFullyConnectedLayer(4, ActivationFunction::RELU); // hidden layer
   net.addClassificationLayer(3); // output layer
   
   net.initialize();

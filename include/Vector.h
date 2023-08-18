@@ -10,31 +10,29 @@ class DiagonalMatrix;
 class Rank1Matrix;
 
 double norm(const Vector&, double p=2.);
+Rank1Matrix outer(const Vector&, const Vector&);
 
-class Vector {
+class Vector : public DataArray {
  public:
   // Constructor and destructor
   Vector();
   Vector(size_t);
+  Vector(size_t, const double*); 
   Vector(const Vector&);
   Vector(std::initializer_list<double>);
-  ~Vector();
 
+  // Assignment operators
   Vector& operator=(const Vector&);
   Vector& operator=(Vector&&);
   Vector& operator=(std::initializer_list<double>);
-  // Simple getter functions
-  size_t size() const;
-
-  // Array subscription operator
-  double& operator[](size_t);
-  const double& operator[](size_t) const;
-
+  
   // Vector operations
   Vector operator+(const Vector&) const;
   Vector operator-(const Vector&) const;
   Vector& operator+=(const Vector&);
   Vector& operator*=(double);
+  
+  size_t length() const;
   
   // Console output via output stream
   friend std::ostream& operator<<(std::ostream&, const Vector&);
@@ -42,6 +40,9 @@ class Vector {
   // friend classes
   friend class Matrix;
   friend class DiagonalMatrix;
+
+  // TODO: I do not want this. Extend Vector class so that this is not necessary
+  friend class NeuralNetwork;
   
   // Matrix-vector operations
   friend Vector Matrix::operator*(const Vector&) const;
@@ -52,10 +53,9 @@ class Vector {
   friend Rank1Matrix outer(const Vector&, const Vector&);
   friend DiagonalMatrix diag(const Vector&);
   friend double norm(const Vector&, double);
- private:
+
+private:
   
-  double* data;
-  size_t n;
 };
 
 // Class representing a diagonal matrix
@@ -65,7 +65,6 @@ public:
 
   friend class Vector;
 private:
-  size_t n;
   const Vector* diagonal;
 };
 
@@ -73,10 +72,12 @@ class Rank1Matrix {
 public:
   Rank1Matrix(const Vector&, const Vector&);
 
+  size_t nRows() const;
+  size_t nCols() const;
+  
   friend class Vector;
   friend class Matrix;
 private:
-  size_t m, n;
   const Vector* u;
   const Vector* v;
 };

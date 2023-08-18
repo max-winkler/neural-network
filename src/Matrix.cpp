@@ -4,22 +4,22 @@
 #include "Matrix.h"
 #include "Vector.h"
 
-Matrix::Matrix() : n(1), m(1)
+Matrix::Matrix() : DataArray(1), m(1)
 {
-  data = new double[1];
-  data[0] = 0.;
 }
 
-Matrix::Matrix(size_t m, size_t n) : m(m), n(n)
+Matrix::Matrix(size_t m, size_t n) : DataArray(m*n), m(m)
 {
-  data = new double[m*n];
-  memset(data, 0., m*n*sizeof(double));
 }
 
-Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : m(m), n(n)
+Matrix::Matrix(size_t m, size_t n, const double* x)
+  : DataArray(m*n), m(m)
 {
-  data = new double[m*n];
+  memcpy(data, x, size*sizeof(double));  
+}
 
+Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : DataArray(m*n), m(m)
+{
   double* data_ptr;
   const unsigned char* pixel_ptr;
   
@@ -27,27 +27,20 @@ Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : m(m), n(n)
     *data_ptr = double(*pixel_ptr) / 255.;
 }
 
-Matrix::Matrix(const Matrix& other) : m(other.m), n(other.n)
+Matrix::Matrix(const Matrix& other) : DataArray(other), m(other.m)
 {
-  data = new double[m*n];
-  memcpy(data, other.data, m*n*sizeof(double));
-}
-
-Matrix::~Matrix()
-{
-  delete[] data;
 }
 
 Matrix& Matrix::operator=(const Matrix& other)
 {
-  if(m != other.m || n != other.n)
+  if(nRows() != other.nRows() || nCols() != other.nCols())
     {
       delete[] data;
-      m = other.m; n = other.n;
-      data = new double[m*n];
+      m = other.m; size = other.size;
+      data = new double[size];
     }
   
-  memcpy(data, other.data, m*n*sizeof(double));
+  memcpy(data, other.data, size*sizeof(double));
   return *this;
 }
 
@@ -58,7 +51,7 @@ Matrix& Matrix::operator=(Matrix&& other)
   
   delete[] data;
   
-  n = other.n;
+  size = other.size;
   m = other.m;
   
   data = other.data;
@@ -67,11 +60,14 @@ Matrix& Matrix::operator=(Matrix&& other)
   return *this;
 }
 
-MatrixRow::MatrixRow(double* data_ptr) : data_ptr(data_ptr)
-{}
-
 Matrix& Matrix::operator=(std::initializer_list<double> val)
 {
+  if(val.size() != size)
+    {
+      std::cerr << "ERROR: Number of elements in initializer list do not match the dimension of the data array.\n";
+      return *this;
+    }
+  
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
@@ -79,19 +75,21 @@ Matrix& Matrix::operator=(std::initializer_list<double> val)
   return *this;
 }
 
-std::pair<size_t, size_t> Matrix::size() const { return std::pair<size_t, size_t>(m, n); }
+MatrixRow::MatrixRow(double* data_ptr) : data_ptr(data_ptr)
+{}
+
 size_t Matrix::nRows() const {return m;}
-size_t Matrix::nCols() const {return n;}
+size_t Matrix::nCols() const {return size/m;}
 
 
 MatrixRow Matrix::operator[](size_t i)
 {
-  return MatrixRow(&(data[i*n]));
+  return MatrixRow(&(data[i*size/m]));
 }
 
 const MatrixRow Matrix::operator[](size_t i) const
 {
-  return MatrixRow(&(data[i*n]));
+  return MatrixRow(&(data[i*size/m]));
 }
 
 double& MatrixRow::operator[](size_t j)
@@ -101,7 +99,7 @@ double& MatrixRow::operator[](size_t j)
 
 Matrix& Matrix::operator*=(double a)
 {
-  for(double* data_ptr = data; data_ptr != data+m*n; ++data_ptr)
+  for(double* data_ptr = data; data_ptr != data+size; ++data_ptr)
     (*data_ptr) *= a;
   
   return *this;  
@@ -112,12 +110,22 @@ const double& MatrixRow::operator[](size_t j) const
   return data_ptr[j];
 }
 
+Matrix Matrix::operator+(const Matrix& B) const
+{
+  Matrix C(*this);
+  C += B;
+  
+  return C;
+}
+
 Vector Matrix::operator*(const Vector& b) const
 {
-  if(n != b.n)
+  size_t n = nCols();
+  
+  if(n != b.size)
     {
       std::cerr << "Error: Matrix and vector have incompatible size for multiplication.\n";
-      std::cerr << "  (" << m << "," << n << ") vs. (" << b.n << ")\n";
+      std::cerr << "  (" << nRows() << "," << nCols() << ") vs. (" << b.size << ")\n";
       return Vector(0);
     }
 
@@ -139,16 +147,16 @@ Vector Matrix::operator*(const Vector& b) const
 
 Matrix& Matrix::operator+=(const Matrix& B)
 {
-  if(B.n != n || B.m != m)
+  if(B.size != size || B.m != m)
     {
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
-      std::cerr << "  (" << m << ", " << n << ") vs. (" << B.m << ", " << B.n << ")\n";
+      std::cerr << "  (" << nRows() << ", " << nCols() << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
     }
 
   double* data_ptr;
   const double* B_data_ptr;
 
-  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+m*n; ++data_ptr, ++B_data_ptr)
+  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
     *data_ptr += *B_data_ptr;
   
   return *this;
@@ -156,10 +164,12 @@ Matrix& Matrix::operator+=(const Matrix& B)
 
 Matrix& Matrix::operator+=(const Rank1Matrix& B)
 {
-  if(B.n != n || B.m != m)
+  size_t n = nRows();
+  
+  if(B.nRows() != nRows() || B.nCols() != nCols())
     {
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
-      std::cerr << "  (" << m << ", " << n << ") vs. (" << B.m << ", " << B.n << ")\n";
+      std::cerr << "  (" << m << ", " << n << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
     }
 
   double* data_ptr;
@@ -179,8 +189,8 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
 Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 {
   // Size of current matrix and filter
-  const size_t n1 = m;
-  const size_t n2 = n;
+  const size_t n1 = nRows();
+  const size_t n2 = nCols();
   const size_t m = K.nRows();
 
   // Size of resulting matrix
@@ -212,8 +222,8 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 
 Matrix Matrix::pool(int type, size_t S, size_t P) const
 {
-  const size_t n1 = m;
-  const size_t n2 = n;
+  const size_t n1 = nRows();
+  const size_t n2 = nCols();
 
   const size_t n1_new = (n1 + 2*P)/S;
   const size_t n2_new = (n2 + 2*P)/S;  
@@ -264,17 +274,20 @@ void Matrix::write_pixels(unsigned char* pixels) const
   unsigned char* pixel_ptr;
   double* data_ptr;
   size_t i=0; 
-  for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+m*n; ++data_ptr, ++pixel_ptr, ++i)
+  for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+size; ++data_ptr, ++pixel_ptr, ++i)
     *pixel_ptr = (unsigned char)(255.*std::max(0.,std::min(1.,(*data_ptr))));
 }
 
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
 {
-  for(size_t i=0; i<matrix.m; ++i)
+  size_t m = matrix.nRows();
+  size_t n = matrix.nCols();
+  
+  for(size_t i=0; i<m; ++i)
     {
       os << "[ ";
-      for(size_t j=0; j<matrix.n; ++j)
-	os << std::left << std::setw(7) << matrix.data[i*matrix.n+j] << " ";
+      for(size_t j=0; j<n; ++j)
+	os << std::left << std::setw(7) << matrix.data[i*n+j] << " ";
       os << "]\n";
     }
   return os;

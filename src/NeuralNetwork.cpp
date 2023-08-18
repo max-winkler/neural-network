@@ -5,12 +5,36 @@
 #include <numeric>
 #include <chrono>
 
-NeuralNetwork::NeuralNetwork() : initialized(false), width(), layers(0), rnd_gen(std::random_device()())
+NeuralNetwork::NeuralNetwork() : initialized(false), layers(), rnd_gen(std::random_device()())
 {
 }
 
+NeuralNetwork::NeuralNetwork(NeuralNetwork&& other) : initialized(true)
+{
+  
+}
+
+NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
+{
+  NeuralNetwork other;
+
+  for(auto layer = net.layers.begin(); layer != net.layers.end(); ++layer)
+    {
+      // Create now layer with zero weights
+      Layer new_layer(layer->dimension, layer->layer_type, layer->activation_function);
+      
+      new_layer.weight = Matrix(layer->weight.nRows(), layer->weight.nCols());
+      new_layer.bias = Vector(layer->bias.length());
+	
+      other.layers.push_back(new_layer);
+    }
+
+  return other;
+}
+
+/*
 NeuralNetwork::NeuralNetwork(std::vector<size_t> width_)
-  : initialized(true), width(width_), layers(width_.size()), rnd_gen(std::random_device()())
+  : initialized(true), layers(width_.size()), rnd_gen(std::random_device()())
 {  
   // Add output dimension
   width.push_back(1);
@@ -26,51 +50,72 @@ NeuralNetwork::NeuralNetwork(std::vector<size_t> width_)
       params.activation.push_back((it+1!=width.end()) ? ActivationFunction::SIGMOID : ActivationFunction::NONE);
     }
 }
+*/
 
-void NeuralNetwork::addLayer(size_t width, ActivationFunction act)
+void NeuralNetwork::addInputLayer(size_t i, size_t j)
 {
-  this->width.push_back(width);
+  LayerType layer_type = (j==0 ? LayerType::VECTOR_INPUT : LayerType::MATRIX_INPUT);
+  Layer layer(std::pair<size_t, size_t>(i, j), layer_type, ActivationFunction::NONE);
+  layers.push_back(layer);
+}
 
-  // input layer has no activation function
-  if(this->width.size() > 1)
-    {
-      params.activation.push_back(act);
-      ++layers;
-    }
+void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
+{
+  Layer layer(std::pair<size_t, size_t>(width, 0), LayerType::FULLY_CONNECTED, act);
+  layers.push_back(layer);
 }
 
 void NeuralNetwork::addClassificationLayer(size_t width)
 {
-  this->width.push_back(width);
-  params.activation.push_back(ActivationFunction::SOFTMAX);
-  ++layers;
-  
+  Layer layer(std::pair<size_t, size_t>(width, 0), LayerType::CLASSIFICATION, ActivationFunction::SOFTMAX);
+  layers.push_back(layer);  
 }
 
 void NeuralNetwork::initialize()
 { 
-  // Reserve memory for parameters
-  params.weight.reserve(layers);
-  params.bias.reserve(layers);
-  
   // Build up weight matrices and bias vectors
-  for(Dimension::const_iterator it = width.begin(); it+1 != width.end(); ++it)
+  auto it_pred = layers.begin();
+  
+  for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
     {
-      size_t m=*(it+1), n=*it;
+      if(it->layer_type == LayerType::FULLY_CONNECTED)
+	{
+	  if(it_pred->layer_type == LayerType::FULLY_CONNECTED
+	     || it_pred->layer_type == LayerType::VECTOR_INPUT
+	     || it_pred->layer_type == LayerType::FLATTENING)	    
+	    {
+	      // Build weight matrix and bias vector
+	      size_t m = it->dimension.first;
+	      size_t n = it_pred->dimension.first;
 
-      // Initialize random matrix
-      Matrix W(m, n);
-      for(size_t i=0; i<m; ++i)
-	for(size_t j=0; j<n; ++j)
-	  W[i][j] = random_real(rnd_gen);
+	      // Initialize random matrix
+	      Matrix W(m, n);
+	      for(size_t i=0; i<m; ++i)
+		for(size_t j=0; j<n; ++j)
+		  W[i][j] = random_real(rnd_gen);
+	      
+	      it->weight = W;
+	      it->bias = Vector(m);
+	    }
+	  else
+	    {
+	      std::cerr << "ERROR: A fully connected layer follows a " << Layer::LayerName[it_pred->layer_type]
+			<< " which is incompatible.\n";
+	      return;
+	    }
 	  
-      params.weight.push_back(W);
-      params.bias.push_back(Vector(m));
+	}
+      else
+	{
+	  std::cerr << "ERROR: Initialization of neural network with " << Layer::LayerName[it->layer_type]
+		    << " is not implemented yet.\n";
+	}
     }  
   
   initialized = true;
 }
 
+/*
 void NeuralNetwork::setParameters(size_t layer, const Matrix& matrix, const Vector& vector, ActivationFunction act)
 {
   if(layer < 0 || layer > layers-1)
@@ -99,14 +144,34 @@ void NeuralNetwork::setParameters(size_t layer, const Matrix& matrix, const Vect
   params.bias[layer] = vector;
   params.activation[layer] = act;
 }
+*/
 
-Vector NeuralNetwork::eval(const Vector& x) const
+Vector NeuralNetwork::eval(const DataArray& x) const
 {
-  Vector x_tmp(x);
-  for(size_t l=0; l<layers; ++l)    
-    x_tmp = activate(params.weight[l] * x_tmp + params.bias[l], params.activation[l]);
-
-  return x_tmp;
+  DataArray* x_tmp;
+  
+  for(auto layer = layers.begin(); layer != layers.end(); ++layer)
+    {      
+      switch(layer->layer_type)
+	{
+	case LayerType::VECTOR_INPUT:
+	  // Create vector in first layer
+	  x_tmp = new Vector(dynamic_cast<const Vector&>(x));
+	  break;
+	case LayerType::FULLY_CONNECTED:
+	case LayerType::CLASSIFICATION:
+	  {
+	    Vector& x_ref = dynamic_cast<Vector&>(*x_tmp);
+	    
+	    *x_tmp = activate(layer->weight * x_ref + layer->bias, layer->activation_function);
+	  }
+	  break;
+	default:
+	  std::cerr << "ERROR: The layer type " << layer->layer_type << " is invalid or not implemented yet.\n";	  
+	}      
+    }
+  
+  return dynamic_cast<Vector&>(*x_tmp);
 }
 
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
@@ -120,15 +185,15 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
     options.batch_size = n_data;
       
   // Auxiliary variables reused in backpropagation
-  std::vector<std::vector<Vector>> z(layers);
-  std::vector<std::vector<Vector>> y(layers+1);
+  std::vector<std::vector<DataArray*>> z(layers.size());
+  std::vector<std::vector<DataArray*>> y(layers.size()+1);
   
   // Allocate memory for auxiliary vectors
-  for(size_t l=0; l<layers+1; ++l)
+  for(size_t l=0; l<layers.size()+1; ++l)
     {
-      if(l<layers)
-        z[l] = std::vector<Vector>(options.batch_size);
-      y[l] = std::vector<Vector>(options.batch_size);
+      if(l<layers.size())
+        z[l] = std::vector<DataArray*>(options.batch_size);
+      y[l] = std::vector<DataArray*>(options.batch_size);
     }
   
   // Index set for training data
@@ -138,59 +203,58 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   // Initialize time measurement
   std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
 
-  // Increment (used in momentum method)
-  NeuralNetworkParameters increment;
-
   // Monitor algorithm progress  
   std::ofstream os;
   os.open("training.csv");  
   
-  double grad_norm = 1.;
+  // Save increment for momentum method
+  NeuralNetwork increment;
 
   size_t i=0;
+  double grad_norm = 1.;  
+  
   // TODO: Find a better stopping criterion
   while(i++ < options.max_iter && grad_norm > 1.e-10)
     {
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
       
-      double f = eval_functional(params, data, y, z, data_idx, options);
+      double f = evalFunctional(data, y, z, data_idx, options);
       
-      NeuralNetworkParameters grad_params = eval_gradient(params, data, y, z, data_idx, options);
-      NeuralNetworkParameters params_new;
+      NeuralNetwork grad_net = evalGradient(data, y, z, data_idx, options);
+      
+      grad_norm = grad_net.norm();
 
-      grad_norm = sqrt(grad_params.dot(grad_params));
-      
-      // for testing only. remove later
-      // gradient_test(grad_params, data, data_idx, options);
-      //return;
-      
-      double f_new = 2*f;
-      //      while(options.learning_rate > 1.e-10 && f_new > f)
-        {
-	if(i>1)
-	  increment = (-options.learning_rate)*grad_params + momentum*increment;
-	else	
-	  increment = (-options.learning_rate)*grad_params;
-	
-	params_new = params + increment;
-	f_new = eval_functional(params_new, data, y, z, data_idx, options);
-	//	options.learning_rate /= 2.;
-        }
-      params = params_new;
-
+      // Console output
       if(i%1000 == 0)
         {
-	std::cout << "Iteration " << i << std::endl;
-	std::cout << "functional value : " << f << std::endl;
-	std::cout << "learning rate    : " << options.learning_rate << std::endl;
-	std::cout << "gradient norm    : " << grad_norm << std::endl;
-	std::cout << "=========================================" << std::endl;
+	  std::cout << "Iteration " << i << std::endl;
+	  std::cout << "functional value : " << f << std::endl;
+	  std::cout << "learning rate    : " << options.learning_rate << std::endl;
+	  std::cout << "gradient norm    : " << grad_norm << std::endl;
+	  std::cout << "=========================================" << std::endl;
         }
-
+      
       os << i << ", " << f << ", " << grad_norm << std::endl;
       
-      //      options.learning_rate *= 4.;
+      // for testing only. remove later
+      // gradientTest(grad_params, data, data_idx, options);
+      //return;
+
+      // Update weights
+      if(i>1)
+	{
+	  // increment = (-options.learning_rate)*grad_net + momentum*increment;
+	  increment *= momentum;
+	  increment += (-options.learning_rate)*grad_net;	  
+	}
+      else
+	{
+	  increment = (-options.learning_rate)*grad_net;
+	}
+      
+      *this += 1.*increment;
     }
+
   os.close();
 
   std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
@@ -200,38 +264,69 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    << "[ms]" << std::endl;
 }
 
-double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
-				      const std::vector<TrainingData>& data,
-				      std::vector<std::vector<Vector>>& y,
-				      std::vector<std::vector<Vector>>& z,
-				      const std::vector<size_t>& data_indices,
-				      OptimizationOptions options) const
+double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
+				     std::vector<std::vector<DataArray*>>& y,
+				     std::vector<std::vector<DataArray*>>& z,
+				     const std::vector<size_t>& data_indices,
+				     OptimizationOptions options) const
 {
   size_t n_data = data.size();
 
   // Set initial layer
-  for(size_t idx=0; idx<options.batch_size; ++idx)
-    y[0][idx] = data[data_indices[idx]].x;
-
+  switch(layers[0].layer_type)
+    {
+    case VECTOR_INPUT:
+      for(size_t idx=0; idx<options.batch_size; ++idx)
+	{
+	  size_t n = data[data_indices[idx]].x.nEntries();
+	  y[0][idx] = new Vector(n, &(data[data_indices[idx]].x[0]));
+	}
+      break;
+    case MATRIX_INPUT:
+      // TODO: Implement
+      // break;
+    default:
+      std::cerr << "ERROR: The input layer must be of type VECTOR_INPUT or MATRIX_INPUT.\n";
+      break;
+    }
+  
   // Forward propagation
-  for(size_t l=0; l<layers; ++l)    
-    for(size_t idx=0; idx<options.batch_size; ++idx)
-      {        
-        z[l][idx] = params.weight[l]*y[l][idx] + params.bias[l];
-        y[l+1][idx] = activate(z[l][idx], params.activation[l]);
-      }
+  int l=0;
+  for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
+    {
+      switch(layer->layer_type)
+	{
+	case FULLY_CONNECTED:
+	  
+	  for(size_t idx=0; idx<options.batch_size; ++idx)
+	    {
+	      Vector& y_prev = dynamic_cast<Vector&>(*y[l][idx]);
+
+	      // ERROR: z and y are nullptr at the moment. Allocate or overwrite if dimension matches.
+	      *z[l][idx] = layer->weight * y_prev + layer->bias;
+	      *y[l+1][idx] = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
+	    }	    
+	  break;
+	  
+	default:
+	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
+		    << Layer::LayerName[layer->layer_type] << ".\n";
+	}
+    }
+
+  
     
   double f = 0.;
   for(size_t idx=0; idx<options.batch_size; ++idx)
     {
       // Get true data and prediction
       const Vector& Y = data[data_indices[idx]].y;
-      const Vector& P = y[layers][idx];
+      const Vector& P = dynamic_cast<Vector&>(*(y[layers.size()][idx]));
 	
       switch(options.loss_function)
 	{
 	case OptimizationOptions::LossFunction::MSE:
-	  f += 0.5*pow(norm(Y-P), 2.);
+	  f += 0.5*pow(::norm(Y-P), 2.);
 	  break;
 	case OptimizationOptions::LossFunction::LOG:
 	  // TODO: What happens for nL > 1?
@@ -251,42 +346,29 @@ double NeuralNetwork::eval_functional(const NeuralNetworkParameters& params,
   return f;
 }
 
-NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParameters& params,
-						     const std::vector<TrainingData>& data,
-						     const std::vector<std::vector<Vector>>& y,
-						     const std::vector<std::vector<Vector>>& z,
-						     const std::vector<size_t>& data_indices,
-						     OptimizationOptions options) const
+NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
+					  const std::vector<std::vector<DataArray*>>& y,
+					  const std::vector<std::vector<DataArray*>>& z,
+					  const std::vector<size_t>& data_indices,
+					  OptimizationOptions options) const
 {
   size_t n_data = data.size();
   
-  NeuralNetworkParameters grad_params;
-
-  grad_params.weight = std::vector<Matrix>(layers);  
-  grad_params.bias = std::vector<Vector>(layers);
-  grad_params.activation = std::vector<ActivationFunction>(layers);
+  NeuralNetwork grad_net = NeuralNetwork::createLike(*this);
     
-  std::vector<Vector> Dy(options.batch_size);
-  std::vector<Vector> Dz(options.batch_size);
- 
-  // Initialize gradient
-  for(size_t l=0; l<layers; ++l)
-    {
-      grad_params.weight[l] = Matrix(width[l+1], width[l]);
-      grad_params.bias[l] = Vector(width[l+1]);
-      grad_params.activation[l] = params.activation[l];
-    }
-
+  std::vector<DataArray*> Dy(options.batch_size);
+  std::vector<DataArray*> Dz(options.batch_size);
+  
   // Set final value in backpropagation
   for(size_t idx=0; idx<options.batch_size; ++idx)
     {
       const Vector& Y = data[data_indices[idx]].y;
-      const Vector& P = y[layers][idx];
+      const Vector& P = dynamic_cast<Vector&>(*y[layers.size()][idx]);
 
       switch(options.loss_function)
 	{
 	case OptimizationOptions::LossFunction::MSE:
-	  Dy[idx] = Y - P;
+	  *Dy[idx] = Y - P;
 	  break;
 	case OptimizationOptions::LossFunction::LOG:
 	  // TODO: What happens for nL > 1?
@@ -296,137 +378,125 @@ NeuralNetworkParameters NeuralNetwork::eval_gradient(const NeuralNetworkParamete
     }
   
   // Do backpropagation
-  for(size_t l=layers; l-- >0; )
-    {
+  for(size_t l=layers.size(); l-- >0; )
+    {      
       for(size_t idx=0; idx<options.batch_size; ++idx)
         {
-	  switch(params.activation[l])
+	  const Vector& z_idx = dynamic_cast<Vector&>(*z[l][idx]);
+	  
+	  switch(layers[l].activation_function)
 	    {
 	    case ActivationFunction::SOFTMAX:
 	      // Activation functions taking all components into account
-	      Dz[idx] = Dy[idx] * DactivateCoupled(z[l][idx], params.activation[l]);
+	      *Dz[idx] = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
 	    
 	      break;
 
 	    default:
 	      // Activation functions applied component-wise
-	      Dz[idx] = Dy[idx] * diag(Dactivate(z[l][idx], params.activation[l]));
+	      *Dz[idx] = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(dynamic_cast<Vector&>(*z[l][idx]), layers[l].activation_function));
 	    }
 
-	  Dy[idx] = Dz[idx] * params.weight[l];	
+	  *Dy[idx] = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
 	
 	  // Gradient w.r.t. weight and bias
-	  grad_params.weight[l] += outer(Dz[idx], y[l][idx]);	
-	  grad_params.bias[l] += Dz[idx];
+	  grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l][idx]));
+	  grad_net.layers[l].bias += dynamic_cast<Vector&>(*Dz[idx]);
         }
     }
 
-  return grad_params;
+  return grad_net;
 }
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net) 
 {
-  os << "Neural network with (" << (net.layers) << " layers)\n";
-  os << "  Input dimension         : " << (net.width[0]) << "\n";
-
-  os << "  Hidden layer dimensions : ";
-  for(size_t i=1; i<net.layers-1; ++i)    
-    os << net.width[i] << ", ";
-  os << net.width[net.layers-1] << std::endl;
-  os << "  Weights and biases      : ";
-  os << net.params;
+  os << "Neural network with (" << (net.layers.size()) << " layers)\n";
+  os << "  Input layer         : " << (net.layers[0]) << "\n";
   
+  for(auto layer = net.layers.begin(); layer != net.layers.end(); ++ layer)
+    {
+      if(layer != net.layers.begin())
+	os << "       ↓\n";
+      
+      os << "  " << *layer << std::endl;
+    }
+      
   return os;
 }
 
-NeuralNetworkParameters& NeuralNetworkParameters::operator=(const ScaledNeuralNetworkParameters& other)
+NeuralNetwork& NeuralNetwork::operator=(const ScaledNeuralNetwork& other)
 {  
-  weight = other.params->weight;
-  bias = other.params->bias;
-  activation = other.params->activation;
+  for(auto layer = other.network->layers.begin(); layer != other.network->layers.end(); ++layer)
+    {
+      // Create now layer with zero weights
+      Layer new_layer(layer->dimension, layer->layer_type, layer->activation_function);
+      
+      new_layer.weight = layer->weight;
+      new_layer.bias = layer->bias;
 
-  for(auto weight_it = weight.begin(); weight_it != weight.end(); ++weight_it)
-    (*weight_it) *= other.scale;
+      new_layer.weight *= other.scale;
+      new_layer.bias *= other.scale;
 
-  for(auto bias_it = bias.begin(); bias_it != bias.end(); ++bias_it)
-    (*bias_it) *= other.scale;
-  
+      layers.push_back(new_layer);
+    }
+
   return *this;
 }
 
-ScaledNeuralNetworkParameters::ScaledNeuralNetworkParameters(double scale ,
-						 const NeuralNetworkParameters& params)
-  : scale(scale), params(&params)
+ScaledNeuralNetwork::ScaledNeuralNetwork(double scale ,
+					 const NeuralNetwork& network)
+  : scale(scale), network(&network)
 {
 }
 
-ScaledNeuralNetworkParameters operator*(double scale, const NeuralNetworkParameters& params)
+ScaledNeuralNetwork operator*(double scale, const NeuralNetwork& params)
 {
-  return ScaledNeuralNetworkParameters(scale, params);
+  return ScaledNeuralNetwork(scale, params);
 }
 
-NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const NeuralNetworkParameters& rhs)
+NeuralNetwork operator+(const NeuralNetwork& lhs, const NeuralNetwork& rhs)
 {
-  NeuralNetworkParameters params;
+  NeuralNetwork net;
 
-  size_t layers = lhs.weight.size();
-    
-  params.weight.reserve(layers);
-  params.bias.reserve(layers);
-  params.activation.reserve(layers);
-
-  for(size_t l=0; l<layers; ++l)
+  for(auto lhs_layer = lhs.layers.begin(), rhs_layer = rhs.layers.begin();
+      lhs_layer != lhs.layers.end(); ++lhs_layer, ++rhs_layer)
     {
-      size_t m = lhs.weight[l].nRows();
-      size_t n = lhs.weight[l].nCols();
+      // Create now layer with zero weights
+      Layer new_layer(lhs_layer->dimension, lhs_layer->layer_type, lhs_layer->activation_function);
       
-      params.weight.push_back(Matrix(m, n));
-      params.bias.push_back(Vector(m));
-      params.activation.push_back(lhs.activation[l]);
-			    
-      for(size_t i=0; i<m; ++i)
-        {
-	for(size_t j=0; j<n; ++j)
-	  {
-	    params.weight[l][i][j] = lhs.weight[l][i][j] + rhs.weight[l][i][j];
-	  }
-	params.bias[l][i] = lhs.bias[l][i] + rhs.bias[l][i];
-        }
+      new_layer.weight = lhs_layer->weight + rhs_layer->weight;
+      new_layer.bias = lhs_layer->bias + rhs_layer->bias;
+
+      net.layers.push_back(new_layer);
     }
-  return params;
+
+  return net;  
 }
 
-NeuralNetworkParameters operator+(const NeuralNetworkParameters& lhs, const ScaledNeuralNetworkParameters& rhs)
+NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs)
 {
-  NeuralNetworkParameters params;
+  NeuralNetwork net;
 
-  size_t layers = lhs.weight.size();
-    
-  params.weight.reserve(layers);
-  params.bias.reserve(layers);
-  params.activation.reserve(layers);
-
-  for(size_t l=0; l<layers; ++l)
+  for(auto lhs_layer = lhs.layers.begin(), rhs_layer = rhs.network->layers.begin();
+      lhs_layer != lhs.layers.end(); ++lhs_layer, ++rhs_layer)
     {
-      size_t m = lhs.weight[l].nRows();
-      size_t n = lhs.weight[l].nCols();
+      // Create now layer with zero weights
+      Layer new_layer(lhs_layer->dimension, lhs_layer->layer_type, lhs_layer->activation_function);
       
-      params.weight.push_back(Matrix(m, n));
-      params.bias.push_back(Vector(m));
-      params.activation.push_back(lhs.activation[l]);
-			    
-      for(size_t i=0; i<m; ++i)
-        {
-	for(size_t j=0; j<n; ++j)
-	  {
-	    params.weight[l][i][j] = lhs.weight[l][i][j] + rhs.scale * rhs.params->weight[l][i][j];
-	  }
-	params.bias[l][i] = lhs.bias[l][i] + rhs.scale * rhs.params->bias[l][i];
-        }
-    }
-  return params;
-}
+      new_layer.weight = rhs_layer->weight;
+      new_layer.weight *= rhs.scale;
+      new_layer.weight += lhs_layer->weight;
 
+      new_layer.bias = rhs_layer->bias;
+      new_layer.bias *= rhs.scale;
+      new_layer.bias += lhs_layer->bias;
+
+      net.layers.push_back(new_layer);
+    }
+
+  return net;
+}
+/*
 NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters& lhs, const ScaledNeuralNetworkParameters& rhs)
 {
   NeuralNetworkParameters params;
@@ -457,24 +527,23 @@ NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters& lhs, cons
     }
   return params;
 }
+*/
 
-void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
-				  const std::vector<TrainingData>& data,
-				  const std::vector<size_t>& data_idx,
-				  OptimizationOptions options) const
+void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
+				 const std::vector<TrainingData>& data,
+				 const std::vector<size_t>& data_idx,
+				 OptimizationOptions options) const
 {  
   // Initialize a direction
-  NeuralNetworkParameters direction;
+  NeuralNetwork direction;
   
-  direction.weight.reserve(layers);
-  direction.bias.reserve(layers);
-  direction.activation.reserve(layers);
+  direction.layers.reserve(layers.size());
  
-  for(size_t l=0; l<layers; ++l)
+  for(auto layer = layers.begin(); layer != layers.end(); ++layer)
     {
-      size_t m = params.weight[l].nRows();
-      size_t n = params.weight[l].nCols();
-
+      size_t m = layer->weight.nRows();
+      size_t n = layer->weight.nCols();
+      
       Matrix weight(m, n);
       Vector bias(m);
       
@@ -486,43 +555,37 @@ void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
 	  }
 	bias[i] = 1.;
         }
+
+      Layer new_layer(layer->dimension, layer->layer_type, layer->activation_function);
       
-      direction.weight.push_back(weight);
-      direction.bias.push_back(bias);
-      direction.activation.push_back(params.activation[l]);
+      new_layer.weight = weight;
+      new_layer.bias = bias;
+
+      direction.layers.push_back(new_layer);
     }
-
-  std::cout << "Neural network parameters:\n";
-  std::cout << params << std::endl;
-
-  std::cout << "Gradient parameters:\n";
-  std::cout << grad_params << std::endl;
-
-  std::cout << "Direction parameters:\n";
-  std::cout << direction << std::endl;
   
-  double deriv_exact = grad_params.dot(direction);
+  double deriv_exact = grad_net.dot(direction);
 
   size_t n_data = data.size();
-    
-  std::vector<std::vector<Vector>> z(layers);
-  std::vector<std::vector<Vector>> y(layers+1);
+  
+  std::vector<std::vector<DataArray*>> z(layers.size());
+  std::vector<std::vector<DataArray*>> y(layers.size()+1);
 
   // Allocate memory for auxiliary vectors
-  for(size_t l=0; l<layers+1; ++l)
+  for(size_t l=0; l<layers.size()+1; ++l)
     {
-      if(l<layers)
-        z[l] = std::vector<Vector>(n_data);
-      y[l] = std::vector<Vector>(n_data);
+      if(l<layers.size())
+        z[l] = std::vector<DataArray*>(n_data);
+      y[l] = std::vector<DataArray*>(n_data);
     }
-
-  double f = eval_functional(params, data, y, z, data_idx, options);  
+  
+  double f = evalFunctional(data, y, z, data_idx, options);  
             
   for(double s=1.; s>1.e-12; s*=0.5)
     {
-      NeuralNetworkParameters params_s = params + s*direction;
+      NeuralNetwork net_s = (*this) + s*direction;
   
-      double f_s = eval_functional(params_s, data, y, z, data_idx, options);      
+      double f_s = net_s.evalFunctional(data, y, z, data_idx, options);
       double deriv_fd = (f_s - f)/s;
 
       std::cout << "  derivative by gradient: " << deriv_exact
@@ -532,39 +595,64 @@ void NeuralNetwork::gradient_test(const NeuralNetworkParameters& grad_params,
     }  
 }
 
-double NeuralNetworkParameters::dot(const NeuralNetworkParameters& rhs) const
-{
-  double d = 0.;
-
-  size_t layers = weight.size();
-  for(size_t l=0; l<layers; ++l)
-    {
-      size_t m = weight[l].nRows();
-      size_t n = weight[l].nCols();
-      
-      for(size_t i=0; i<m; ++i)
-        {
-	for(size_t j=0; j<n; ++j)
-	  d += weight[l][i][j] * rhs.weight[l][i][j];
-	
-	d += bias[l][i] * rhs.bias[l][i];
-        }
-    }
+double NeuralNetwork::dot(const NeuralNetwork& rhs) const
+{ 
+  double val = 0.;
   
-  return d;
+  auto layer = layers.begin();
+  auto layer_rhs = rhs.layers.begin();
+  
+  for(; layer != layers.end(); ++layer, ++layer_rhs)
+    val += layer->dot(*layer_rhs);
+   
+  return val;
 }
 
-std::ostream& operator<<(std::ostream& os, const NeuralNetworkParameters& params)
+double NeuralNetwork::norm() const
 {
-  size_t layers = params.weight.size();
+  return dot(*this);
+}
 
-  for(size_t l=0; l<layers; ++l)
+NeuralNetwork& NeuralNetwork::operator*=(double s)
+{
+  for(auto layer = layers.begin(); layer != layers.end(); ++layer)
     {
-      os << "W" << l << " =\n" << params.weight[l];
-      os << "B" << l << " =\n" << params.bias[l] << std::endl;
-      os << "Activation  (" << l << "): " << params.activation[l] << std::endl << std::endl;
+      layer->weight *= s;
+      layer->bias *= s;
     }
-  return os;
+
+  return *this;       
+}
+
+NeuralNetwork& NeuralNetwork::operator+=(const ScaledNeuralNetwork& other)
+{
+  auto layer = layers.begin();
+  auto layer_rhs = other.network->layers.begin();
+  
+  for(; layer != layers.end();
+      ++layer, ++layer_rhs)
+    {
+      // TODO: Implement efficient A += s*B operation for Matrix and Vector
+      Matrix& A = layer->weight;
+      const Matrix& B = layer_rhs->weight;
+
+      double* A_ptr;
+      const double* B_ptr;
+      
+      for(A_ptr = A.data, B_ptr = B.data; A_ptr != A.data + A.nEntries(); ++A_ptr, ++B_ptr)
+	*A_ptr += other.scale * (*B_ptr);
+
+      Vector& x = layer->bias;
+      const Vector& y = layer_rhs->bias;
+
+      double* x_ptr;
+      const double* y_ptr;
+	
+      for(x_ptr = x.data, y_ptr = y.data; x_ptr != x.data + x.length(); ++x_ptr, ++y_ptr)
+	*x_ptr += other.scale * (*y_ptr);      
+    }
+  
+  return *this;
 }
 
 OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),
