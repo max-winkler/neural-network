@@ -12,7 +12,7 @@ int main()
   
   NeuralNetwork net;
   net.addInputLayer(2); // input layer
-  net.addFullyConnectedLayer(6, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(8, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(1, ActivationFunction::NONE);    // output layer
@@ -53,9 +53,10 @@ int main()
 
   // Train neural network
   OptimizationOptions options;
-  options.loss_function = OptimizationOptions::LossFunction::LOG;
-  options.max_iter = 5.e5;
-  options.learning_rate = 0.002;
+  options.loss_function = OptimizationOptions::LossFunction::MSE;
+  options.batch_size = 100;
+  options.max_iter = 1.e5;
+  options.learning_rate = 0.001;
   
   net.train(training_data, options);
 
@@ -82,12 +83,12 @@ int main()
   size_t wrong_classified = 0;
   for(auto it = training_data.begin(); it != training_data.end(); ++it)
     {      
-      double y = (net.eval(it->x))[0] > 0.5 ? 1. : 0.;
+      double y = (net.eval(*it->x))[0] > 0.5 ? 1. : 0.;
       if(std::abs(y - it->y[0]) > 1.e-8)
         wrong_classified++;
     }
   
-  std::cout << "Training sample size : " << training_data.size();
+  std::cout << "Training sample size : " << training_data.size() << std::endl;
   std::cout << "  wrongly classified : " << wrong_classified << " ("
 	  << double(wrong_classified)/training_data.size()*100 << "%)\n"; 
   

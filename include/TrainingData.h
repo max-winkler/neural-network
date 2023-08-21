@@ -6,9 +6,10 @@
 class TrainingData
 {
  public:
-  TrainingData(const DataArray&, const Vector&);
+  TrainingData(const Vector&, const Vector&);
+  ~TrainingData();
   
-  DataArray x;
+  DataArray* x;
   Vector y;
 };
 

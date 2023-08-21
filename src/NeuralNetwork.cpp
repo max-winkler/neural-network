@@ -163,7 +163,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	  {
 	    Vector& x_ref = dynamic_cast<Vector&>(*x_tmp);
 	    
-	    *x_tmp = activate(layer->weight * x_ref + layer->bias, layer->activation_function);
+	    dynamic_cast<Vector&>(*x_tmp) = activate(layer->weight * x_ref + layer->bias, layer->activation_function);
 	  }
 	  break;
 	default:
@@ -177,7 +177,8 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method
-  const double momentum = 0.9;
+  // TODO: Set to 0.9 again
+  const double momentum = 0.0;
   
   size_t n_data = data.size();
   
@@ -194,6 +195,21 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       if(l<layers.size())
         z[l] = std::vector<DataArray*>(options.batch_size);
       y[l] = std::vector<DataArray*>(options.batch_size);
+
+      for(size_t idx = 0; idx < options.batch_size; ++idx)
+	{
+	  switch(layers[l].layer_type)
+	    {	      
+	    case FULLY_CONNECTED:
+	    case VECTOR_INPUT:
+	      if(l<layers.size())
+		z[l][idx] = new Vector(layers[l].dimension.first);
+	      y[l][idx] = new Vector(layers[l].dimension.first);
+	      break;
+	    default:
+	      std::cerr << "ERROR: Allocation of memory not implemented for this layer type yet.\n";
+	    }
+	}
     }
   
   // Index set for training data
@@ -237,7 +253,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       os << i << ", " << f << ", " << grad_norm << std::endl;
       
       // for testing only. remove later
-      // gradientTest(grad_params, data, data_idx, options);
+      //gradientTest(grad_net, data, data_idx, options);
       //return;
 
       // Update weights
@@ -245,11 +261,11 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	{
 	  // increment = (-options.learning_rate)*grad_net + momentum*increment;
 	  increment *= momentum;
-	  increment += (-options.learning_rate)*grad_net;	  
+	  increment += (options.learning_rate)*grad_net;	  
 	}
       else
 	{
-	  increment = (-options.learning_rate)*grad_net;
+	  increment = (options.learning_rate)*grad_net;
 	}
       
       *this += 1.*increment;
@@ -278,8 +294,8 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
     case VECTOR_INPUT:
       for(size_t idx=0; idx<options.batch_size; ++idx)
 	{
-	  size_t n = data[data_indices[idx]].x.nEntries();
-	  y[0][idx] = new Vector(n, &(data[data_indices[idx]].x[0]));
+	  size_t n = data[data_indices[idx]].x->nEntries();
+	  y[0][idx] = new Vector(n, &(data[data_indices[idx]].x->operator[](0)));
 	}
       break;
     case MATRIX_INPUT:
@@ -294,7 +310,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   int l=0;
   for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
     {
-      switch(layer->layer_type)
+       switch(layer->layer_type)
 	{
 	case FULLY_CONNECTED:
 	  
@@ -303,8 +319,8 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      Vector& y_prev = dynamic_cast<Vector&>(*y[l][idx]);
 
 	      // ERROR: z and y are nullptr at the moment. Allocate or overwrite if dimension matches.
-	      *z[l][idx] = layer->weight * y_prev + layer->bias;
-	      *y[l+1][idx] = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
+	      dynamic_cast<Vector&>(*z[l][idx]) = layer->weight * y_prev + layer->bias;	      
+	      dynamic_cast<Vector&>(*y[l+1][idx]) = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
 	    }	    
 	  break;
 	  
@@ -314,14 +330,13 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	}
     }
 
-  
-    
+  // Evaluate objective functional
   double f = 0.;
   for(size_t idx=0; idx<options.batch_size; ++idx)
     {
       // Get true data and prediction
       const Vector& Y = data[data_indices[idx]].y;
-      const Vector& P = dynamic_cast<Vector&>(*(y[layers.size()][idx]));
+      const Vector& P = dynamic_cast<Vector&>(*(y[layers.size()-1][idx]));
 	
       switch(options.loss_function)
 	{
@@ -343,6 +358,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	  return 0;
 	}
     }
+  
   return f;
 }
 
@@ -363,48 +379,54 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
   for(size_t idx=0; idx<options.batch_size; ++idx)
     {
       const Vector& Y = data[data_indices[idx]].y;
-      const Vector& P = dynamic_cast<Vector&>(*y[layers.size()][idx]);
+      const Vector& P = dynamic_cast<Vector&>(*y[layers.size()-1][idx]);
 
       switch(options.loss_function)
 	{
 	case OptimizationOptions::LossFunction::MSE:
-	  *Dy[idx] = Y - P;
+	  Dy[idx] = new Vector(Y - P);
 	  break;
 	case OptimizationOptions::LossFunction::LOG:
 	  // TODO: What happens for nL > 1?
+	  Dy[idx] = new Vector(1);
 	  Dy[idx][0] = (1.-Y[0]) / (1.-P[0]) - Y[0] / P[0];
 	  break;
 	}
     }
   
   // Do backpropagation
-  for(size_t l=layers.size(); l-- >0; )
+  for(size_t l=layers.size(); l-- >1; )
     {      
       for(size_t idx=0; idx<options.batch_size; ++idx)
         {
-	  const Vector& z_idx = dynamic_cast<Vector&>(*z[l][idx]);
+	  const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
 	  
 	  switch(layers[l].activation_function)
 	    {
 	    case ActivationFunction::SOFTMAX:
 	      // Activation functions taking all components into account
-	      *Dz[idx] = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
-	    
+	      Dz[idx] = new Vector();
+	      dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
+	      
 	      break;
 
 	    default:
 	      // Activation functions applied component-wise
-	      *Dz[idx] = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(dynamic_cast<Vector&>(*z[l][idx]), layers[l].activation_function));
+	      Dz[idx] = new Vector();
+	      dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
 	    }
 
-	  *Dy[idx] = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
+	  Dy[idx] = new Vector();
+	  dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
 	
 	  // Gradient w.r.t. weight and bias
-	  grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l][idx]));
+	  grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l-1][idx]));
 	  grad_net.layers[l].bias += dynamic_cast<Vector&>(*Dz[idx]);
         }
     }
 
+  // TODO: Clean up memory
+  
   return grad_net;
 }
 
@@ -563,7 +585,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 
       direction.layers.push_back(new_layer);
     }
-  
+
   double deriv_exact = grad_net.dot(direction);
 
   size_t n_data = data.size();
@@ -575,18 +597,36 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
   for(size_t l=0; l<layers.size()+1; ++l)
     {
       if(l<layers.size())
-        z[l] = std::vector<DataArray*>(n_data);
-      y[l] = std::vector<DataArray*>(n_data);
+        z[l] = std::vector<DataArray*>(options.batch_size);
+      y[l] = std::vector<DataArray*>(options.batch_size);
+
+      for(size_t idx = 0; idx < options.batch_size; ++idx)
+	{
+	  switch(layers[l].layer_type)
+	    {	      
+	    case FULLY_CONNECTED:
+	    case VECTOR_INPUT:
+	      if(l<layers.size())
+		z[l][idx] = new Vector(layers[l].dimension.first);
+	      y[l][idx] = new Vector(layers[l].dimension.first);
+	      break;
+	    default:
+	      std::cerr << "ERROR: Allocation of memory not implemented for this layer type yet.\n";
+	    }
+	}
     }
   
-  double f = evalFunctional(data, y, z, data_idx, options);  
+  double f = evalFunctional(data, y, z, data_idx, options);
+  std::cout << "Value in x0: " << f << std::endl; 
             
   for(double s=1.; s>1.e-12; s*=0.5)
     {
       NeuralNetwork net_s = (*this) + s*direction;
   
       double f_s = net_s.evalFunctional(data, y, z, data_idx, options);
-      double deriv_fd = (f_s - f)/s;
+      std::cout << "Value in x+s*d: " << f_s << std::endl;
+      
+      double deriv_fd = (f - f_s)/s;
 
       std::cout << "  derivative by gradient: " << deriv_exact
 	      << " vs. by difference quotient: " << deriv_fd
@@ -599,8 +639,8 @@ double NeuralNetwork::dot(const NeuralNetwork& rhs) const
 { 
   double val = 0.;
   
-  auto layer = layers.begin();
-  auto layer_rhs = rhs.layers.begin();
+  auto layer = layers.begin()+1;
+  auto layer_rhs = rhs.layers.begin()+1;
   
   for(; layer != layers.end(); ++layer, ++layer_rhs)
     val += layer->dot(*layer_rhs);

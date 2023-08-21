@@ -44,7 +44,7 @@ Vector& Vector::operator=(const Vector& other)
 }
 
 Vector& Vector::operator=(Vector&& other)
-{
+{  
   delete[] data;
   
   size = other.size;

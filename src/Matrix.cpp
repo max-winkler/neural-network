@@ -164,7 +164,7 @@ Matrix& Matrix::operator+=(const Matrix& B)
 
 Matrix& Matrix::operator+=(const Rank1Matrix& B)
 {
-  size_t n = nRows();
+  size_t n = nCols();
   
   if(B.nRows() != nRows() || B.nCols() != nCols())
     {
