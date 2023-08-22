@@ -6,7 +6,11 @@ DataArray::DataArray(size_t size)
   : size(size)
 {
   data = new double[size];
-  std::memset(data, 0, size*sizeof(double));
+
+  // TODO: Valgrind throws "uninitialized value" when using memset
+  for(size_t i=0; i<size; ++i)
+    data[i] = 0.;
+  //std::memset(data, 0.0, size*sizeof(double));
 }
 
 DataArray::DataArray(const DataArray& other)

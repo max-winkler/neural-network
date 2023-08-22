@@ -14,13 +14,16 @@ Rank1Matrix outer(const Vector&, const Vector&);
 
 class Vector : public DataArray {
  public:
-  // Constructor and destructor
+  // Constructors
   Vector();
   Vector(size_t);
   Vector(size_t, const double*); 
   Vector(const Vector&);
   Vector(std::initializer_list<double>);
 
+  // Destructor
+  ~Vector();
+  
   // Assignment operators
   Vector& operator=(const Vector&);
   Vector& operator=(Vector&&);

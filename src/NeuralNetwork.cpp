@@ -7,6 +7,7 @@
 
 NeuralNetwork::NeuralNetwork() : initialized(false), layers(), rnd_gen(std::random_device()())
 {
+  layers.reserve(10);
 }
 
 NeuralNetwork::NeuralNetwork(NeuralNetwork&& other) : initialized(true)
@@ -170,15 +171,17 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	  std::cerr << "ERROR: The layer type " << layer->layer_type << " is invalid or not implemented yet.\n";	  
 	}      
     }
+
+  Vector y = dynamic_cast<Vector&>(*x_tmp);
+  delete x_tmp;
   
-  return dynamic_cast<Vector&>(*x_tmp);
+  return y;
 }
 
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method
-  // TODO: Set to 0.9 again
-  const double momentum = 0.0;
+  const double momentum = 0.9;
   
   size_t n_data = data.size();
   
@@ -190,20 +193,19 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   std::vector<std::vector<DataArray*>> y(layers.size()+1);
   
   // Allocate memory for auxiliary vectors
-  for(size_t l=0; l<layers.size()+1; ++l)
+  for(size_t l=0; l<layers.size(); ++l)
     {
-      if(l<layers.size())
-        z[l] = std::vector<DataArray*>(options.batch_size);
+      z[l] = std::vector<DataArray*>(options.batch_size);
       y[l] = std::vector<DataArray*>(options.batch_size);
 
       for(size_t idx = 0; idx < options.batch_size; ++idx)
-	{
+	{	  
 	  switch(layers[l].layer_type)
 	    {	      
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
-	      if(l<layers.size())
-		z[l][idx] = new Vector(layers[l].dimension.first);
+	      
+	      z[l][idx] = new Vector(layers[l].dimension.first);
 	      y[l][idx] = new Vector(layers[l].dimension.first);
 	      break;
 	    default:
@@ -270,7 +272,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       
       *this += 1.*increment;
     }
-
+  
   os.close();
 
   std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
@@ -278,6 +280,14 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   std::cout << "Learning process finished after "
 	    << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count()
 	    << "[ms]" << std::endl;
+
+  // Delete memory
+  for(size_t l=0; l<layers.size(); ++l)
+    for(size_t idx = 0; idx < options.batch_size; ++idx)
+      {
+	delete y[l][idx];
+	delete z[l][idx];
+      }
 }
 
 double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
@@ -294,8 +304,8 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
     case VECTOR_INPUT:
       for(size_t idx=0; idx<options.batch_size; ++idx)
 	{
-	  size_t n = data[data_indices[idx]].x->nEntries();
-	  y[0][idx] = new Vector(n, &(data[data_indices[idx]].x->operator[](0)));
+	  size_t n = data[data_indices[idx]].x->nEntries();	    
+	  dynamic_cast<Vector&>(*y[0][idx]) = Vector(n, &(data[data_indices[idx]].x->operator[](0)));
 	}
       break;
     case MATRIX_INPUT:
@@ -317,8 +327,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	  for(size_t idx=0; idx<options.batch_size; ++idx)
 	    {
 	      Vector& y_prev = dynamic_cast<Vector&>(*y[l][idx]);
-
-	      // ERROR: z and y are nullptr at the moment. Allocate or overwrite if dimension matches.
+	      
 	      dynamic_cast<Vector&>(*z[l][idx]) = layer->weight * y_prev + layer->bias;	      
 	      dynamic_cast<Vector&>(*y[l+1][idx]) = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
 	    }	    
@@ -392,6 +401,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  Dy[idx][0] = (1.-Y[0]) / (1.-P[0]) - Y[0] / P[0];
 	  break;
 	}
+      Dz[idx] = new Vector();
     }
   
   // Do backpropagation
@@ -405,18 +415,16 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	    {
 	    case ActivationFunction::SOFTMAX:
 	      // Activation functions taking all components into account
-	      Dz[idx] = new Vector();
 	      dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
 	      
 	      break;
 
 	    default:
 	      // Activation functions applied component-wise
-	      Dz[idx] = new Vector();
 	      dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
 	    }
 
-	  Dy[idx] = new Vector();
+	  
 	  dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
 	
 	  // Gradient w.r.t. weight and bias
@@ -426,6 +434,11 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
     }
 
   // TODO: Clean up memory
+  for(size_t idx=0; idx<options.batch_size; ++idx)
+    {
+      delete Dz[idx];
+      delete Dy[idx];
+    }
   
   return grad_net;
 }
@@ -594,20 +607,18 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
   std::vector<std::vector<DataArray*>> y(layers.size()+1);
 
   // Allocate memory for auxiliary vectors
-  for(size_t l=0; l<layers.size()+1; ++l)
-    {
-      if(l<layers.size())
-        z[l] = std::vector<DataArray*>(options.batch_size);
+  for(size_t l=0; l<layers.size(); ++l)
+    {      
+      z[l] = std::vector<DataArray*>(options.batch_size);
       y[l] = std::vector<DataArray*>(options.batch_size);
-
+      
       for(size_t idx = 0; idx < options.batch_size; ++idx)
 	{
 	  switch(layers[l].layer_type)
 	    {	      
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
-	      if(l<layers.size())
-		z[l][idx] = new Vector(layers[l].dimension.first);
+	      z[l][idx] = new Vector(layers[l].dimension.first);
 	      y[l][idx] = new Vector(layers[l].dimension.first);
 	      break;
 	    default:
@@ -632,7 +643,14 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	      << " vs. by difference quotient: " << deriv_fd
 	      << " relative error: " << std::abs(deriv_exact - deriv_fd)/deriv_exact << std::endl;
       
-    }  
+    }
+
+  for(size_t l=0; l<layers.size(); ++l)
+    for(size_t idx = 0; idx < options.batch_size; ++idx)
+      {
+	delete y[l][idx];
+	delete z[l][idx];
+      }
 }
 
 double NeuralNetwork::dot(const NeuralNetwork& rhs) const

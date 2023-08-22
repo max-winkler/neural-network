@@ -30,6 +30,10 @@ Vector::Vector(std::initializer_list<double> val) : DataArray(val.size())
     data[i] = *x;
 }
 
+Vector::~Vector()
+{
+}
+
 Vector& Vector::operator=(const Vector& other)
 {
   if(size != other.size)
@@ -44,7 +48,7 @@ Vector& Vector::operator=(const Vector& other)
 }
 
 Vector& Vector::operator=(Vector&& other)
-{  
+{
   delete[] data;
   
   size = other.size;

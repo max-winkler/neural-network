@@ -7,6 +7,13 @@ class TrainingData
 {
  public:
   TrainingData(const Vector&, const Vector&);
+
+  TrainingData(const TrainingData&);
+  TrainingData(TrainingData&&);
+  
+  TrainingData& operator=(const TrainingData&);
+  TrainingData& operator=(TrainingData&&);
+  
   ~TrainingData();
   
   DataArray* x;
