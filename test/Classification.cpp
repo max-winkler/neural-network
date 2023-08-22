@@ -17,7 +17,7 @@ int main()
   net.addFullyConnectedLayer(4, ActivationFunction::TANH); // hidden layer
   net.addFullyConnectedLayer(6, ActivationFunction::TANH); // hidden layer
   net.addFullyConnectedLayer(6, ActivationFunction::TANH); // hidden layer
-  net.addFullyConnectedLayer(4, ActivationFunction::RELU); // hidden layer
+  net.addFullyConnectedLayer(3, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(3); // output layer
   
   net.initialize();
@@ -52,6 +52,7 @@ int main()
   // Train neural network
   OptimizationOptions options;
   options.loss_function = OptimizationOptions::LossFunction::LOG;
+  options.batch_size    = 100;
   
   net.train(training_data, options);
 

@@ -5,15 +5,15 @@
 #include <numeric>
 #include <chrono>
 
-NeuralNetwork::NeuralNetwork() : initialized(false), layers(), rnd_gen(std::random_device()())
+NeuralNetwork::NeuralNetwork()
+  : initialized(false), layers(), rnd_gen(std::random_device()())
 {
   layers.reserve(10);
 }
 
-NeuralNetwork::NeuralNetwork(NeuralNetwork&& other) : initialized(true)
-{
-  
-}
+NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
+  : initialized(true), layers(std::move(other.layers)), rnd_gen(std::random_device()())
+{}
 
 NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 {
@@ -79,7 +79,8 @@ void NeuralNetwork::initialize()
   
   for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
     {
-      if(it->layer_type == LayerType::FULLY_CONNECTED)
+      if(it->layer_type == LayerType::FULLY_CONNECTED
+	 || it->layer_type == LayerType::CLASSIFICATION)
 	{
 	  if(it_pred->layer_type == LayerType::FULLY_CONNECTED
 	     || it_pred->layer_type == LayerType::VECTOR_INPUT
@@ -100,7 +101,8 @@ void NeuralNetwork::initialize()
 	    }
 	  else
 	    {
-	      std::cerr << "ERROR: A fully connected layer follows a " << Layer::LayerName[it_pred->layer_type]
+	      std::cerr << "ERROR: A " << Layer::LayerName[it->layer_type]
+			<< " follows a " << Layer::LayerName[it_pred->layer_type]
 			<< " which is incompatible.\n";
 	      return;
 	    }
@@ -204,10 +206,12 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    {	      
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
+	    case CLASSIFICATION:
 	      
 	      z[l][idx] = new Vector(layers[l].dimension.first);
 	      y[l][idx] = new Vector(layers[l].dimension.first);
 	      break;
+	      
 	    default:
 	      std::cerr << "ERROR: Allocation of memory not implemented for this layer type yet.\n";
 	    }
@@ -243,7 +247,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       grad_norm = grad_net.norm();
 
       // Console output
-      if(i%1000 == 0)
+      if(i%1 == 0)
         {
 	  std::cout << "Iteration " << i << std::endl;
 	  std::cout << "functional value : " << f << std::endl;
@@ -255,8 +259,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       os << i << ", " << f << ", " << grad_norm << std::endl;
       
       // for testing only. remove later
-      //gradientTest(grad_net, data, data_idx, options);
-      //return;
+      gradientTest(grad_net, data, data_idx, options);
+      return;
 
       // Update weights
       if(i>1)
@@ -323,7 +327,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
        switch(layer->layer_type)
 	{
 	case FULLY_CONNECTED:
-	  
+	case CLASSIFICATION:
 	  for(size_t idx=0; idx<options.batch_size; ++idx)
 	    {
 	      Vector& y_prev = dynamic_cast<Vector&>(*y[l][idx]);
@@ -332,7 +336,6 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      dynamic_cast<Vector&>(*y[l+1][idx]) = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
 	    }	    
 	  break;
-	  
 	default:
 	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
 		    << Layer::LayerName[layer->layer_type] << ".\n";
@@ -393,12 +396,18 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
       switch(options.loss_function)
 	{
 	case OptimizationOptions::LossFunction::MSE:
+
 	  Dy[idx] = new Vector(Y - P);
 	  break;
+	  
 	case OptimizationOptions::LossFunction::LOG:
-	  // TODO: What happens for nL > 1?
-	  Dy[idx] = new Vector(1);
-	  Dy[idx][0] = (1.-Y[0]) / (1.-P[0]) - Y[0] / P[0];
+	  {
+	    size_t nL = layers.back().dimension.first;
+	    Dy[idx] = new Vector(nL);	  
+
+	    for(size_t i=0; i<nL; ++i)
+	      (*Dy[idx])[i] = (1.-Y[i]) / (1.-P[i]) - Y[i] / P[i];
+	  }
 	  break;
 	}
       Dz[idx] = new Vector();
@@ -618,9 +627,12 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	    {	      
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
+	    case CLASSIFICATION:
+	      
 	      z[l][idx] = new Vector(layers[l].dimension.first);
 	      y[l][idx] = new Vector(layers[l].dimension.first);
 	      break;
+	      
 	    default:
 	      std::cerr << "ERROR: Allocation of memory not implemented for this layer type yet.\n";
 	    }
