@@ -17,7 +17,7 @@ int main()
   net.addFullyConnectedLayer(4, ActivationFunction::TANH); // hidden layer
   net.addFullyConnectedLayer(6, ActivationFunction::TANH); // hidden layer
   net.addFullyConnectedLayer(6, ActivationFunction::TANH); // hidden layer
-  net.addFullyConnectedLayer(3, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(3); // output layer
   
   net.initialize();
@@ -51,8 +51,9 @@ int main()
 
   // Train neural network
   OptimizationOptions options;
-  options.loss_function = OptimizationOptions::LossFunction::LOG;
+  options.loss_function = OptimizationOptions::LossFunction::MSE;
   options.batch_size    = 100;
+  options.max_iter      = 1e5;
   
   net.train(training_data, options);
 
@@ -107,7 +108,7 @@ int main()
     delete[] row_pointers[i];
   delete[] row_pointers;
 
-  return 0;
+  fclose(fp);
   
   while(true)
     {

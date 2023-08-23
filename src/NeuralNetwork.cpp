@@ -247,7 +247,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       grad_norm = grad_net.norm();
 
       // Console output
-      if(i%1 == 0)
+      if(i%1000 == 0)
         {
 	  std::cout << "Iteration " << i << std::endl;
 	  std::cout << "functional value : " << f << std::endl;
@@ -259,19 +259,19 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       os << i << ", " << f << ", " << grad_norm << std::endl;
       
       // for testing only. remove later
-      gradientTest(grad_net, data, data_idx, options);
-      return;
+      //gradientTest(grad_net, data, data_idx, options);
+      //return;
 
       // Update weights
       if(i>1)
 	{
 	  // increment = (-options.learning_rate)*grad_net + momentum*increment;
 	  increment *= momentum;
-	  increment += (options.learning_rate)*grad_net;	  
+	  increment += (-options.learning_rate)*grad_net;	  
 	}
       else
 	{
-	  increment = (options.learning_rate)*grad_net;
+	  increment = (-options.learning_rate)*grad_net;
 	}
       
       *this += 1.*increment;
@@ -397,7 +397,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	{
 	case OptimizationOptions::LossFunction::MSE:
 
-	  Dy[idx] = new Vector(Y - P);
+	  Dy[idx] = new Vector(P - Y);
 	  break;
 	  
 	case OptimizationOptions::LossFunction::LOG:
@@ -649,7 +649,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
       double f_s = net_s.evalFunctional(data, y, z, data_idx, options);
       std::cout << "Value in x+s*d: " << f_s << std::endl;
       
-      double deriv_fd = (f - f_s)/s;
+      double deriv_fd = (f_s - f)/s;
 
       std::cout << "  derivative by gradient: " << deriv_exact
 	      << " vs. by difference quotient: " << deriv_fd

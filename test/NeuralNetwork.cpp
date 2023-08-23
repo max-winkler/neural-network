@@ -17,7 +17,7 @@ int main()
   net.addFullyConnectedLayer(8, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(2, ActivationFunction::SIGMOID); // hidden layer
-  net.addFullyConnectedLayer(1, ActivationFunction::NONE);    // output layer
+  net.addFullyConnectedLayer(1, ActivationFunction::SIGMOID);    // output layer
   
   net.initialize();
   
@@ -55,10 +55,10 @@ int main()
 
   // Train neural network
   OptimizationOptions options;
-  options.loss_function = OptimizationOptions::LossFunction::MSE;
+  options.loss_function = OptimizationOptions::LossFunction::LOG;
   options.batch_size = 100;
   options.max_iter = 2e5;
-  options.learning_rate = 0.001;
+  options.learning_rate = 0.01;
   
   net.train(training_data, options);
 
