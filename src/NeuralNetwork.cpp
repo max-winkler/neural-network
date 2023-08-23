@@ -33,26 +33,6 @@ NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
   return other;
 }
 
-/*
-NeuralNetwork::NeuralNetwork(std::vector<size_t> width_)
-  : initialized(true), layers(width_.size()), rnd_gen(std::random_device()())
-{  
-  // Add output dimension
-  width.push_back(1);
-
-  params.weight.reserve(layers);
-  params.bias.reserve(layers);
-  params.activation.reserve(layers);
-  
-  for(Dimension::const_iterator it = width.begin(); it+1 != width.end(); ++it)
-    {
-      params.weight.push_back(Matrix(*(it+1), *it));
-      params.bias.push_back(Vector(*(it+1)));
-      params.activation.push_back((it+1!=width.end()) ? ActivationFunction::SIGMOID : ActivationFunction::NONE);
-    }
-}
-*/
-
 void NeuralNetwork::addInputLayer(size_t i, size_t j)
 {
   LayerType layer_type = (j==0 ? LayerType::VECTOR_INPUT : LayerType::MATRIX_INPUT);
