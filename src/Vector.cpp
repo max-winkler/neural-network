@@ -172,17 +172,23 @@ Vector Vector::operator*(const DiagonalMatrix& A) const
 
 Vector& Vector::operator+=(const Vector& B)
 {
-  if(B.size != size)
+  operator+=(ScaledVector(1., B));
+  return *this;
+}
+
+Vector& Vector::operator+=(const ScaledVector& B)
+{
+  if(B.vector->size != size)
     {
       std::cerr << "Error: Vectors have incompatible dimension for summation.\n";
-      std::cerr << "  (" << size << ") vs. (" << B.size  << ")\n";
+      std::cerr << "  (" << size << ") vs. (" << B.vector->size  << ")\n";
     }
 
   double* data_ptr;
   const double* B_data_ptr;
 
-  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
-    *data_ptr += *B_data_ptr;
+  for(data_ptr = data, B_data_ptr = B.vector->data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
+    *data_ptr += B.scale * (*B_data_ptr);
   
   return *this;
 }
@@ -222,4 +228,11 @@ double norm(const Vector& x, double p)
   for(double* it = x.data; it != x.data+x.size; ++it)
     val += pow(*it, 2.);
   return sqrt(val);
+}
+
+ScaledVector::ScaledVector(double scale, const Vector& vector) : scale(scale), vector(&vector) {}
+
+ScaledVector operator*(double scale, const Vector& vector)
+{
+  return ScaledVector(scale, vector);
 }

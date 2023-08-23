@@ -8,8 +8,14 @@
 
 #include "DataArray.h"
 
+// Forward class declarations
 class Vector;
 class Rank1Matrix;
+class Matrix;
+struct ScaledMatrix;
+
+// Forward declarations of free functions
+ScaledMatrix operator*(double, const Matrix&);
 
 class MatrixRow
 {
@@ -55,6 +61,7 @@ class Matrix : public DataArray
   // Matrix-matrix operations
   Matrix operator+(const Matrix&) const;
   Matrix& operator+=(const Matrix&);
+  Matrix& operator+=(const ScaledMatrix&);
   Matrix& operator+=(const Rank1Matrix&);
 
   // Convolution operations
@@ -73,6 +80,13 @@ class Matrix : public DataArray
 private:
   // number of rows
   size_t m;
+};
+
+struct ScaledMatrix
+{
+  ScaledMatrix(double, const Matrix& matrix);
+  double scale;
+  const Matrix* matrix;
 };
 
 #endif

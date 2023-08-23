@@ -147,17 +147,26 @@ Vector Matrix::operator*(const Vector& b) const
 
 Matrix& Matrix::operator+=(const Matrix& B)
 {
-  if(B.size != size || B.m != m)
+  operator+=(ScaledMatrix(1., B));
+  return *this;
+}
+
+Matrix& Matrix::operator+=(const ScaledMatrix& B)
+{
+  if(B.matrix->size != size || B.matrix->m != m)
     {
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
-      std::cerr << "  (" << nRows() << ", " << nCols() << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
+      std::cerr << "  (" << nRows() << ", " << nCols()
+		<< ") vs. (" << B.matrix->nRows() << ", " << B.matrix->nCols() << ")\n";
     }
-
+  
   double* data_ptr;
   const double* B_data_ptr;
 
-  for(data_ptr = data, B_data_ptr = B.data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
-    *data_ptr += *B_data_ptr;
+  for(data_ptr = data, B_data_ptr = B.matrix->data;
+      data_ptr != data+size;
+      ++data_ptr, ++B_data_ptr)
+    *data_ptr += B.scale * (*B_data_ptr);
   
   return *this;
 }
@@ -291,4 +300,10 @@ std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
       os << "]\n";
     }
   return os;
+}
+
+ScaledMatrix::ScaledMatrix(double scale, const Matrix& matrix) : scale(scale), matrix(&matrix) {}
+ScaledMatrix operator*(double scale, const Matrix& matrix)
+{
+  return ScaledMatrix(scale, matrix);
 }

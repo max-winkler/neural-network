@@ -5,12 +5,24 @@
 
 #include "Matrix.h"
 
-// Forward declarations
+// Forward class declarations
 class DiagonalMatrix;
 class Rank1Matrix;
+class Vector;
+struct ScaledVector;
 
+// Forward declaration of free functions
+ScaledVector operator*(double, const Vector&);
 double norm(const Vector&, double p=2.);
 Rank1Matrix outer(const Vector&, const Vector&);
+
+struct ScaledVector
+{
+  ScaledVector(double, const Vector&);
+  
+  double scale;
+  const Vector* vector;
+};
 
 class Vector : public DataArray {
  public:
@@ -33,26 +45,25 @@ class Vector : public DataArray {
   Vector operator+(const Vector&) const;
   Vector operator-(const Vector&) const;
   Vector& operator+=(const Vector&);
+  Vector& operator+=(const ScaledVector&);
   Vector& operator*=(double);
-  
+
+  // Getters for basic properties
   size_t length() const;
   
-  // Console output via output stream
+  // Console output
   friend std::ostream& operator<<(std::ostream&, const Vector&);
 
-  // friend classes
+  // Friend classes
   friend class Matrix;
   friend class DiagonalMatrix;
-
-  // TODO: I do not want this. Extend Vector class so that this is not necessary
-  friend class NeuralNetwork;
   
   // Matrix-vector operations
   friend Vector Matrix::operator*(const Vector&) const;
   Vector operator*(const Matrix&) const;
   Vector operator*(const DiagonalMatrix&) const;
   
-  // free functions
+  // Vector operations operations
   friend Rank1Matrix outer(const Vector&, const Vector&);
   friend DiagonalMatrix diag(const Vector&);
   friend double norm(const Vector&, double);

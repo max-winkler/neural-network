@@ -701,25 +701,9 @@ NeuralNetwork& NeuralNetwork::operator+=(const ScaledNeuralNetwork& other)
   
   for(; layer != layers.end();
       ++layer, ++layer_rhs)
-    {
-      // TODO: Implement efficient A += s*B operation for Matrix and Vector
-      Matrix& A = layer->weight;
-      const Matrix& B = layer_rhs->weight;
-
-      double* A_ptr;
-      const double* B_ptr;
-      
-      for(A_ptr = A.data, B_ptr = B.data; A_ptr != A.data + A.nEntries(); ++A_ptr, ++B_ptr)
-	*A_ptr += other.scale * (*B_ptr);
-
-      Vector& x = layer->bias;
-      const Vector& y = layer_rhs->bias;
-
-      double* x_ptr;
-      const double* y_ptr;
-	
-      for(x_ptr = x.data, y_ptr = y.data; x_ptr != x.data + x.length(); ++x_ptr, ++y_ptr)
-	*x_ptr += other.scale * (*y_ptr);      
+    {    
+      layer->weight += other.scale * layer_rhs->weight;
+      layer->bias += other.scale * layer_rhs->bias;
     }
   
   return *this;

@@ -13,8 +13,8 @@ default: $(OBJ)
 	g++ test/NeuralNetwork.o ${OBJ} -o neuralnetwork_test
 	g++ -c test/Classification.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Classification.o	
 	g++ test/Classification.o ${OBJ} ${LIBS} -o classification_test
-#	g++ -c test/Convolution.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Convolution.o	
-#	g++ test/Convolution.o ${OBJ} ${LIBS} -o convolution_test
+	g++ -c test/Convolution.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Convolution.o	
+	g++ test/Convolution.o ${OBJ} ${LIBS} -o convolution_test
 
 clean:
 	rm src/*.o
