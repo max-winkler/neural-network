@@ -72,11 +72,10 @@ class Matrix : public DataArray
   
   // Console output
   friend std::ostream& operator<<(std::ostream&, const Matrix&);
-  
-  friend class Vector;
 
-  // TODO: I do not want this. Extend Matrix class so that this is not necessary
-  friend class NeuralNetwork;
+  // Friend declarations
+  friend class Vector;
+  
 private:
   // number of rows
   size_t m;

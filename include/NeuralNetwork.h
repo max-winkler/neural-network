@@ -10,17 +10,10 @@
 #include "Activation.h"
 #include "TrainingData.h"
 
-class NeuralNetwork;
+// Forward class declarations
+struct ScaledNeuralNetwork;
 
-struct ScaledNeuralNetwork
-{
-  ScaledNeuralNetwork(double, const NeuralNetwork&);
-  double scale;
-  const NeuralNetwork* network;
-
-  //friend NeuralNetwork operator+(const ScaledNeuralNetwork&, const ScaledNeuralNetwork&);
-};
-
+// Struct for optimization options used in Neuralnetwork::train
 struct OptimizationOptions
 {
   OptimizationOptions();
@@ -35,79 +28,87 @@ struct OptimizationOptions
     
 };
 
+// Main class representing a neural network
 class NeuralNetwork
 {
  public:
+  
+  // Constructors
   NeuralNetwork();
   NeuralNetwork(NeuralNetwork&&);
-  
+
+  /// Assignment operators
   NeuralNetwork& operator=(NeuralNetwork&&);
   NeuralNetwork& operator=(const ScaledNeuralNetwork&);
   
-  // unused constructor: remove later
-  //NeuralNetwork(Dimension);
-
-  // static creator function
+  // Static creator function with zero-initialization but correct dimensions
   static NeuralNetwork createLike(const NeuralNetwork&);
-  
+
+  // Add neural network layers
   void addInputLayer(size_t i, size_t j=0);
   void addFullyConnectedLayer(size_t, ActivationFunction);
   void addClassificationLayer(size_t);
-  
+
+  // Initialization of neural network, set weights randomly
   void initialize();
-
-  // unused function, remove later
-  // void setParameters(size_t, const Matrix&, const Vector&, ActivationFunction);
-
+  
+  // Evaluate neural network in given point
   Vector eval(const DataArray&) const;
 
+  // Train neural network for according to given training data
   void train(const std::vector<TrainingData>&, OptimizationOptions options=OptimizationOptions());
 
-  // functional evaluation (for training routine)
+  // Functional evaluation (for training routine)
   double evalFunctional(const std::vector<TrainingData>&,
 			 std::vector<std::vector<DataArray*>>&,
 			 std::vector<std::vector<DataArray*>>&,
 			 const std::vector<size_t>&,
 			 OptimizationOptions) const;
   
-  // gradient evaluation (for training routine)
+  // Gradient evaluation (for training routine)
   NeuralNetwork evalGradient(const std::vector<TrainingData>&,
 			      const std::vector<std::vector<DataArray*>>&,
 			      const std::vector<std::vector<DataArray*>>&,
 			      const std::vector<size_t>&,
 			      OptimizationOptions) const;
 
+  // Scalar product and norm (used in gradient test and stopping criterion)
   double dot(const NeuralNetwork&) const;
   double norm() const;  
 
-  // operator overloads
+  // Operations on neural network parameters
   NeuralNetwork& operator*=(double);
   NeuralNetwork& operator+=(const ScaledNeuralNetwork&);
   friend ScaledNeuralNetwork operator*(double, const NeuralNetwork&);      
   friend NeuralNetwork operator+(const NeuralNetwork&, const NeuralNetwork&);  
   friend NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs);
     
-  // console output
+  // Console output
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
   
  private:
-  // Store dimension of neural network
+  // Layer list of neural network
   std::vector<Layer> layers;  
-  
+
+  // Initialization state of the neural network
   bool initialized;
   
-  // Weights and biases (old code, now parameters stored in vector "layers")
-  // NeuralNetworkParameters params;
-
   // Random number generator
   std::mt19937 rnd_gen;
   std::uniform_real_distribution<> random_real;
   
-  // for debugging and testing
+  // Gradient test (for debugging and testing)
   void gradientTest(const NeuralNetwork&,
 		    const std::vector<TrainingData>&,
 		    const std::vector<size_t>&,
 		    OptimizationOptions) const;
+};
+
+struct ScaledNeuralNetwork
+{
+  ScaledNeuralNetwork(double, const NeuralNetwork&);
+  double scale;
+  const NeuralNetwork* network;
 };
 
 #endif

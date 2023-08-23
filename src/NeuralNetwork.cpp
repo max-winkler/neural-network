@@ -500,21 +500,7 @@ ScaledNeuralNetwork operator*(double scale, const NeuralNetwork& params)
 
 NeuralNetwork operator+(const NeuralNetwork& lhs, const NeuralNetwork& rhs)
 {
-  NeuralNetwork net;
-
-  for(auto lhs_layer = lhs.layers.begin(), rhs_layer = rhs.layers.begin();
-      lhs_layer != lhs.layers.end(); ++lhs_layer, ++rhs_layer)
-    {
-      // Create now layer with zero weights
-      Layer new_layer(lhs_layer->dimension, lhs_layer->layer_type, lhs_layer->activation_function);
-      
-      new_layer.weight = lhs_layer->weight + rhs_layer->weight;
-      new_layer.bias = lhs_layer->bias + rhs_layer->bias;
-
-      net.layers.push_back(new_layer);
-    }
-
-  return net;  
+  return lhs + ScaledNeuralNetwork(1., rhs);
 }
 
 NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs)
@@ -526,52 +512,18 @@ NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs
     {
       // Create now layer with zero weights
       Layer new_layer(lhs_layer->dimension, lhs_layer->layer_type, lhs_layer->activation_function);
+
+      new_layer.weight = lhs_layer->weight;
+      new_layer.weight+= rhs.scale * rhs_layer->weight;            
+
+      new_layer.bias = lhs_layer->bias;
+      new_layer.bias+= rhs.scale * rhs_layer->bias;
       
-      new_layer.weight = rhs_layer->weight;
-      new_layer.weight *= rhs.scale;
-      new_layer.weight += lhs_layer->weight;
-
-      new_layer.bias = rhs_layer->bias;
-      new_layer.bias *= rhs.scale;
-      new_layer.bias += lhs_layer->bias;
-
       net.layers.push_back(new_layer);
     }
 
   return net;
 }
-/*
-NeuralNetworkParameters operator+(const ScaledNeuralNetworkParameters& lhs, const ScaledNeuralNetworkParameters& rhs)
-{
-  NeuralNetworkParameters params;
-
-  size_t layers = lhs.params->weight.size();
-    
-  params.weight.reserve(layers);
-  params.bias.reserve(layers);
-  params.activation.reserve(layers);
-
-  for(size_t l=0; l<layers; ++l)
-    {
-      size_t m = lhs.params->weight[l].nRows();
-      size_t n = lhs.params->weight[l].nCols();
-      
-      params.weight.push_back(Matrix(m, n));
-      params.bias.push_back(Vector(m));
-      params.activation.push_back(lhs.params->activation[l]);
-			    
-      for(size_t i=0; i<m; ++i)
-        {
-	for(size_t j=0; j<n; ++j)
-	  {
-	    params.weight[l][i][j] = lhs.scale * lhs.params->weight[l][i][j] + rhs.scale * rhs.params->weight[l][i][j];
-	  }
-	params.bias[l][i] = lhs.scale * lhs.params->bias[l][i] + rhs.scale * rhs.params->bias[l][i];
-        }
-    }
-  return params;
-}
-*/
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 				 const std::vector<TrainingData>& data,
