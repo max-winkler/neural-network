@@ -35,6 +35,7 @@ class Matrix : public DataArray
   Matrix(size_t, size_t);
   Matrix(size_t, size_t, const double*);  
   Matrix(const Matrix&);
+  // TODO: Implement move constructor
 
   // Read matrix from image pixels
   Matrix(size_t, size_t, const unsigned char*);

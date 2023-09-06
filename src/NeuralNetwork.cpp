@@ -472,8 +472,13 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	      break;
 
 	    case FLATTENING:
-	      // TODO: Implement backpropagation over flattening layer here (requires reshape of vector into matrix)
-	      break
+	      {
+		DataArray* tmp = Dy[idx];
+		Dy[idx] = new Matrix(dynamic_cast<Vector&>(*Dy[idx]).reshape(layers[l].dimension.first,
+									     layers[l].dimension.second));
+		delete tmp;
+	      }
+	      break;
 	    default:
 	      std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]
 			<< " not implemented yet.\n";

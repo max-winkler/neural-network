@@ -74,6 +74,11 @@ size_t Vector::length() const
   return size;
 }
 
+Matrix Vector::reshape(size_t m, size_t n) const
+{
+  return Matrix(m, n, data);
+}
+
 Vector Vector::operator+(const Vector& other) const
 {
   if(size != other.size)

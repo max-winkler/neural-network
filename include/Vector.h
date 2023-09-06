@@ -50,6 +50,9 @@ class Vector : public DataArray {
 
   // Getters for basic properties
   size_t length() const;
+
+  // Transform vector to matrix
+  Matrix reshape(size_t, size_t) const;
   
   // Console output
   friend std::ostream& operator<<(std::ostream&, const Vector&);
