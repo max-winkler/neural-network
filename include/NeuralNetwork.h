@@ -46,6 +46,7 @@ class NeuralNetwork
 
   // Add neural network layers
   void addInputLayer(size_t i, size_t j=0);
+  void addFlatteningLayer();
   void addFullyConnectedLayer(size_t, ActivationFunction);
   void addClassificationLayer(size_t);
 

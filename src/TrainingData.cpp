@@ -1,6 +1,7 @@
 #include "TrainingData.h"
 
 TrainingData::TrainingData(const Vector& x, const Vector& y) : x(new Vector(x)), y(y) {}
+TrainingData::TrainingData(const Matrix& x, const Vector& y) : x(new Matrix(x)), y(y) {}
 
 TrainingData::TrainingData(const TrainingData& other) : x(new Vector(dynamic_cast<Vector&>(*other.x))), y(other.y) {}
 

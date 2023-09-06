@@ -195,6 +195,11 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
   return *this;
 }
 
+Vector Matrix::flatten() const
+{
+  return Vector(nRows()*nCols(), data);
+}
+
 Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 {
   // Size of current matrix and filter

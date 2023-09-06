@@ -65,6 +65,7 @@ class Matrix : public DataArray
   Matrix& operator+=(const Rank1Matrix&);
 
   // Convolution operations
+  Vector flatten() const;
   Matrix convolve(const Matrix&, size_t S=1, size_t P=0) const;
   Matrix pool(int, size_t S=2, size_t P=0) const;
  

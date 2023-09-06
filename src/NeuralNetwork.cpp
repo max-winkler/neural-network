@@ -40,6 +40,30 @@ void NeuralNetwork::addInputLayer(size_t i, size_t j)
   layers.push_back(layer);
 }
 
+void NeuralNetwork::addFlatteningLayer()
+{
+  const Layer& prev_layer = layers.back();
+
+  // Check if previous layer produces a matrix
+  switch(prev_layer.layer_type)
+    {
+    case LayerType::MATRIX_INPUT:
+    case LayerType::CONVOLUTION:
+    case LayerType::POOLING:
+      break;
+    default:
+      std::cerr << "ERROR: A flattening layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
+		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
+		<< " or " << Layer::LayerName[LayerType::CONVOLUTION] << std::endl;
+      return;
+    }
+  // Dimension of flattened matrix
+  size_t dim = prev_layer.dimension.first * prev_layer.dimension.second;
+  
+  Layer layer(std::pair<size_t, size_t>(dim, 0), LayerType::FLATTENING, ActivationFunction::NONE);
+  layers.push_back(layer);
+}
+
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 {
   Layer layer(std::pair<size_t, size_t>(width, 0), LayerType::FULLY_CONNECTED, act);
@@ -87,6 +111,10 @@ void NeuralNetwork::initialize()
 	      return;
 	    }
 	  
+	}
+      else if(it->layer_type == LayerType::FLATTENING)
+	{
+	  // Nothing to be done here
 	}
       else
 	{
@@ -183,17 +211,24 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       for(size_t idx = 0; idx < options.batch_size; ++idx)
 	{	  
 	  switch(layers[l].layer_type)
-	    {	      
+	    {
+	    case MATRIX_INPUT:
+	      // TODO: Are y and z really needed in input layers?
+	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
+	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
+
+	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:
-	      
+	    case FLATTENING:
 	      z[l][idx] = new Vector(layers[l].dimension.first);
 	      y[l][idx] = new Vector(layers[l].dimension.first);
 	      break;
 	      
 	    default:
-	      std::cerr << "ERROR: Allocation of memory not implemented for this layer type yet.\n";
+	      std::cerr << "ERROR: Allocation of memory not implemented for "
+			<< Layer::LayerName[layers[l].layer_type] << " yet.\n";
 	    }
 	}
     }
@@ -288,13 +323,17 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
     case VECTOR_INPUT:
       for(size_t idx=0; idx<options.batch_size; ++idx)
 	{
-	  size_t n = data[data_indices[idx]].x->nEntries();	    
-	  dynamic_cast<Vector&>(*y[0][idx]) = Vector(n, &(data[data_indices[idx]].x->operator[](0)));
+	  dynamic_cast<Vector&>(*y[0][idx]) = dynamic_cast<Vector&>(*data[data_indices[idx]].x);
 	}
       break;
+      
     case MATRIX_INPUT:
-      // TODO: Implement
-      // break;
+      for(size_t idx=0; idx<options.batch_size; ++idx)
+	{
+	  dynamic_cast<Matrix&>(*y[0][idx]) = dynamic_cast<Matrix&>(*data[data_indices[idx]].x);
+	}      
+      break;
+      
     default:
       std::cerr << "ERROR: The input layer must be of type VECTOR_INPUT or MATRIX_INPUT.\n";
       break;
@@ -315,6 +354,15 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      dynamic_cast<Vector&>(*z[l][idx]) = layer->weight * y_prev + layer->bias;	      
 	      dynamic_cast<Vector&>(*y[l+1][idx]) = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
 	    }	    
+	  break;
+	case FLATTENING:
+	  for(size_t idx=0; idx<options.batch_size; ++idx)
+	    {
+	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
+	  
+	      // z is unused here
+	      dynamic_cast<Vector&>(*y[l+1][idx]) = y_prev.flatten();
+	    }
 	  break;
 	default:
 	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
@@ -393,36 +441,50 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
       Dz[idx] = new Vector();
     }
   
-  // Do backpropagation
+  // Backward propagation
   for(size_t l=layers.size(); l-- >1; )
     {      
       for(size_t idx=0; idx<options.batch_size; ++idx)
         {
-	  const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
-	  
-	  switch(layers[l].activation_function)
+	  switch(layers[l].layer_type)
 	    {
-	    case ActivationFunction::SOFTMAX:
-	      // Activation functions taking all components into account
-	      dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
+	    case FULLY_CONNECTED:
+	    case CLASSIFICATION:
+	      {
+		const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
 	      
+		switch(layers[l].activation_function)
+		  {
+		  case ActivationFunction::SOFTMAX:
+		    // Activation functions taking all components into account
+		    dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
+		  
+		    break;
+		  
+		  default:
+		    // Activation functions applied component-wise
+		    dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
+		  }
+	      
+	      
+		dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
+	      }
 	      break;
 
+	    case FLATTENING:
+	      // TODO: Implement backpropagation over flattening layer here (requires reshape of vector into matrix)
+	      break
 	    default:
-	      // Activation functions applied component-wise
-	      dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
+	      std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]
+			<< " not implemented yet.\n";
+	      break;
 	    }
-
-	  
-	  dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
-	
 	  // Gradient w.r.t. weight and bias
 	  grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l-1][idx]));
 	  grad_net.layers[l].bias += dynamic_cast<Vector&>(*Dz[idx]);
         }
     }
 
-  // TODO: Clean up memory
   for(size_t idx=0; idx<options.batch_size; ++idx)
     {
       delete Dz[idx];

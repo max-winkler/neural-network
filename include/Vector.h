@@ -29,7 +29,7 @@ class Vector : public DataArray {
   // Constructors
   Vector();
   Vector(size_t);
-  Vector(size_t, const double*); 
+  Vector(size_t, const double*);
   Vector(const Vector&);
   Vector(std::initializer_list<double>);
 
