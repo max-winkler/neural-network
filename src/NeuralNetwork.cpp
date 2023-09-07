@@ -258,52 +258,57 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   // Save increment for momentum method
   NeuralNetwork increment;
 
-  size_t i=0;
   double grad_norm = 1.;  
-  
-  // TODO: Find a better stopping criterion
-  //while(i++ < options.max_iter && grad_norm > 1.e-10)
-  while(i++ < options.max_iter)
+  size_t i=0;
+  for(size_t epoch=0; epoch<options.epochs; ++epoch)
     {
+      std::cout << "Epoch " << epoch << " of " << options.epochs << std::endl;
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
-      
-      double f = evalFunctional(data, y, z, data_idx, options);
-      
-      NeuralNetwork grad_net = evalGradient(data, y, z, data_idx, options);
-      
-      grad_norm = grad_net.norm();
 
-      // Console output
-      if(i%options.output_every == 0)
-        {
-	  std::cout << "Iteration " << i << std::endl;
-	  std::cout << "functional value : " << f << std::endl;
-	  std::cout << "learning rate    : " << options.learning_rate << std::endl;
-	  std::cout << "gradient norm    : " << grad_norm << std::endl;
-	  std::cout << "=========================================" << std::endl;
+      for(size_t start_idx=0; start_idx<n_data-options.batch_size; start_idx+=options.batch_size)
+        {	
+	std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
+				     data_idx.begin() + start_idx + options.batch_size);
+
+	double f = evalFunctional(data, y, z, batch_data_idx, options);
+      
+	NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
+	
+	grad_norm = grad_net.norm();
+
+	// Console output
+	if(i++%options.output_every == 0)
+	  {
+	    std::cout << "Batch " << start_idx/options.batch_size
+		    << "/" << n_data/options.batch_size << std::endl;
+	    std::cout << "functional value : " << f << std::endl;
+	    std::cout << "learning rate    : " << options.learning_rate << std::endl;
+	    std::cout << "gradient norm    : " << grad_norm << std::endl;
+	    std::cout << "=========================================" << std::endl;
+	  }
+      
+	os << start_idx / options.batch_size << ", " << f << ", " << grad_norm << std::endl;
+      
+	// for testing only. remove later
+	//gradientTest(grad_net, data, data_idx, options);
+	//return;
+
+	// Update weights
+	if(epoch==0 && start_idx==0)
+	  {
+	    increment = (-options.learning_rate)*grad_net;
+	  }
+	else
+	  {
+	    // increment = (-options.learning_rate)*grad_net + momentum*increment;
+	    increment *= momentum;
+	    increment += (-options.learning_rate)*grad_net;	  
+	  }
+      
+	*this += 1.*increment;
         }
-      
-      os << i << ", " << f << ", " << grad_norm << std::endl;
-      
-      // for testing only. remove later
-      //gradientTest(grad_net, data, data_idx, options);
-      //return;
-
-      // Update weights
-      if(i>1)
-	{
-	  // increment = (-options.learning_rate)*grad_net + momentum*increment;
-	  increment *= momentum;
-	  increment += (-options.learning_rate)*grad_net;	  
-	}
-      else
-	{
-	  increment = (-options.learning_rate)*grad_net;
-	}
-      
-      *this += 1.*increment;
     }
-  
+
   os.close();
 
   std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
@@ -730,5 +735,5 @@ NeuralNetwork& NeuralNetwork::operator+=(const ScaledNeuralNetwork& other)
 
 OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),
 				     learning_rate(1.e-2), loss_function(LossFunction::MSE),
-				     output_every(1)
+				     output_every(1), epochs(3)				     
 {}

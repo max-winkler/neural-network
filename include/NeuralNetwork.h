@@ -22,6 +22,7 @@ struct OptimizationOptions
   size_t batch_size;
   double learning_rate;
   size_t output_every;
+  size_t epochs;
   
   enum LossFunction {
     MSE, LOG
