@@ -211,7 +211,10 @@ size_t Vector::indMax() const
   double max = data[0];
   for(size_t l=0; l<size; ++l)
     if(data[l] > max)
-      ind = l;
+      {
+        max = data[l];
+        ind = l;
+      }
 
   return ind;
 }

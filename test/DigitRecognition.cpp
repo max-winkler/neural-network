@@ -141,17 +141,22 @@ int main()
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
   net.addFlatteningLayer();
-  net.addFullyConnectedLayer(64, ActivationFunction::RELU); // hidden layer
-  net.addFullyConnectedLayer(64, ActivationFunction::RELU); // hidden layer
-  net.addFullyConnectedLayer(32, ActivationFunction::RELU); // hidden layer
-  net.addFullyConnectedLayer(32, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(80, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(10, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(10); // output layer
   
   net.initialize();
 
   std::cout << net;
+
+  OptimizationOptions options;
+  options.loss_function = OptimizationOptions::LossFunction::MSE;
+  options.batch_size    = 100;
+  options.max_iter      = 1e4;
+  options.output_every  = 10;
   
-  net.train(training_data);
+  net.train(training_data, options);
 
   // Read training data
   std::vector<TrainingData> test_data;
@@ -171,10 +176,26 @@ int main()
   for(auto data = test_data.begin(); data != test_data.end(); ++data)
     {
       Vector p = net.eval(*(data->x));
-      p.indMax() == data->y.indMax() ? correct++ : wrong++;      
+      if(p.indMax() != data->y.indMax())
+        {
+	/*
+	std::cout << "Wrong classification detected.\n";
+	std::cout << "Image: \n" << dynamic_cast<const Matrix&>(*(data->x));
+	std::cout << "This is number " << data->y.indMax()
+		<< " but network predicts " << p.indMax() << ".\n";
+	std::cout << p << std::endl;
+	
+	char a;
+	std::cout << "Press enter to continue.\n";
+	std::cin >> a;
+	*/
+	wrong++;
+        }
+      else
+        correct++;
     }
   std::cout << "Correctly classified : " << correct << " (" << (double)correct/n_test*100 << "%)\n";
   std::cout << "Wrongly classified   : " << wrong << " (" << (double)wrong/n_test*100 << "%)\n";
-  
+
   return 0;
 }

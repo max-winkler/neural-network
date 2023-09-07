@@ -1,6 +1,6 @@
 OBJ = 	src/DataArray.o src/Vector.o src/Matrix.o src/Layer.o src/NeuralNetwork.o src/Activation.o src/TrainingData.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -g
+CPP_FLAGS = -O3
 LIBS = -lpng
 
 %.o: %.cpp

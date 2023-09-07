@@ -98,7 +98,7 @@ void NeuralNetwork::initialize()
 	      Matrix W(m, n);
 	      for(size_t i=0; i<m; ++i)
 		for(size_t j=0; j<n; ++j)
-		  W[i][j] = random_real(rnd_gen);
+		  W[i][j] = -1.+2*random_real(rnd_gen); // TODO: Which interval range is best?
 	      
 	      it->weight = W;
 	      it->bias = Vector(m);
@@ -262,7 +262,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   double grad_norm = 1.;  
   
   // TODO: Find a better stopping criterion
-  while(i++ < options.max_iter && grad_norm > 1.e-10)
+  //while(i++ < options.max_iter && grad_norm > 1.e-10)
+  while(i++ < options.max_iter)
     {
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
       
