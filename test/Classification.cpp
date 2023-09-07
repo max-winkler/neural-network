@@ -25,7 +25,7 @@ int main()
   std::cout << net; 
 
   // Generate data and separate into 3 classes
-  const size_t sample_size = 1000;
+  const size_t sample_size = 10000;
 
   std::vector<TrainingData> training_data;
   training_data.reserve(sample_size);
@@ -54,6 +54,7 @@ int main()
   options.loss_function = OptimizationOptions::LossFunction::MSE;
   options.batch_size    = 100;
   options.max_iter      = 1e5;
+  options.epochs        = 10;
   
   net.train(training_data, options);
 
