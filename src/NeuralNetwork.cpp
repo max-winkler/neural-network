@@ -169,12 +169,23 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	  // Create vector in first layer
 	  x_tmp = new Vector(dynamic_cast<const Vector&>(x));
 	  break;
+	case LayerType::MATRIX_INPUT:
+	  x_tmp = new Matrix(dynamic_cast<const Matrix&>(x));
+	  break;
 	case LayerType::FULLY_CONNECTED:
 	case LayerType::CLASSIFICATION:
 	  {
 	    Vector& x_ref = dynamic_cast<Vector&>(*x_tmp);
 	    
 	    dynamic_cast<Vector&>(*x_tmp) = activate(layer->weight * x_ref + layer->bias, layer->activation_function);
+	  }
+	  break;
+	case LayerType::FLATTENING:
+	  {
+	    // TODO: Delete old x_tmp after flattening
+	    const Matrix* tmp = dynamic_cast<const Matrix*>(x_tmp);
+	    x_tmp = new Vector(tmp->flatten());
+	    delete tmp;
 	  }
 	  break;
 	default:
@@ -262,7 +273,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       grad_norm = grad_net.norm();
 
       // Console output
-      if(i%1000 == 0)
+      if(i%options.output_every == 0)
         {
 	  std::cout << "Iteration " << i << std::endl;
 	  std::cout << "functional value : " << f << std::endl;
@@ -446,47 +457,48 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
     {      
       for(size_t idx=0; idx<options.batch_size; ++idx)
         {
-	  switch(layers[l].layer_type)
+	switch(layers[l].layer_type)
+	  {
+	  case FULLY_CONNECTED:
+	  case CLASSIFICATION:
 	    {
-	    case FULLY_CONNECTED:
-	    case CLASSIFICATION:
-	      {
-		const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
+	      const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
 	      
-		switch(layers[l].activation_function)
-		  {
-		  case ActivationFunction::SOFTMAX:
-		    // Activation functions taking all components into account
-		    dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
+	      switch(layers[l].activation_function)
+	        {
+	        case ActivationFunction::SOFTMAX:
+		// Activation functions taking all components into account
+		dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
 		  
-		    break;
+		break;
 		  
-		  default:
-		    // Activation functions applied component-wise
-		    dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
-		  }
+	        default:
+		// Activation functions applied component-wise
+		dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
+	        }
 	      
 	      
-		dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
-	      }
-	      break;
+	      dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
 
-	    case FLATTENING:
-	      {
-		DataArray* tmp = Dy[idx];
-		Dy[idx] = new Matrix(dynamic_cast<Vector&>(*Dy[idx]).reshape(layers[l].dimension.first,
-									     layers[l].dimension.second));
-		delete tmp;
-	      }
-	      break;
-	    default:
-	      std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]
-			<< " not implemented yet.\n";
-	      break;
+	      // Gradient w.r.t. weight and bias
+	      grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l-1][idx]));
+	      grad_net.layers[l].bias += dynamic_cast<Vector&>(*Dz[idx]);
 	    }
-	  // Gradient w.r.t. weight and bias
-	  grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l-1][idx]));
-	  grad_net.layers[l].bias += dynamic_cast<Vector&>(*Dz[idx]);
+	    break;
+
+	  case FLATTENING:
+	    {
+	      DataArray* tmp = Dy[idx];
+	      Dy[idx] = new Matrix(dynamic_cast<Vector&>(*Dy[idx]).reshape(layers[l].dimension.first,
+							       layers[l].dimension.second));
+	      delete tmp;
+	    }
+	    break;
+	  default:
+	    std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]
+		    << " not implemented yet.\n";
+	    break;
+	  }
         }
     }
 
@@ -616,28 +628,35 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 
   // Allocate memory for auxiliary vectors
   for(size_t l=0; l<layers.size(); ++l)
-    {      
+    {
       z[l] = std::vector<DataArray*>(options.batch_size);
       y[l] = std::vector<DataArray*>(options.batch_size);
-      
+
       for(size_t idx = 0; idx < options.batch_size; ++idx)
-	{
+	{	  
 	  switch(layers[l].layer_type)
-	    {	      
+	    {
+	    case MATRIX_INPUT:
+	      // TODO: Are y and z really needed in input layers?
+	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
+	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
+
+	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:
-	      
+	    case FLATTENING:
 	      z[l][idx] = new Vector(layers[l].dimension.first);
 	      y[l][idx] = new Vector(layers[l].dimension.first);
 	      break;
 	      
 	    default:
-	      std::cerr << "ERROR: Allocation of memory not implemented for this layer type yet.\n";
+	      std::cerr << "ERROR: Allocation of memory not implemented for "
+			<< Layer::LayerName[layers[l].layer_type] << " yet.\n";
 	    }
 	}
     }
-  
+    
   double f = evalFunctional(data, y, z, data_idx, options);
   std::cout << "Value in x0: " << f << std::endl; 
             
@@ -709,5 +728,6 @@ NeuralNetwork& NeuralNetwork::operator+=(const ScaledNeuralNetwork& other)
 }
 
 OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),
-					     learning_rate(1.e-2), loss_function(LossFunction::MSE)
+				     learning_rate(1.e-2), loss_function(LossFunction::MSE),
+				     output_every(1)
 {}

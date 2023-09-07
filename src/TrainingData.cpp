@@ -3,7 +3,17 @@
 TrainingData::TrainingData(const Vector& x, const Vector& y) : x(new Vector(x)), y(y) {}
 TrainingData::TrainingData(const Matrix& x, const Vector& y) : x(new Matrix(x)), y(y) {}
 
-TrainingData::TrainingData(const TrainingData& other) : x(new Vector(dynamic_cast<Vector&>(*other.x))), y(other.y) {}
+TrainingData::TrainingData(const TrainingData& other) : y(other.y) {
+
+  if(dynamic_cast<Vector*>(other.x))
+    x = new Vector(dynamic_cast<Vector&>(*other.x));
+  else if(dynamic_cast<Matrix*>(other.x))
+    x = new Matrix(dynamic_cast<Matrix&>(*other.x));
+  else
+    {
+      std::cerr << "ERROR: Unable to copy training data as type of input is not accurate.\n";
+    }
+}
 
 TrainingData::TrainingData(TrainingData&& other) : x(other.x), y(std::move(other.y))
 {    

@@ -54,7 +54,7 @@ int read_training_data(const char* image_file, const char* label_file,
 
   magic_number2 = reverseInt(magic_number2);
   n_images2 = reverseInt(n_images2);
-
+  
   if(n_images != n_images2)
     {
       std::cerr << "ERROR: Image data and label data do not fit together.\n";
@@ -78,14 +78,15 @@ int read_training_data(const char* image_file, const char* label_file,
       
       // Read pixel data
       image_data.read((char*)pixel_buffer, pixels*sizeof(char));
+
       /*
       // Console output for testing only
       for(int i=0; i<height; ++i)
-	{
-	  for(int j=0; j<width; ++j)
-	    std::cout << std::setw(4) << (int)(pixel_buffer[width*i+j]);
-	  std::cout << std::endl;
-	}
+        {
+	for(int j=0; j<width; ++j)
+	  std::cout << std::setw(4) << (int)(pixel_buffer[width*i+j]);
+	std::cout << std::endl;
+        }
       */
       
       // Read label
@@ -108,8 +109,10 @@ int read_training_data(const char* image_file, const char* label_file,
 	}
       
       y[label] = 1.;
-      
-      training_data.emplace_back(TrainingData(x, y));
+
+      // TODO: Training data is copied here. Use move semantics instead
+      TrainingData data(x, y);
+      training_data.push_back(data);
     }
   
   image_data.close();
@@ -138,9 +141,9 @@ int main()
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
   net.addFlatteningLayer();
-  net.addFullyConnectedLayer(64, ActivationFunction::TANH); // hidden layer
-  net.addFullyConnectedLayer(64, ActivationFunction::TANH); // hidden layer
-  net.addFullyConnectedLayer(32, ActivationFunction::TANH); // hidden layer
+  net.addFullyConnectedLayer(64, ActivationFunction::RELU); // hidden layer
+  net.addFullyConnectedLayer(64, ActivationFunction::RELU); // hidden layer
+  net.addFullyConnectedLayer(32, ActivationFunction::RELU); // hidden layer
   net.addFullyConnectedLayer(32, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(10); // output layer
   
@@ -149,6 +152,29 @@ int main()
   std::cout << net;
   
   net.train(training_data);
-    
+
+  // Read training data
+  std::vector<TrainingData> test_data;
+  int n_test;
+
+  if(read_training_data("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
+		    n_test, width, height, test_data) != 0)    
+    return -1;  
+
+  // Console output
+  std::cout << "Training set:\n";
+  std::cout << " images : " << n_images << std::endl;
+  
+  // Compare to test data
+  int correct = 0;
+  int wrong   = 0;
+  for(auto data = test_data.begin(); data != test_data.end(); ++data)
+    {
+      Vector p = net.eval(*(data->x));
+      p.indMax() == data->y.indMax() ? correct++ : wrong++;      
+    }
+  std::cout << "Correctly classified : " << correct << " (" << (double)correct/n_test*100 << "%)\n";
+  std::cout << "Wrongly classified   : " << wrong << " (" << (double)wrong/n_test*100 << "%)\n";
+  
   return 0;
 }

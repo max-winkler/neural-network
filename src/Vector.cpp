@@ -205,6 +205,17 @@ Vector& Vector::operator*=(double a)
   return *this;
 }
 
+size_t Vector::indMax() const
+{
+  size_t ind = 0;
+  double max = data[0];
+  for(size_t l=0; l<size; ++l)
+    if(data[l] > max)
+      ind = l;
+
+  return ind;
+}
+
 DiagonalMatrix::DiagonalMatrix(const Vector& x)
   : diagonal(&x)
 {

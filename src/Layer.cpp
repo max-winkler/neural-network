@@ -32,7 +32,8 @@ double Layer::dot(const Layer& rhs) const
 
     case VECTOR_INPUT:
     case MATRIX_INPUT:
-      // Input layers have no weight and bias
+    case FLATTENING:
+      // These layers have no weight and bias
       break;
     default:
       std::cerr << "ERROR: Inner product for layer type " << LayerName[layer_type] << " not implemented yet.\n";

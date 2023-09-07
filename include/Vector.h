@@ -48,6 +48,9 @@ class Vector : public DataArray {
   Vector& operator+=(const ScaledVector&);
   Vector& operator*=(double);
 
+  // Maximum and minimum functions
+  size_t indMax() const;
+  
   // Getters for basic properties
   size_t length() const;
 
