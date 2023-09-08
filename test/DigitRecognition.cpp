@@ -20,7 +20,7 @@ int reverseInt (int i)
 }
 
 int read_training_data(const char* image_file, const char* label_file,
-		       int& n_images, int& width, int& height,
+		       int& n_images, int& width, int& height, int& n_classes,
 		       std::vector<TrainingData>& training_data)
 {
   std::ifstream image_data(image_file, std::ios::binary);
@@ -67,6 +67,24 @@ int read_training_data(const char* image_file, const char* label_file,
   // Read pixel data of images
   unsigned char pixel_buffer[pixels];
   unsigned char label_buffer[1];
+
+  // Determine number of classes
+  n_classes = 0;
+  for(int m=0; m<n_images; ++m)
+    {
+      label_data.read((char*)label_buffer, sizeof(char));
+      int label = (int)(*label_buffer);
+      
+      if(label > n_classes)
+	n_classes = label;
+    }
+  n_classes++;
+
+  std::cout << "This dataset has " << n_classes << " different classes\n";
+  // Read from beginning and reread first lines
+  label_data.seekg(0, label_data.beg);
+  label_data.read(reinterpret_cast<char*>(&magic_number2), sizeof(magic_number2));
+  label_data.read(reinterpret_cast<char*>(&n_images2), sizeof(n_images2));
   
   for(int m=0; m<n_images; ++m)
     {
@@ -99,10 +117,10 @@ int read_training_data(const char* image_file, const char* label_file,
       
       // Create training dataset
       Matrix x(width, height, pixel_buffer);
-      Vector y(10);
+      Vector y(n_classes);
       int label = (int)(*label_buffer);
 
-      if(label < 0 || label > 9)
+      if(label < 0 || label >= n_classes)
 	{
 	  std::cerr << "ERROR: Invalid label in training data detected.\n";
 	  return -1;
@@ -124,11 +142,23 @@ int read_training_data(const char* image_file, const char* label_file,
 int main()
 {
   // Read training data
-  int width, height, n_images;
+  int width, height, n_images, n_classes;
   std::vector<TrainingData> training_data;
+
+  /*
+  char training_data_file[]  = "mnist/train-images-idx3-ubyte";
+  char training_label_file[] = "mnist/train-labels-idx1-ubyte";
+  char test_data_file[]      = "mnist/t10k-images-idx3-ubyte";
+  char test_label_file[]     = "mnist/t10k-labels-idx1-ubyte";
+  */
   
-  if(read_training_data("mnist/train-images-idx3-ubyte", "mnist/train-labels-idx1-ubyte",
-			n_images, width, height, training_data) != 0)    
+  char training_data_file[]  = "mnist/emnist-letters-train-images-idx3-ubyte";
+  char training_label_file[] = "mnist/emnist-letters-train-labels-idx1-ubyte";
+  char test_data_file[]      = "mnist/emnist-letters-test-images-idx3-ubyte";
+  char test_label_file[]     = "mnist/emnist-letters-test-labels-idx1-ubyte";
+  
+  if(read_training_data(training_data_file, training_label_file,
+			n_images, width, height, n_classes, training_data) != 0)    
     return -1;
 
   // Console output
@@ -137,14 +167,31 @@ int main()
   std::cout << " width  : " << width << std::endl;
   std::cout << " height : " << height << std::endl;
 
+  // Read test data
+  std::vector<TrainingData> test_data;
+  int n_test, n_classes_test;
+
+  if(read_training_data(test_data_file, test_label_file,
+		    n_test, width, height, n_classes_test, test_data) != 0)    
+    return -1;  
+
+  if(n_classes != n_classes_test)
+    {
+      std::cerr << "ERROR: Training and test dataset have different number of classes.\n";
+      return -1;
+    }
+  
+  // Console output
+  std::cout << "Training set:\n";
+  std::cout << " images : " << n_images << std::endl;
+  
   // Create neural network
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(80, ActivationFunction::SIGMOID); // hidden layer
-  //net.addFullyConnectedLayer(10, ActivationFunction::SIGMOID); // hidden layer
-  net.addClassificationLayer(10); // output layer
+  net.addClassificationLayer(n_classes); // output layer
   
   net.initialize();
 
@@ -152,24 +199,13 @@ int main()
 
   OptimizationOptions options;
   options.loss_function = OptimizationOptions::LossFunction::MSE;
-  options.batch_size    = 32;
+  options.batch_size    = 64;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 5;
+  options.epochs        = 10;
   
   net.train(training_data, options);
 
-  // Read training data
-  std::vector<TrainingData> test_data;
-  int n_test;
-
-  if(read_training_data("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
-		    n_test, width, height, test_data) != 0)    
-    return -1;  
-
-  // Console output
-  std::cout << "Training set:\n";
-  std::cout << " images : " << n_images << std::endl;
   
   // Compare to test data
   int correct = 0;
