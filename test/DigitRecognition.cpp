@@ -195,6 +195,7 @@ int main()
   
   net.initialize();
 
+  // Output neural network structure
   std::cout << net;
 
   OptimizationOptions options;
