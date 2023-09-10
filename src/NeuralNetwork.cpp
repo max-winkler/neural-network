@@ -40,6 +40,33 @@ void NeuralNetwork::addInputLayer(size_t i, size_t j)
   layers.push_back(layer);
 }
 
+void NeuralNetwork::addPoolingLayer(size_t batch)
+{
+  const Layer& prev_layer = layers.back();
+
+  // Check if layer matches previous layer
+  switch(prev_layer.layer_type)
+    {
+    case LayerType::MATRIX_INPUT:
+    case LayerType::CONVOLUTION:
+    case LayerType::POOLING:
+      break;
+    default:
+      std::cerr << "ERROR: A pooling layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
+	      << ", " << Layer::LayerName[LayerType::CONVOLUTION]
+	      << " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      return;
+    }
+
+  // Dimension of resulting matrix
+  size_t m = (prev_layer.dimension.first-1) / batch + 1;
+  size_t n = (prev_layer.dimension.second-1) / batch + 1;
+
+  // Add layer
+  Layer layer(std::pair<size_t, size_t>(m, n), LayerType::POOLING, ActivationFunction::NONE);
+  layers.push_back(layer);  
+}
+
 void NeuralNetwork::addFlatteningLayer()
 {
   const Layer& prev_layer = layers.back();
@@ -54,7 +81,7 @@ void NeuralNetwork::addFlatteningLayer()
     default:
       std::cerr << "ERROR: A flattening layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
 		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
-		<< " or " << Layer::LayerName[LayerType::CONVOLUTION] << std::endl;
+		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
       return;
     }
   // Dimension of flattened matrix
@@ -112,16 +139,17 @@ void NeuralNetwork::initialize()
 	    }
 	  
 	}
-      else if(it->layer_type == LayerType::FLATTENING)
-	{
-	  // Nothing to be done here
-	}
+      else if(it->layer_type == LayerType::FLATTENING
+	    || it->layer_type == LayerType::POOLING)
+        {
+	// Nothing to be done here
+        }
       else
-	{
-	  std::cerr << "ERROR: Initialization of neural network with " << Layer::LayerName[it->layer_type]
-		    << " is not implemented yet.\n";
-	}
-    }  
+        {
+	std::cerr << "ERROR: Initialization of neural network with " << Layer::LayerName[it->layer_type]
+		<< " is not implemented yet.\n";
+        }
+    }
   
   initialized = true;
 }

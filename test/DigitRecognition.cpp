@@ -144,18 +144,18 @@ int main()
   // Read training data
   int width, height, n_images, n_classes;
   std::vector<TrainingData> training_data;
-
-  /*
+  
   char training_data_file[]  = "mnist/train-images-idx3-ubyte";
   char training_label_file[] = "mnist/train-labels-idx1-ubyte";
   char test_data_file[]      = "mnist/t10k-images-idx3-ubyte";
   char test_label_file[]     = "mnist/t10k-labels-idx1-ubyte";
-  */
-  
+
+  /*
   char training_data_file[]  = "mnist/emnist-letters-train-images-idx3-ubyte";
   char training_label_file[] = "mnist/emnist-letters-train-labels-idx1-ubyte";
   char test_data_file[]      = "mnist/emnist-letters-test-images-idx3-ubyte";
   char test_label_file[]     = "mnist/emnist-letters-test-labels-idx1-ubyte";
+  */
   
   if(read_training_data(training_data_file, training_label_file,
 			n_images, width, height, n_classes, training_data) != 0)    
@@ -188,6 +188,7 @@ int main()
   // Create neural network
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
+  net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(80, ActivationFunction::SIGMOID); // hidden layer
