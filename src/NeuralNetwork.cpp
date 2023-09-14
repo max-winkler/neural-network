@@ -522,7 +522,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	      DataArray* tmp = Dy[idx];
 
 	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
-	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l+1][idx]);
+	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l-1][idx]);
 	      
 	      Dy_idx = Dy_idx.unpool(y_res, POOLING_MAX, layers[l].S, layers[l].P);
 	    }	    

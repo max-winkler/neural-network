@@ -1,6 +1,6 @@
 OBJ = 	src/DataArray.o src/Vector.o src/Matrix.o src/Layer.o src/NeuralNetwork.o src/Activation.o src/TrainingData.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -g
+CPP_FLAGS = -O3
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \

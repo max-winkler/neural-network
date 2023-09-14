@@ -33,6 +33,7 @@ double Layer::dot(const Layer& rhs) const
     case VECTOR_INPUT:
     case MATRIX_INPUT:
     case FLATTENING:
+    case POOLING:
       // These layers have no weight and bias
       break;
     default:
