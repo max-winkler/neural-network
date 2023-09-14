@@ -1,6 +1,6 @@
 OBJ = 	src/DataArray.o src/Vector.o src/Matrix.o src/Layer.o src/NeuralNetwork.o src/Activation.o src/TrainingData.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -O3
+CPP_FLAGS = -g
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
@@ -28,6 +28,8 @@ test: $(OBJ)
 	g++ test/Convolution.o ${OBJ} ${LIBS} -o convolution_test
 	g++ -c test/DigitRecognition.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/DigitRecognition.o	
 	g++ test/DigitRecognition.o ${OBJ} ${LIBS} -o digitrecognition_test
+	g++ -c test/Pooling.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Pooling.o	
+	g++ test/Pooling.o ${OBJ} ${LIBS} -o pooling_test
 
 # Target to create the output directory
 $(MNIST_FILE_DIR):

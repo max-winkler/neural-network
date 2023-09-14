@@ -33,8 +33,13 @@ class Layer
  private:
   std::pair<size_t, size_t> dimension;
 
+  // Matrix and vector (might be unused depending on layer type)
   Matrix weight;
   Vector bias;
+
+  // Stright and padding (might be unused depending on layer type)
+  size_t S;
+  size_t P;
   
   ActivationFunction activation_function;
 

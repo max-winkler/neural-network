@@ -64,7 +64,9 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
 
   // Add layer
   Layer layer(std::pair<size_t, size_t>(m, n), LayerType::POOLING, ActivationFunction::NONE);
-  layers.push_back(layer);  
+  // TODO: Extend this function to variable padding P
+  layer.S = batch;
+  layers.push_back(layer);
 }
 
 void NeuralNetwork::addFlatteningLayer()
@@ -154,37 +156,6 @@ void NeuralNetwork::initialize()
   initialized = true;
 }
 
-/*
-void NeuralNetwork::setParameters(size_t layer, const Matrix& matrix, const Vector& vector, ActivationFunction act)
-{
-  if(layer < 0 || layer > layers-1)
-    {
-      std::cerr << "Error: The layer " << layer << " is not feasible. Must be between 0 and " << layers-1 << std::endl;
-      return;
-    }
-
-  if(matrix.nRows() != width[layer+1] || matrix.nCols() != width[layer])
-    {
-      std::cerr << "Error: The provided weight matrix has invalid size.\n";
-      std::cerr << "  Given is (" << matrix.nRows() << "," << matrix.nCols() << ")"
-		<< " but required is (" << width[layer+1] << "," << width[layer] << ")\n";
-      return;
-    }
-  
-  if(vector.size() != width[layer+1])
-    {
-      std::cerr << "Error: The provided bias vector has invalid size.\n";
-      std::cerr << "  Given is (" << vector.size() 
-		<< " but required is (" << width[layer+1] << "," << ")\n";
-      return;
-    }
-  
-  params.weight[layer] = matrix;
-  params.bias[layer] = vector;
-  params.activation[layer] = act;
-}
-*/
-
 Vector NeuralNetwork::eval(const DataArray& x) const
 {
   DataArray* x_tmp;
@@ -216,8 +187,16 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	    delete tmp;
 	  }
 	  break;
+	case LayerType::POOLING:
+	  {
+	    Matrix& x_ref = dynamic_cast<Matrix&>(*x_tmp);
+	    x_ref = x_ref.pool(POOLING_MAX, layer->S, 0);
+	  }
+	  break;
 	default:
-	  std::cerr << "ERROR: The layer type " << layer->layer_type << " is invalid or not implemented yet.\n";	  
+	  std::cerr << "ERROR: Evaluation of neural networks involving " << Layer::LayerName[layer->layer_type]
+		  << " is invalid or not implemented yet.\n";
+	  return Vector();
 	}      
     }
 
@@ -252,6 +231,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	  switch(layers[l].layer_type)
 	    {
 	    case MATRIX_INPUT:
+	    case POOLING:
 	      // TODO: Are y and z really needed in input layers?
 	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
 	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
@@ -409,6 +389,14 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      dynamic_cast<Vector&>(*y[l+1][idx]) = y_prev.flatten();
 	    }
 	  break;
+	case POOLING:
+	  for(size_t idx=0; idx<options.batch_size; ++idx)
+	    {
+	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
+	      
+	      // z is unused here
+	      dynamic_cast<Matrix&>(*y[l+1][idx]) = y_prev.pool(POOLING_MAX, layer->S, layer->P);
+	    }
 	default:
 	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
 		    << Layer::LayerName[layer->layer_type] << ".\n";
@@ -527,6 +515,17 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 							       layers[l].dimension.second));
 	      delete tmp;
 	    }
+	    break;
+	  case POOLING:
+	    {
+	      DataArray* tmp = Dy[idx];
+
+	      Matrix& y0 = dynamic_cast<Matrix&>(*y[l][idx]);
+	      Matrix& y1 = dynamic_cast<Matrix&>(*y[l+1][idx]);
+	      
+	      // TODO: Evaluate gradient with respect to y
+	      // Dy[idx] = ;
+	    }	    
 	    break;
 	  default:
 	    std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]

@@ -12,8 +12,8 @@ std::unordered_map<LayerType, const char*> Layer::LayerName =
   };
 
 Layer::Layer(std::pair<size_t, size_t> dimension, LayerType layer_type, ActivationFunction activation_function)
-  : dimension(dimension), layer_type(layer_type), activation_function(activation_function),
-    weight(Matrix()), bias(Vector())
+  : dimension(dimension), layer_type(layer_type), activation_function(activation_function), 
+    weight(), bias(), S(0), P(0)
 {}
 
 double Layer::dot(const Layer& rhs) const
