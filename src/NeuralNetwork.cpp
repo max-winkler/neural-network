@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <chrono>
+#include <iomanip>
 
 NeuralNetwork::NeuralNetwork()
   : initialized(false), layers(), rnd_gen(std::random_device()())
@@ -270,7 +271,12 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   size_t i=0;
   for(size_t epoch=0; epoch<options.epochs; ++epoch)
     {
-      std::cout << "Epoch " << epoch << " of " << options.epochs << std::endl;
+      std::cout << "**************************************************************\n";
+      std::cout << "* Epoch " << epoch+1 << " of " << options.epochs << std::endl;
+      std::cout << "**************************************************************\n";
+
+      std::cout << std::setw(20) << "Batch" << std::setw(20) << "Functional value" << std::setw(20) << "gradient norm" << std::endl;
+      
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
 
       for(size_t start_idx=0; start_idx<n_data-options.batch_size; start_idx+=options.batch_size)
@@ -287,16 +293,10 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	// Console output
 	if(i++%options.output_every == 0)
 	  {
-	    std::cout << "Batch " << start_idx/options.batch_size
-		    << "/" << n_data/options.batch_size << std::endl;
-	    std::cout << "functional value : " << f << std::endl;
-	    std::cout << "learning rate    : " << options.learning_rate << std::endl;
-	    std::cout << "gradient norm    : " << grad_norm << std::endl;
-	    std::cout << "=========================================" << std::endl;
+	    std::cout << std::setw(13) << start_idx/options.batch_size << " / " << std::setw(4) << n_data/options.batch_size;
+	    std::cout << std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
 	  }
-      
-	os << start_idx / options.batch_size << ", " << f << ", " << grad_norm << std::endl;
-      
+	
 	// for testing only. remove later
 	//gradientTest(grad_net, data, data_idx, options);
 	//return;
