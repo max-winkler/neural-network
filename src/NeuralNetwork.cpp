@@ -397,9 +397,10 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      // z is unused here
 	      dynamic_cast<Matrix&>(*y[l+1][idx]) = y_prev.pool(POOLING_MAX, layer->S, layer->P);
 	    }
+	  break;
 	default:
 	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
-		    << Layer::LayerName[layer->layer_type] << ".\n";
+		  << Layer::LayerName[layer->layer_type] << ".\n";
 	}
     }
 
@@ -520,11 +521,10 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	    {
 	      DataArray* tmp = Dy[idx];
 
-	      Matrix& y0 = dynamic_cast<Matrix&>(*y[l][idx]);
-	      Matrix& y1 = dynamic_cast<Matrix&>(*y[l+1][idx]);
+	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
+	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l+1][idx]);
 	      
-	      // TODO: Evaluate gradient with respect to y
-	      // Dy[idx] = ;
+	      Dy_idx = Dy_idx.unpool(y_res, POOLING_MAX, layers[l].S, layers[l].P);
 	    }	    
 	    break;
 	  default:
@@ -546,8 +546,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net) 
 {
-  os << "Neural network with (" << (net.layers.size()) << " layers)\n";
-  os << "  Input layer         : " << (net.layers[0]) << "\n";
+  os << "Neural network with (" << (net.layers.size()) << " layers)\n\n";
   
   for(auto layer = net.layers.begin(); layer != net.layers.end(); ++ layer)
     {
