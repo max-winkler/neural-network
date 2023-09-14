@@ -27,7 +27,10 @@ NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
       
       new_layer.weight = Matrix(layer->weight.nRows(), layer->weight.nCols());
       new_layer.bias = Vector(layer->bias.length());
-	
+
+      new_layer.S = layer->S;
+      new_layer.P = layer->P;
+      
       other.layers.push_back(new_layer);
     }
 
@@ -298,8 +301,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	  }
 	
 	// for testing only. remove later
-	//gradientTest(grad_net, data, data_idx, options);
-	//return;
+	// gradientTest(grad_net, data, data_idx, options);
+	// return;
 
 	// Update weights
 	if(epoch==0 && start_idx==0)
@@ -437,10 +440,10 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 }
 
 NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
-					  const std::vector<std::vector<DataArray*>>& y,
-					  const std::vector<std::vector<DataArray*>>& z,
-					  const std::vector<size_t>& data_indices,
-					  OptimizationOptions options) const
+				  const std::vector<std::vector<DataArray*>>& y,
+				  const std::vector<std::vector<DataArray*>>& z,
+				  const std::vector<size_t>& data_indices,
+				  OptimizationOptions options) const
 {
   size_t n_data = data.size();
   
@@ -572,6 +575,9 @@ NeuralNetwork& NeuralNetwork::operator=(const ScaledNeuralNetwork& other)
       new_layer.weight *= other.scale;
       new_layer.bias *= other.scale;
 
+      new_layer.S = layer->S;
+      new_layer.P = layer->P;
+
       layers.push_back(new_layer);
     }
 
@@ -609,6 +615,9 @@ NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs
 
       new_layer.bias = lhs_layer->bias;
       new_layer.bias+= rhs.scale * rhs_layer->bias;
+
+      new_layer.S = lhs_layer->S;
+      new_layer.P = lhs_layer->P;
       
       net.layers.push_back(new_layer);
     }
@@ -669,6 +678,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	  switch(layers[l].layer_type)
 	    {
 	    case MATRIX_INPUT:
+	    case POOLING:
 	      // TODO: Are y and z really needed in input layers?
 	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
 	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
