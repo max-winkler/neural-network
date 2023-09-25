@@ -4,9 +4,9 @@ CPP_FLAGS = -O3
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
-	http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
-#	http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz \
-#	http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+	http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz \
+	http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz \
+	http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
 
 MNIST_FILE_DIR := mnist
 

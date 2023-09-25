@@ -38,6 +38,7 @@ class Layer
   Vector bias;
 
   // Stright and padding (might be unused depending on layer type)
+  size_t m;
   size_t S;
   size_t P;
   

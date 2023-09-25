@@ -97,6 +97,40 @@ void NeuralNetwork::addFlatteningLayer()
   layers.push_back(layer);
 }
 
+void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, size_t S, size_t P)
+{
+
+  const Layer& prev_layer = layers.back();
+  
+  // Check if previous layer produces a matrix
+  switch(prev_layer.layer_type)
+    {
+    case LayerType::MATRIX_INPUT:
+    case LayerType::CONVOLUTION:
+    case LayerType::POOLING:
+      break;
+    default:
+      std::cerr << "ERROR: A convolution layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
+		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
+		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      return;
+    }
+
+  const size_t m1 = prev_layer.dimension.first;
+  const size_t n1 = prev_layer.dimension.second;
+
+  // TODO: This not neccesarily yields an integer. Catch this case?
+  size_t m2 = (m1-batch+2*P)/S+1;
+  size_t n2 = (n1-batch+2*P)/S+1;
+
+  Layer layer(std::pair<size_t, size_t>(m2, n2), LayerType::CONVOLUTION, act);
+  layer.m = batch;
+  layer.S = S;
+  layer.P = P;
+  
+  layers.push_back(layer);
+}
+
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 {
   Layer layer(std::pair<size_t, size_t>(width, 0), LayerType::FULLY_CONNECTED, act);
@@ -116,9 +150,10 @@ void NeuralNetwork::initialize()
   
   for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
     {
-      if(it->layer_type == LayerType::FULLY_CONNECTED
-	 || it->layer_type == LayerType::CLASSIFICATION)
+      switch(it->layer_type)
 	{
+	case FULLY_CONNECTED:
+	case CLASSIFICATION:	  
 	  if(it_pred->layer_type == LayerType::FULLY_CONNECTED
 	     || it_pred->layer_type == LayerType::VECTOR_INPUT
 	     || it_pred->layer_type == LayerType::FLATTENING)	    
@@ -131,7 +166,7 @@ void NeuralNetwork::initialize()
 	      Matrix W(m, n);
 	      for(size_t i=0; i<m; ++i)
 		for(size_t j=0; j<n; ++j)
-		  W[i][j] = -1.+2*random_real(rnd_gen); // TODO: Which interval range is best?
+		  W[i][j] = -1.+2*random_real(rnd_gen);
 	      
 	      it->weight = W;
 	      it->bias = Vector(m);
@@ -143,18 +178,30 @@ void NeuralNetwork::initialize()
 			<< " which is incompatible.\n";
 	      return;
 	    }
+	  break;
 	  
+	case FLATTENING:
+	case POOLING:
+	  // nothing to be done here
+	  break;
+	  
+	case CONVOLUTION:
+	  {
+	    Matrix W(it->m,it->m);
+	    for(size_t i=0; i<it->m; ++i)
+	      for(size_t j=0; j<it->m; ++j)
+		W[i][j] = -1.+2*random_real(rnd_gen);
+
+	    it->weight = W;
+	    it->bias = Vector(1);
+	  }
+	  break;
+	  
+	default:
+	  std::cerr << "ERROR: Initialization of neural network with " << Layer::LayerName[it->layer_type]
+		    << " is not implemented yet.\n";
+	  break;
 	}
-      else if(it->layer_type == LayerType::FLATTENING
-	    || it->layer_type == LayerType::POOLING)
-        {
-	// Nothing to be done here
-        }
-      else
-        {
-	std::cerr << "ERROR: Initialization of neural network with " << Layer::LayerName[it->layer_type]
-		<< " is not implemented yet.\n";
-        }
     }
   
   initialized = true;
@@ -236,6 +283,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    {
 	    case MATRIX_INPUT:
 	    case POOLING:
+	    case CONVOLUTION:
 	      // TODO: Are y and z really needed in input layers?
 	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
 	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
@@ -282,10 +330,12 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
 
-      for(size_t start_idx=0; start_idx<n_data-options.batch_size; start_idx+=options.batch_size)
+      for(size_t start_idx = 0;
+	  start_idx < n_data-options.batch_size;
+	  start_idx+= options.batch_size)
         {	
 	std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
-				     data_idx.begin() + start_idx + options.batch_size);
+					   data_idx.begin() + start_idx + options.batch_size);
 
 	double f = evalFunctional(data, y, z, batch_data_idx, options);
       
