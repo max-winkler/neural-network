@@ -244,6 +244,14 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	    x_ref = x_ref.pool(POOLING_MAX, layer->S, 0);
 	  }
 	  break;
+	case LayerType::CONVOLUTION:
+	  {
+	    // TODO: Add the bias b to each matrix component (remember: Y_new = act(conv(Y,K) + b)))
+	    // requires implementation of operator+ for matrix and double
+	    Matrix& x_ref = dynamic_cast<Matrix&>(*x_tmp);
+	    x_ref = activate(x_ref.convolve(layer->weight, layer->S, layer->P), layer->activation_function);
+	  }
+	  break;	  
 	default:
 	  std::cerr << "ERROR: Evaluation of neural networks involving " << Layer::LayerName[layer->layer_type]
 		  << " is invalid or not implemented yet.\n";
@@ -326,47 +334,50 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       std::cout << "* Epoch " << epoch+1 << " of " << options.epochs << std::endl;
       std::cout << "**************************************************************\n";
 
-      std::cout << std::setw(20) << "Batch" << std::setw(20) << "Functional value" << std::setw(20) << "gradient norm" << std::endl;
+      std::cout << std::setw(20) << "Batch"
+		<< std::setw(20) << "Functional value"
+		<< std::setw(20) << "gradient norm" << std::endl;
       
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
-
+      
       for(size_t start_idx = 0;
 	  start_idx < n_data-options.batch_size;
 	  start_idx+= options.batch_size)
         {	
-	std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
-					   data_idx.begin() + start_idx + options.batch_size);
+	  std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
+					     data_idx.begin() + start_idx + options.batch_size);
 
-	double f = evalFunctional(data, y, z, batch_data_idx, options);
+	  double f = evalFunctional(data, y, z, batch_data_idx, options);
       
-	NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
+	  NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
 	
-	grad_norm = grad_net.norm();
+	  grad_norm = grad_net.norm();
 
-	// Console output
-	if(i++%options.output_every == 0)
-	  {
-	    std::cout << std::setw(13) << start_idx/options.batch_size << " / " << std::setw(4) << n_data/options.batch_size;
-	    std::cout << std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
-	  }
+	  // Console output
+	  if(i++%options.output_every == 0)
+	    {
+	      std::cout << std::setw(13) << start_idx/options.batch_size << " / "
+			<< std::setw(4) << n_data/options.batch_size
+			<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
+	    }
 	
-	// for testing only. remove later
-	// gradientTest(grad_net, data, data_idx, options);
-	// return;
+	  // for testing only. remove later
+	  // gradientTest(grad_net, data, data_idx, options);
+	  // return;
 
-	// Update weights
-	if(epoch==0 && start_idx==0)
-	  {
-	    increment = (-options.learning_rate)*grad_net;
-	  }
-	else
-	  {
-	    // increment = (-options.learning_rate)*grad_net + momentum*increment;
-	    increment *= momentum;
-	    increment += (-options.learning_rate)*grad_net;	  
-	  }
+	  // Update weights
+	  if(epoch==0 && start_idx==0)
+	    {
+	      increment = (-options.learning_rate)*grad_net;
+	    }
+	  else
+	    {
+	      // increment = (-options.learning_rate)*grad_net + momentum*increment;
+	      increment *= momentum;
+	      increment += (-options.learning_rate)*grad_net;	  
+	    }
       
-	*this += 1.*increment;
+	  *this += 1.*increment;
         }
     }
 
@@ -433,6 +444,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      dynamic_cast<Vector&>(*y[l+1][idx]) = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
 	    }	    
 	  break;
+	  
 	case FLATTENING:
 	  for(size_t idx=0; idx<options.batch_size; ++idx)
 	    {
@@ -442,6 +454,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      dynamic_cast<Vector&>(*y[l+1][idx]) = y_prev.flatten();
 	    }
 	  break;
+	  
 	case POOLING:
 	  for(size_t idx=0; idx<options.batch_size; ++idx)
 	    {
@@ -451,6 +464,18 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      dynamic_cast<Matrix&>(*y[l+1][idx]) = y_prev.pool(POOLING_MAX, layer->S, layer->P);
 	    }
 	  break;
+	  
+	case CONVOLUTION:
+	  for(size_t idx=0; idx<options.batch_size; ++idx)
+	    {
+	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
+	      
+	      // TODO: Add bias here (see NeuralNetwork::eval())
+	      dynamic_cast<Matrix&>(*z[l][idx]) = y_prev.convolve(layer->weight, layer->S, layer->P);
+	      dynamic_cast<Matrix&>(*y[l+1][idx]) = activate(dynamic_cast<Matrix&>(*z[l][idx]), layer->activation_function);
+	    }
+	  break;
+	  
 	default:
 	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
 		  << Layer::LayerName[layer->layer_type] << ".\n";

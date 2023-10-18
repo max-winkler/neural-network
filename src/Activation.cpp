@@ -40,6 +40,25 @@ Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGM
   return y;
 }
 
+Matrix activate(const Matrix& x, ActivationFunction act=ActivationFunction::SIGMOID)
+{
+  Matrix y(x.nRows(), x.nCols());
+
+  if(act == ActivationFunction::SOFTMAX)
+    {
+      std::cerr << "ERROR: Softmax activation function not implemented for matrix-valued layers.\n";
+      return Matrix(0,0);
+    }
+  else
+    {
+      // Component-wise applied activation functions
+      for(size_t i=0; i<x.nRows(); ++i)
+	for(size_t j=0; j<x.nCols(); ++j)    
+	  y[i][j] = activate(x[i][j], act);
+    }
+  return y;
+}
+
 double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)

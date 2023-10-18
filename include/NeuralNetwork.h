@@ -50,7 +50,7 @@ class NeuralNetwork
   void addInputLayer(size_t i, size_t j=0);
   void addPoolingLayer(size_t);
   void addFlatteningLayer();
-  void addConvolutionLayer(size_t, ActivationFunction, size_t S=0, size_t P=0);
+  void addConvolutionLayer(size_t, ActivationFunction, size_t S=1, size_t P=0);
   void addFullyConnectedLayer(size_t, ActivationFunction);
   void addClassificationLayer(size_t);
 

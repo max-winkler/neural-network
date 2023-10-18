@@ -239,8 +239,8 @@ Matrix Matrix::pool(int type, size_t S, size_t P) const
   const size_t n1 = nRows();
   const size_t n2 = nCols();
 
-  const size_t n1_new = (n1 + 2*P)/S;
-  const size_t n2_new = (n2 + 2*P)/S;  
+  const size_t n1_new = (n1 + -1 + 2*P)/S + 1;
+  const size_t n2_new = (n2 + -1 + 2*P)/S + 1;  
   
   Matrix A(n1_new, n2_new);
 
