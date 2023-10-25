@@ -597,13 +597,22 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	    break;
 	  case POOLING:
 	    {
-	      DataArray* tmp = Dy[idx];
-
 	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
 	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l-1][idx]);
 	      
 	      Dy_idx = Dy_idx.unpool(y_res, POOLING_MAX, layers[l].S, layers[l].P);
 	    }	    
+	    break;
+	  case CONVOLUTION:
+	    {
+	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
+	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l-1][idx]);
+
+	      // TODO: Check these lines. They are probably wrong
+	      grad_net.layers[l].weight += y_res.convolve(Dy_idx);
+
+	      // Dy_idx = ...
+	    }
 	    break;
 	  default:
 	    std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]
