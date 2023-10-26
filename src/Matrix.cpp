@@ -214,24 +214,45 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
   Matrix A(n1_new, n2_new);
 
   for(size_t i=-P; i+S+m<n1+P; i+=S)
-    {
-      for(size_t j=-P; j+S+m<n2+P; j+=S)
-	{
-	  for(size_t k=0; k<m; ++k)
-	    {
-	      for(size_t l=0; l<m; ++l)
-		{
-		  // Skip when matrix is accessed out of bounds (extend by zero)
-		  if(i+m-k < 0 || j+m-l < 0 || i+m-k >= n1 || j+m-l >= n2)
-		    continue;
+    for(size_t j=-P; j+S+m<n2+P; j+=S)
+      for(size_t k=0; k<m; ++k)
+	for(size_t l=0; l<m; ++l)
+	  {
+	    // Skip when matrix is accessed out of bounds (extend by zero)
+	    if(i+m-k < 0 || j+m-l < 0 || i+m-k >= n1 || j+m-l >= n2)
+	      continue;
 		  
-		  A[i/S+P][j/S+P] += K[k][l] * (*this)[i+m-k][j+m-l];
-		}
-	    }
-	}
-    }
+	    A[i/S+P][j/S+P] += (*this)[i+m-k][j+m-l] * K[k][l];
+	  }
 
   return A;    
+}
+
+Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const
+{
+  const size_t n1 = nRows();
+  const size_t n2 = nCols();
+  const size_t M = Y.nRows();
+
+  const size_t n1_new = n1-J*(M-1);
+  const size_t n2_new = n2-J*(M-1);
+
+  Matrix K(n1_new, n2_new);
+
+  // TODO: Implement back convolution with padding
+  if(P!=0)
+    {
+      std::cerr << "ERROR: Back convolution with padding not implemented yet.\n";
+      return Matrix();
+    }
+
+  for(size_t k=0; k<n1_new; ++k)
+    for(size_t l=0; l<n2_new; ++l)
+      for(size_t i=0; i<M; ++i)
+	for(size_t j=0; j<M; ++j)
+	  K[k][l] += (*this)[i*J+k][j*J+l] * Y[i][j];
+
+  return K;
 }
 
 Matrix Matrix::pool(int type, size_t S, size_t P) const
@@ -243,6 +264,12 @@ Matrix Matrix::pool(int type, size_t S, size_t P) const
   const size_t n2_new = (n2 + -1 + 2*P)/S + 1;  
   
   Matrix A(n1_new, n2_new);
+
+  if(P!=0)
+    {
+      std::cerr << "ERROR: Back convolution with padding not implemented yet.\n";
+      return Matrix();
+    }
 
   for(size_t i=0; i < n1_new;  ++i)    
     for(size_t j=0; j < n2_new;  ++j)
@@ -321,6 +348,32 @@ Matrix Matrix::unpool(const Matrix& A, int type, size_t S, size_t P) const
 	}
       }
   return B;
+}
+
+Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
+{
+  const size_t n1 = nRows();
+  const size_t n2 = nCols();
+  const size_t m = K.nRows();
+
+  // if no stride given we assume its the same like kernel size
+  if(S==0) S=m;
+
+  if((n1-m)%S != 0 || (n2-m)%S !=0)
+    {
+      std::cerr << "ERROR: Can not determine size of matrix resulting from Kronecker product.\n";
+      return Matrix();
+    }
+  
+  Matrix G((n1-m)/S+1, (n2-m)/S+1);
+
+  for(size_t i=0; i<n1; ++i)
+    for(size_t j=0; j<n2; ++j)
+      for(size_t k=0; k<m; ++k)
+	for(size_t l=0; l<m; ++l)	    
+	  G[i*S+k][j*S+l] += (*this)[i][j] * K[k][l];	    
+  
+  return G;
 }
 
 void Matrix::write_pixels(unsigned char* pixels) const

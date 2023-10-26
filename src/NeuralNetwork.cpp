@@ -608,10 +608,9 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
 	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l-1][idx]);
 
-	      // TODO: Check these lines. They are probably wrong
-	      grad_net.layers[l].weight += y_res.convolve(Dy_idx);
-
-	      // Dy_idx = ...
+	      grad_net.layers[l].weight += y_res.back_convolve(Dy_idx, layers[l].S, layers[l].P);
+	      
+	      Dy_idx = y_res.kron(layers[l].weight);
 	    }
 	    break;
 	  default:
