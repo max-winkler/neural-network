@@ -365,7 +365,7 @@ Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
       return Matrix();
     }
   
-  Matrix G((n1-m)/S+1, (n2-m)/S+1);
+  Matrix G((n1-1)*S+m, (n2-1)*S+m);
 
   for(size_t i=0; i<n1; ++i)
     for(size_t j=0; j<n2; ++j)

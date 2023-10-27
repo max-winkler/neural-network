@@ -29,7 +29,9 @@ double Layer::dot(const Layer& rhs) const
       val += bias.inner(rhs.bias);		
                 
       break;
-
+    case CONVOLUTION:
+      val += weight.inner(rhs.weight);
+      break;
     case VECTOR_INPUT:
     case MATRIX_INPUT:
     case FLATTENING:

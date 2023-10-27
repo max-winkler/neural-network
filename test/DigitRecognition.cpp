@@ -202,10 +202,10 @@ int main()
 
   OptimizationOptions options;
   options.loss_function = OptimizationOptions::LossFunction::MSE;
-  options.batch_size    = 1;
+  options.batch_size    = 100;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 10;
+  options.epochs        = 3;
   
   net.train(training_data, options);
 
