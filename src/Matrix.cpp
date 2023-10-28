@@ -202,6 +202,12 @@ Vector Matrix::flatten() const
 
 Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 {
+  if(P != 0)
+    {
+      std::cerr << "ERROR: Convolution with padding not implemented yet.\n";
+      return Matrix();
+    }
+  
   // Size of current matrix and filter
   const size_t n1 = nRows();
   const size_t n2 = nCols();
@@ -213,18 +219,14 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 
   Matrix A(n1_new, n2_new);
 
-  for(size_t i=-P; i+S+m<n1+P; i+=S)
-    for(size_t j=-P; j+S+m<n2+P; j+=S)
+  for(size_t i=0; i<n1_new; ++i)
+    for(size_t j=0; j<n2_new; ++j)
       for(size_t k=0; k<m; ++k)
-	for(size_t l=0; l<m; ++l)
-	  {
-	    // Skip when matrix is accessed out of bounds (extend by zero)
-	    if(i+m-k < 0 || j+m-l < 0 || i+m-k >= n1 || j+m-l >= n2)
-	      continue;
-		  
-	    A[i/S+P][j/S+P] += (*this)[i+m-k][j+m-l] * K[k][l];
-	  }
-
+        for(size_t l=0; l<m; ++l)
+	{	    
+	  A[i][j] += (*this)[i*S+k][j*S+l] * K[k][l];
+	}
+  
   return A;    
 }
 
