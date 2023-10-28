@@ -7,7 +7,7 @@
 #include <iomanip>
 
 NeuralNetwork::NeuralNetwork()
-  : initialized(false), layers(), rnd_gen(std::random_device()())
+  : initialized(false), layers(), rnd_gen(std::random_device()()), random_normal(0., 1.)
 {
   layers.reserve(10);
 }
@@ -190,7 +190,7 @@ void NeuralNetwork::initialize()
 	    Matrix W(it->m,it->m);
 	    for(size_t i=0; i<it->m; ++i)
 	      for(size_t j=0; j<it->m; ++j)
-		W[i][j] = -1.+2*random_real(rnd_gen);
+		W[i][j] = -1.+2*random_normal(rnd_gen);
 
 	    it->weight = W;
 	    it->bias = Vector(1);
@@ -590,8 +590,8 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  case FLATTENING:
 	    {
 	      DataArray* tmp = Dy[idx];
-	      Dy[idx] = new Matrix(dynamic_cast<Vector&>(*Dy[idx]).reshape(layers[l].dimension.first,
-							       layers[l].dimension.second));
+	      Dy[idx] = new Matrix(dynamic_cast<Vector&>(*Dy[idx]).reshape(layers[l-1].dimension.first,
+							       layers[l-1].dimension.second));
 	      delete tmp;
 	    }
 	    break;
@@ -697,9 +697,13 @@ NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs
       new_layer.weight = lhs_layer->weight;
       new_layer.weight+= rhs.scale * rhs_layer->weight;            
 
-      new_layer.bias = lhs_layer->bias;
-      new_layer.bias+= rhs.scale * rhs_layer->bias;
-
+      // TODO: Exclude all layer types without bias
+      if(lhs_layer->layer_type != LayerType::CONVOLUTION)
+        {
+	new_layer.bias = lhs_layer->bias;
+	new_layer.bias+= rhs.scale * rhs_layer->bias;
+        }
+      
       new_layer.S = lhs_layer->S;
       new_layer.P = lhs_layer->P;
       
@@ -763,6 +767,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	    {
 	    case MATRIX_INPUT:
 	    case POOLING:
+	    case CONVOLUTION:
 	      // TODO: Are y and z really needed in input layers?
 	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
 	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);

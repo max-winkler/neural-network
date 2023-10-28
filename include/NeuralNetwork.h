@@ -101,6 +101,7 @@ class NeuralNetwork
   // Random number generator
   std::mt19937 rnd_gen;
   std::uniform_real_distribution<> random_real;
+  std::normal_distribution<> random_normal;
   
   // Gradient test (for debugging and testing)
   void gradientTest(const NeuralNetwork&,
