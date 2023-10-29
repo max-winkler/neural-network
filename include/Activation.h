@@ -18,6 +18,7 @@ Matrix activate(const Matrix&, ActivationFunction);
 
 double Dactivate(double, ActivationFunction);
 Vector Dactivate(const Vector&, ActivationFunction);
+Matrix Dactivate(const Matrix&, ActivationFunction);
 Matrix DactivateCoupled(const Vector&, ActivationFunction);
 
 #endif

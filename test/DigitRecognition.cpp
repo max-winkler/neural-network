@@ -188,8 +188,7 @@ int main()
   // Create neural network
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
-  net.addConvolutionLayer(2, ActivationFunction::NONE, 2);
-  // net.addPoolingLayer(2);
+  net.addConvolutionLayer(4, ActivationFunction::RELU, 2);
   // net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
@@ -206,7 +205,7 @@ int main()
   options.batch_size    = 100;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 3;
+  options.epochs        = 10;
   
   net.train(training_data, options);
 

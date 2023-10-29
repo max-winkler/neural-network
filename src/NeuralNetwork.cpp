@@ -190,7 +190,7 @@ void NeuralNetwork::initialize()
 	    Matrix W(it->m,it->m);
 	    for(size_t i=0; i<it->m; ++i)
 	      for(size_t j=0; j<it->m; ++j)
-		W[i][j] = -1.+2*random_normal(rnd_gen);
+		W[i][j] = 0.5+random_normal(rnd_gen);
 
 	    it->weight = W;
 	    it->bias = Vector(1);
@@ -246,10 +246,10 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	  break;
 	case LayerType::CONVOLUTION:
 	  {
-	    // TODO: Add the bias b to each matrix component (remember: Y_new = act(conv(Y,K) + b)))
-	    // requires implementation of operator+ for matrix and double
 	    Matrix& x_ref = dynamic_cast<Matrix&>(*x_tmp);
-	    x_ref = activate(x_ref.convolve(layer->weight, layer->S, layer->P), layer->activation_function);
+	    x_ref = x_ref.convolve(layer->weight, layer->S, layer->P);
+	    x_ref += layer->bias[0];
+	    x_ref = activate(x_ref, layer->activation_function);
 	  }
 	  break;	  
 	default:
@@ -362,8 +362,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    }
 	
 	  // for testing only. remove later
-	  // gradientTest(grad_net, data, data_idx, options);
-	  // return;
+	  //gradientTest(grad_net, data, data_idx, options);
+	  //return;
 
 	  // Update weights
 	  if(epoch==0 && start_idx==0)
@@ -469,10 +469,11 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	  for(size_t idx=0; idx<options.batch_size; ++idx)
 	    {
 	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
+	      Matrix& z_idx = dynamic_cast<Matrix&>(*z[l][idx]);
 	      
-	      // TODO: Add bias here (see NeuralNetwork::eval())
-	      dynamic_cast<Matrix&>(*z[l][idx]) = y_prev.convolve(layer->weight, layer->S, layer->P);
-	      dynamic_cast<Matrix&>(*y[l+1][idx]) = activate(dynamic_cast<Matrix&>(*z[l][idx]), layer->activation_function);
+	      z_idx = y_prev.convolve(layer->weight, layer->S, layer->P);
+	      z_idx += layer->bias[0];
+	      dynamic_cast<Matrix&>(*y[l+1][idx]) = activate(z_idx, layer->activation_function);
 	    }
 	  break;
 	  
@@ -550,7 +551,6 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  }
 	  break;
 	}
-      Dz[idx] = new Vector();
     }
   
   // Backward propagation
@@ -563,27 +563,30 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  case FULLY_CONNECTED:
 	  case CLASSIFICATION:
 	    {
+	      const Vector& y_idx = dynamic_cast<Vector&>(*y[l-1][idx]);
 	      const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
+	      Vector& Dy_idx = dynamic_cast<Vector&>(*Dy[idx]);
+	      Vector Dz_idx;
 	      
 	      switch(layers[l].activation_function)
 	        {
 	        case ActivationFunction::SOFTMAX:
 		// Activation functions taking all components into account
-		dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * DactivateCoupled(z_idx, layers[l].activation_function);
-		  
+	          Dz_idx = Dy_idx * DactivateCoupled(z_idx, layers[l].activation_function);		  
 		break;
 		  
 	        default:
 		// Activation functions applied component-wise
-		dynamic_cast<Vector&>(*Dz[idx]) = dynamic_cast<Vector&>(*Dy[idx]) * diag(Dactivate(z_idx, layers[l].activation_function));
+		Dz_idx = Dy_idx * diag(Dactivate(z_idx, layers[l].activation_function));
 	        }
 	      
 	      
-	      dynamic_cast<Vector&>(*Dy[idx]) = dynamic_cast<Vector&>(*Dz[idx]) * layers[l].weight;
-
 	      // Gradient w.r.t. weight and bias
-	      grad_net.layers[l].weight += outer(dynamic_cast<Vector&>(*Dz[idx]), dynamic_cast<Vector&>(*y[l-1][idx]));
-	      grad_net.layers[l].bias += dynamic_cast<Vector&>(*Dz[idx]);
+	      grad_net.layers[l].weight += outer(Dz_idx, y_idx);
+	      grad_net.layers[l].bias += Dz_idx;
+
+	      // Gradient w.r.t. data
+	      Dy_idx = Dz_idx * layers[l].weight;
 	    }
 	    break;
 
@@ -606,12 +609,16 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  case CONVOLUTION:
 	    {
 	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
-	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l-1][idx]);
-
-	      // Gradient w.r.t. kernel matrix
-	      grad_net.layers[l].weight += y_res.back_convolve(Dy_idx, layers[l].S, layers[l].P);
+	      const Matrix& z_idx = dynamic_cast<Matrix&>(*z[l-1][idx]);	      
+	      const Matrix& y_idx = dynamic_cast<Matrix&>(*y[l-1][idx]);
+	      const Matrix Dz_idx = Dactivate(z_idx, layers[l].activation_function);
 	      
-	      Dy_idx = y_res.kron(layers[l].weight);
+	      // Gradient w.r.t. kernel matrix and bias
+	      grad_net.layers[l].weight += y_idx.back_convolve(multiply(Dz_idx, Dy_idx), layers[l].S, layers[l].P);
+	      grad_net.layers[l].bias[0] += Dy_idx.inner(Dz_idx);
+	      
+	      // Gradient w.r.t. data
+	      Dy_idx = multiply(Dz_idx, Dy_idx).kron(layers[l].weight);
 	    }
 	    break;
 	  default:
@@ -696,13 +703,9 @@ NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs
 
       new_layer.weight = lhs_layer->weight;
       new_layer.weight+= rhs.scale * rhs_layer->weight;            
-
-      // TODO: Exclude all layer types without bias
-      if(lhs_layer->layer_type != LayerType::CONVOLUTION)
-        {
-	new_layer.bias = lhs_layer->bias;
-	new_layer.bias+= rhs.scale * rhs_layer->bias;
-        }
+      
+      new_layer.bias = lhs_layer->bias;
+      new_layer.bias+= rhs.scale * rhs_layer->bias;
       
       new_layer.S = lhs_layer->S;
       new_layer.P = lhs_layer->P;
@@ -725,11 +728,13 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
  
   for(auto layer = layers.begin(); layer != layers.end(); ++layer)
     {
-      size_t m = layer->weight.nRows();
-      size_t n = layer->weight.nCols();
+      const size_t m = layer->weight.nRows();
+      const size_t n = layer->weight.nCols();
+
+      const size_t bias_dim = (layer->layer_type == LayerType::CONVOLUTION ? 1 : m);
       
       Matrix weight(m, n);
-      Vector bias(m);
+      Vector bias(bias_dim);
       
       for(size_t i=0; i<m; ++i)
         {

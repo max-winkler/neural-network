@@ -145,6 +145,14 @@ Vector Matrix::operator*(const Vector& b) const
   return c;
 }
 
+Matrix& Matrix::operator+=(double a)
+{
+  for(double* data_ptr = data; data_ptr != data+size; ++data_ptr)
+    *data_ptr += a;
+  
+  return *this;
+}
+  
 Matrix& Matrix::operator+=(const Matrix& B)
 {
   operator+=(ScaledMatrix(1., B));
@@ -193,6 +201,30 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
       }
   
   return *this;
+}
+
+Matrix multiply(const Matrix& A, const Matrix& B)
+{
+  const size_t m = A.nRows();
+  const size_t n = A.nCols();
+  
+  if(m != B.nRows() || n != B.nCols())
+    {
+      std::cerr << "ERROR: Matrices have incompatible dimension for Hadamard product.\n";
+      return Matrix();
+    }
+
+  Matrix C(m,n);
+
+  double* data_ptr;
+  const double* A_data_ptr;
+  const double* B_data_ptr;
+
+  for(data_ptr = C.data, A_data_ptr = A.data, B_data_ptr = B.data;
+      data_ptr != C.data+m*n; ++data_ptr, ++A_data_ptr, ++B_data_ptr)
+    *data_ptr = (*A_data_ptr)*(*B_data_ptr);
+
+  return C; 
 }
 
 Vector Matrix::flatten() const
@@ -360,12 +392,6 @@ Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
 
   // if no stride given we assume its the same like kernel size
   if(S==0) S=m;
-
-  if((n1-m)%S != 0 || (n2-m)%S !=0)
-    {
-      std::cerr << "ERROR: Can not determine size of matrix resulting from Kronecker product.\n";
-      return Matrix();
-    }
   
   Matrix G((n1-1)*S+m, (n2-1)*S+m);
 

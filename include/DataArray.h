@@ -16,6 +16,8 @@ class DataArray
 
   // Frobenious/Euklidean inner product
   double inner(const DataArray&) const;
+
+  friend double sum(const DataArray&);
   
   size_t nEntries() const;
   

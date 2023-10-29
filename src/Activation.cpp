@@ -49,13 +49,12 @@ Matrix activate(const Matrix& x, ActivationFunction act=ActivationFunction::SIGM
       std::cerr << "ERROR: Softmax activation function not implemented for matrix-valued layers.\n";
       return Matrix(0,0);
     }
-  else
-    {
-      // Component-wise applied activation functions
-      for(size_t i=0; i<x.nRows(); ++i)
-	for(size_t j=0; j<x.nCols(); ++j)    
-	  y[i][j] = activate(x[i][j], act);
-    }
+
+  // Component-wise applied activation functions
+  for(size_t i=0; i<x.nRows(); ++i)
+    for(size_t j=0; j<x.nCols(); ++j)    
+      y[i][j] = activate(x[i][j], act);
+
   return y;
 }
 
@@ -70,7 +69,7 @@ double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::TANH:
       return 4.*exp(-2.*x)/pow(1.+exp(-2.*x), 2.);
     case ActivationFunction::RELU:
-      return x<=0. ? 0. : 1.;
+      return x<0. ? 0. : 1.;
     }
   
   return 0.;
@@ -82,6 +81,18 @@ Vector Dactivate(const Vector& x, ActivationFunction act=ActivationFunction::SIG
 
   for(size_t i=0; i<x.length(); ++i)    
     y[i] = Dactivate(x[i], act);
+
+  return y;
+}
+
+Matrix Dactivate(const Matrix& x, ActivationFunction act=ActivationFunction::SIGMOID)
+{
+  Matrix y(x.nRows(), x.nCols());
+
+  // Component-wise applied activation functions
+  for(size_t i=0; i<x.nRows(); ++i)
+    for(size_t j=0; j<x.nCols(); ++j)    
+      y[i][j] = Dactivate(x[i][j], act);
 
   return y;
 }

@@ -24,13 +24,9 @@ double Layer::dot(const Layer& rhs) const
     {
     case FULLY_CONNECTED:
     case CLASSIFICATION:
-      
+    case CONVOLUTION:      
       val += weight.inner(rhs.weight);
       val += bias.inner(rhs.bias);		
-                
-      break;
-    case CONVOLUTION:
-      val += weight.inner(rhs.weight);
       break;
     case VECTOR_INPUT:
     case MATRIX_INPUT:

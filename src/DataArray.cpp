@@ -49,6 +49,15 @@ double DataArray::inner(const DataArray& B) const
   return val;
 }
 
+double sum(const DataArray& A)
+{
+  double val = 0.;
+  for(double* data_ptr = A.data; data_ptr!=A.data+A.size; ++data_ptr)
+    val += *data_ptr;
+  
+  return val;
+}
+
 size_t DataArray::nEntries() const
 {
   return size;

@@ -61,17 +61,20 @@ class Matrix : public DataArray
 
   // Matrix-matrix operations
   Matrix operator+(const Matrix&) const;
+  Matrix& operator+=(double);
   Matrix& operator+=(const Matrix&);
   Matrix& operator+=(const ScaledMatrix&);
   Matrix& operator+=(const Rank1Matrix&);
 
+  friend Matrix multiply(const Matrix&, const Matrix&);
+  
   // Convolution operations
   Vector flatten() const;
   Matrix convolve(const Matrix&, size_t S=1, size_t P=0) const;
   Matrix back_convolve(const Matrix&, size_t J=1, size_t P=0) const;
   Matrix pool(int type=POOLING_MAX, size_t S=2, size_t P=0) const;
   Matrix unpool(const Matrix&, int type=POOLING_MAX, size_t S=2, size_t P=0) const;
-  Matrix kron(const Matrix&, int S=0, int overlap=0) const;
+  Matrix kron(const Matrix&, int S=0, int overlap=0) const;  
   
   void write_pixels(unsigned char*) const;
   
