@@ -90,6 +90,9 @@ class NeuralNetwork
     
   // Console output
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
+
+  // File IO
+  void save(const std::string&) const;
   
  private:
   // Layer list of neural network

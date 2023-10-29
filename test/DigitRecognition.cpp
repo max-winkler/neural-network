@@ -188,8 +188,8 @@ int main()
   // Create neural network
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
-  net.addConvolutionLayer(4, ActivationFunction::RELU, 2);
-  // net.addPoolingLayer(2);
+  net.addConvolutionLayer(3, ActivationFunction::RELU, 1);
+  net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(80, ActivationFunction::SIGMOID); // hidden layer
@@ -208,7 +208,6 @@ int main()
   options.epochs        = 10;
   
   net.train(training_data, options);
-
   
   // Compare to test data
   int correct = 0;
@@ -237,5 +236,7 @@ int main()
   std::cout << "Correctly classified : " << correct << " (" << (double)correct/n_test*100 << "%)\n";
   std::cout << "Wrongly classified   : " << wrong << " (" << (double)wrong/n_test*100 << "%)\n";
 
+  net.save("network.dat");
+  
   return 0;
 }

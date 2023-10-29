@@ -653,6 +653,34 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net)
   return os;
 }
 
+void NeuralNetwork::save(const std::string& filename) const
+{
+  std::ofstream os(filename);
+
+  for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
+    {
+      os << "[ " << Layer::LayerName[layer->layer_type] << " ]\n";
+      os << "  dimension : " << layer->dimension.first << ", " << layer->dimension.second << '\n';
+      os << "  stride    : " << layer->S << '\n';
+      os << "  padding   : " << layer->P << '\n';
+      os << "  weight    : ";
+      for(size_t i=0; i<layer->weight.nRows(); ++i)
+        {
+	if(i>0)
+	  os << "             ";
+	
+	for(size_t j=0; j<layer->weight.nCols(); ++j)
+	  os << std::setw(12) << layer->weight[i][j] << (j<layer->weight.nCols()-1 ? ", " : "\n");
+        }
+      os << "  bias      : ";
+      for(size_t i=0; i<layer->bias.length(); ++i)
+        os << std::setw(12) << layer->bias[i] << (i<layer->bias.length()-1 ? ", " : "\n");	  
+    }
+  
+  os.close();
+}
+
+
 NeuralNetwork& NeuralNetwork::operator=(const ScaledNeuralNetwork& other)
 {  
   for(auto layer = other.network->layers.begin(); layer != other.network->layers.end(); ++layer)
