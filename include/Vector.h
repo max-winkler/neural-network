@@ -199,7 +199,7 @@ class Vector : public DataArray {
   Matrix reshape(size_t, size_t) const;
   
   /**
-   * Output stream operator. Used to write the vector to console of to a file.
+   * Output stream operator. Used to write the vector to console or to a file.
    *
    * @brief Vector output
    * 
