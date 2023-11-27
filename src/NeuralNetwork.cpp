@@ -1,5 +1,8 @@
 #include "NeuralNetwork.h"
 
+#include "VectorInputLayer.h"
+#include "FullyConnectedLayer.h"
+
 #include <fstream>
 #include <algorithm>
 #include <numeric>
@@ -12,10 +15,16 @@ NeuralNetwork::NeuralNetwork()
   layers.reserve(10);
 }
 
+NeuralNetwork::NeuralNetwork(size_t n_layers)
+  : initialized(false), layers(layers), rnd_gen(std::random_device()()), random_normal(0., 1.)
+{}
+
+
 NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
   : initialized(true), layers(std::move(other.layers)), rnd_gen(std::random_device()())
 {}
 
+/*
 NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 {
   NeuralNetwork other;
@@ -36,18 +45,26 @@ NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 
   return other;
 }
+*/
 
 void NeuralNetwork::addInputLayer(size_t i, size_t j)
 {
-  LayerType layer_type = (j==0 ? LayerType::VECTOR_INPUT : LayerType::MATRIX_INPUT);
-  Layer layer(std::pair<size_t, size_t>(i, j), layer_type, ActivationFunction::NONE);
-  layers.push_back(layer);
+  if(j==0)
+    {
+      VectorInputLayer layer(i);
+      layers.push_back(layer);
+    }
+  else
+    {
+      std::cerr << "ERROR: Implement matrix input layer first.\n";
+    }
 }
 
 void NeuralNetwork::addPoolingLayer(size_t batch)
 {
-  const Layer& prev_layer = layers.back();
-
+  /*
+  const Layer prev_layer = layers.back();
+  
   // Check if layer matches previous layer
   switch(prev_layer.layer_type)
     {
@@ -71,10 +88,12 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
   // TODO: Extend this function to variable padding P
   layer.S = batch;
   layers.push_back(layer);
+  */
 }
 
 void NeuralNetwork::addFlatteningLayer()
 {
+  /*
   const Layer& prev_layer = layers.back();
 
   // Check if previous layer produces a matrix
@@ -95,11 +114,12 @@ void NeuralNetwork::addFlatteningLayer()
   
   Layer layer(std::pair<size_t, size_t>(dim, 0), LayerType::FLATTENING, ActivationFunction::NONE);
   layers.push_back(layer);
+  */
 }
 
 void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, size_t S, size_t P)
 {
-
+  /*
   const Layer& prev_layer = layers.back();
   
   // Check if previous layer produces a matrix
@@ -129,18 +149,19 @@ void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, si
   layer.P = P;
   
   layers.push_back(layer);
+  */
 }
 
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 {
-  Layer layer(std::pair<size_t, size_t>(width, 0), LayerType::FULLY_CONNECTED, act);
+  FullyConnectedLayer layer(width, layers.back().dim[0], act);
   layers.push_back(layer);
 }
 
 void NeuralNetwork::addClassificationLayer(size_t width)
 {
-  Layer layer(std::pair<size_t, size_t>(width, 0), LayerType::CLASSIFICATION, ActivationFunction::SOFTMAX);
-  layers.push_back(layer);  
+  FullyConnectedLayer layer(width, layers.back().dim[0], /*LayerType::CLASSIFICATION,*/ ActivationFunction::SOFTMAX);
+  layers.push_back(layer);
 }
 
 void NeuralNetwork::initialize()
@@ -150,6 +171,8 @@ void NeuralNetwork::initialize()
   
   for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
     {
+      it->initialize();
+      /*
       switch(it->layer_type)
 	{
 	case FULLY_CONNECTED:
@@ -158,9 +181,12 @@ void NeuralNetwork::initialize()
 	     || it_pred->layer_type == LayerType::VECTOR_INPUT
 	     || it_pred->layer_type == LayerType::FLATTENING)	    
 	    {
+	      // Get layer
+	      auto layer = dynamic_cast<FullyConnectedLayer&>(*it);
+		
 	      // Build weight matrix and bias vector
-	      size_t m = it->dimension.first;
-	      size_t n = it_pred->dimension.first;
+	      size_t m = it->dim[0];
+	      size_t n = it_pred->dim[0];
 
 	      // Initialize random matrix
 	      Matrix W(m, n);
@@ -168,8 +194,8 @@ void NeuralNetwork::initialize()
 		for(size_t j=0; j<n; ++j)
 		  W[i][j] = -1.+2*random_real(rnd_gen);
 	      
-	      it->weight = W;
-	      it->bias = Vector(m);
+	      layer.set_weight(W);
+	      layer.set_bias(Vector(m));
 	    }
 	  else
 	    {
@@ -186,6 +212,7 @@ void NeuralNetwork::initialize()
 	  break;
 	  
 	case CONVOLUTION:
+	  
 	  {
 	    Matrix W(it->m,it->m);
 	    for(size_t i=0; i<it->m; ++i)
@@ -195,6 +222,7 @@ void NeuralNetwork::initialize()
 	    it->weight = W;
 	    it->bias = Vector(1);
 	  }
+	  
 	  break;
 	  
 	default:
@@ -202,15 +230,30 @@ void NeuralNetwork::initialize()
 		    << " is not implemented yet.\n";
 	  break;
 	}
+      */
     }
   
   initialized = true;
 }
 
+size_t NeuralNetwork::n_layers() const
+{
+  return layers.size();
+}
+
 Vector NeuralNetwork::eval(const DataArray& x) const
 {
-  DataArray* x_tmp;
+  // Input layer
+  DataArray x_tmp = layers.front().eval(x);
+
+  // Hidden and output layers
+  for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)
+    {
+      x_tmp = layer_it->eval(x_tmp);
+    }
   
+  // OLD VERSION
+  /*
   for(auto layer = layers.begin(); layer != layers.end(); ++layer)
     {      
       switch(layer->layer_type)
@@ -258,9 +301,9 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 	  return Vector();
 	}      
     }
-
-  Vector y = dynamic_cast<Vector&>(*x_tmp);
-  delete x_tmp;
+  */
+  
+  Vector y = dynamic_cast<Vector&>(x_tmp);
   
   return y;
 }
@@ -293,16 +336,17 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    case POOLING:
 	    case CONVOLUTION:
 	      // TODO: Are y and z really needed in input layers?
+	      /*
 	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
 	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-
+	      */
 	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:
 	    case FLATTENING:
-	      z[l][idx] = new Vector(layers[l].dimension.first);
-	      y[l][idx] = new Vector(layers[l].dimension.first);
+	      z[l][idx] = new Vector(layers[l].dim[0]);
+	      y[l][idx] = new Vector(layers[l].dim[0]);
 	      break;
 	      
 	    default:
@@ -398,6 +442,15 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       }
 }
 
+void NeuralNetwork::update(double momentum, const NeuralNetwork& gradient, double learning_rate)
+{
+  auto layer = layers.begin();
+  auto grad_layer = gradient.layers.begin();
+  
+  for(; layer != layers.end(); ++layer, ++grad_layer)    
+    layer->update(momentum, *grad_layer, learning_rate);    
+}
+
 double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 				     std::vector<std::vector<DataArray*>>& y,
 				     std::vector<std::vector<DataArray*>>& z,
@@ -427,8 +480,16 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
       std::cerr << "ERROR: The input layer must be of type VECTOR_INPUT or MATRIX_INPUT.\n";
       break;
     }
+
+  size_t l = 0;
+  for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
+    {
+      for(size_t idx=0; idx<options.batch_size; ++idx)
+	layer->eval_functional(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
+    }
   
   // Forward propagation
+  /*
   int l=0;
   for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
     {
@@ -482,7 +543,8 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 		  << Layer::LayerName[layer->layer_type] << ".\n";
 	}
     }
-
+  */
+  
   // Evaluate objective functional
   double f = 0.;
   for(size_t idx=0; idx<options.batch_size; ++idx)
@@ -522,11 +584,11 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 				  OptimizationOptions options) const
 {
   size_t n_data = data.size();
-  
-  NeuralNetwork grad_net = NeuralNetwork::createLike(*this);
+
+  NeuralNetwork grad_net(n_layers());
+  //NeuralNetwork grad_net = NeuralNetwork::createLike(*this);
     
   std::vector<DataArray*> Dy(options.batch_size);
-  std::vector<DataArray*> Dz(options.batch_size);
   
   // Set final value in backpropagation
   for(size_t idx=0; idx<options.batch_size; ++idx)
@@ -543,7 +605,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  
 	case OptimizationOptions::LossFunction::LOG:
 	  {
-	    size_t nL = layers.back().dimension.first;
+	    size_t nL = layers.back().dim[0];
 	    Dy[idx] = new Vector(nL);	  
 
 	    for(size_t i=0; i<nL; ++i)
@@ -552,8 +614,16 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  break;
 	}
     }
+
+  // Backward propagation (desired version)
+  for(size_t l=layers.size(); l-- >1; )
+    {
+      Layer grad = layers[l].backpropagate(Dy, y[l-1], z[l-1]);
+      grad_net.layers[l] = grad;
+    }
   
-  // Backward propagation
+  // Backward propagation (old version)
+  /*
   for(size_t l=layers.size(); l-- >1; )
     {      
       for(size_t idx=0; idx<options.batch_size; ++idx)
@@ -568,7 +638,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	      Vector& Dy_idx = dynamic_cast<Vector&>(*Dy[idx]);
 	      Vector Dz_idx;
 	      
-	      switch(layers[l].activation_function)
+	      switch(layers[l].act)
 	        {
 	        case ActivationFunction::SOFTMAX:
 		// Activation functions taking all components into account
@@ -577,7 +647,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 		  
 	        default:
 		// Activation functions applied component-wise
-		Dz_idx = Dy_idx * diag(Dactivate(z_idx, layers[l].activation_function));
+		  Dz_idx = Dy_idx * diag(Dactivate(z_idx, layers[l].activation_function));
 	        }
 	      
 	      
@@ -628,12 +698,10 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  }
         }
     }
-
-  for(size_t idx=0; idx<options.batch_size; ++idx)
-    {
-      delete Dz[idx];
-      delete Dy[idx];
-    }
+  */
+  
+  for(size_t idx=0; idx<options.batch_size; ++idx)         
+    delete Dy[idx];    
   
   return grad_net;
 }
@@ -660,10 +728,13 @@ void NeuralNetwork::save(const std::string& filename) const
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
     {
       os << "[ " << Layer::LayerName[layer->layer_type] << " ]\n";
-      os << "  dimension : " << layer->dimension.first << ", " << layer->dimension.second << '\n';
-      os << "  stride    : " << layer->S << '\n';
-      os << "  padding   : " << layer->P << '\n';
-      os << "  weight    : ";
+      os << "  dimension : " << layer->dim[0] << '\n'; // << ", " << layer->dim[1] << '\n';
+      // TODO: Reimplement this
+      /*
+	os << "  stride    : " << layer->S << '\n';
+	os << "  padding   : " << layer->P << '\n';
+	os << "  weight    : ";
+      
       for(size_t i=0; i<layer->weight.nRows(); ++i)
         {
 	if(i>0)
@@ -675,6 +746,7 @@ void NeuralNetwork::save(const std::string& filename) const
       os << "  bias      : ";
       for(size_t i=0; i<layer->bias.length(); ++i)
         os << std::setw(12) << layer->bias[i] << (i<layer->bias.length()-1 ? ", " : "\n");	  
+      */
     }
   
   os.close();
@@ -682,11 +754,12 @@ void NeuralNetwork::save(const std::string& filename) const
 
 
 NeuralNetwork& NeuralNetwork::operator=(const ScaledNeuralNetwork& other)
-{  
+{
+  /**
   for(auto layer = other.network->layers.begin(); layer != other.network->layers.end(); ++layer)
     {
-      // Create now layer with zero weights
-      Layer new_layer(layer->dimension, layer->layer_type, layer->activation_function);
+      // Create new layer with zero weights
+      Layer new_layer(layer->dim, layer->layer_type, layer->act);
       
       new_layer.weight = layer->weight;
       new_layer.bias = layer->bias;
@@ -699,7 +772,8 @@ NeuralNetwork& NeuralNetwork::operator=(const ScaledNeuralNetwork& other)
 
       layers.push_back(new_layer);
     }
-
+  */
+  std::cerr << "ERROR: The function operator=(ScaleledNeuralNetwork) is deprecated.\n";
   return *this;
 }
 
@@ -714,11 +788,25 @@ ScaledNeuralNetwork operator*(double scale, const NeuralNetwork& params)
   return ScaledNeuralNetwork(scale, params);
 }
 
-NeuralNetwork operator+(const NeuralNetwork& lhs, const NeuralNetwork& rhs)
+NeuralNetwork NeuralNetwork::operator+(const NeuralNetwork& rhs)
 {
-  return lhs + ScaledNeuralNetwork(1., rhs);
+  NeuralNetwork net;
+
+  auto lhs_it = layers.begin();
+  auto rhs_it = rhs.layers.begin();
+    
+  for(; lhs_it != layers.end(); ++lhs_it, ++rhs_it)
+    {
+      net.layers.push_back((*lhs_it) + (*rhs_it));
+    }
+
+  return net;
+  
+  // Old version:
+  // return lhs + ScaledNeuralNetwork(1., rhs);
 }
 
+/*
 NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs)
 {
   NeuralNetwork net;
@@ -743,6 +831,7 @@ NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs
 
   return net;
 }
+*/
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 				 const std::vector<TrainingData>& data,
@@ -826,7 +915,8 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
             
   for(double s=1.; s>1.e-12; s*=0.5)
     {
-      NeuralNetwork net_s = (*this) + s*direction;
+      NeuralNetwork net_s(*this);
+      net_s.update(1, direction, s);
   
       double f_s = net_s.evalFunctional(data, y, z, data_idx, options);
       std::cout << "Value in x+s*d: " << f_s << std::endl;
@@ -869,8 +959,7 @@ NeuralNetwork& NeuralNetwork::operator*=(double s)
 {
   for(auto layer = layers.begin(); layer != layers.end(); ++layer)
     {
-      layer->weight *= s;
-      layer->bias *= s;
+      layer->scale_params(s);
     }
 
   return *this;       

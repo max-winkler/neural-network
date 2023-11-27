@@ -2,7 +2,9 @@
 #define _LAYER_H_
 
 #include <iostream>
+#include <vector>
 #include <unordered_map>
+#include <cstring>
 
 #include "Activation.h"
 #include "Matrix.h"
@@ -19,32 +21,43 @@ enum LayerType
     CLASSIFICATION,
     CONVOLUTION,
     POOLING,
-    FLATTENING
+    FLATTENING,
+    UNKNOWN
   };
 
 class Layer
 {
  public:
-  Layer(std::pair<size_t, size_t>, LayerType, ActivationFunction);
   
-  double dot(const Layer&) const;
+  // Process layers
+  virtual DataArray eval(const DataArray&) const;
+  virtual void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const;
+			       
+  // Get gradient
+  virtual Layer backpropagate(std::vector<DataArray*>&,
+			      const std::vector<DataArray*>&,
+			      const std::vector<DataArray*>&) const;
+  
+  virtual double dot(const Layer&) const;
 
+  virtual void initialize();
+  
+  virtual void update(double, const Layer&, double);
+  
   static std::unordered_map<LayerType, const char*> LayerName;
- private:
-  std::pair<size_t, size_t> dimension;
+  std::string get_name() const;
 
-  // Matrix and vector (might be unused depending on layer type)
-  Matrix weight;
-  Vector bias;
-
-  // Stright and padding (might be unused depending on layer type)
-  size_t m;
-  size_t S;
-  size_t P;
+  virtual Layer operator+(const Layer&);
+protected:
   
-  ActivationFunction activation_function;
-
+  Layer(std::vector<size_t>, LayerType);
+  
+  std::vector<size_t> dim;
   LayerType layer_type;
+  
+private:
+
+  // LayerType layer_type; // Do we need this when using inheritence?
 
   friend class NeuralNetwork;
   friend class ScaledNeuralNetwork;  

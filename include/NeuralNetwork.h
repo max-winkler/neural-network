@@ -37,6 +37,7 @@ class NeuralNetwork
   
   // Constructors
   NeuralNetwork();
+  NeuralNetwork(size_t);
   NeuralNetwork(NeuralNetwork&&);
 
   /// Assignment operators
@@ -56,6 +57,7 @@ class NeuralNetwork
 
   // Initialization of neural network, set weights randomly
   void initialize();
+  size_t n_layers() const;
   
   // Evaluate neural network in given point
   Vector eval(const DataArray&) const;
@@ -85,8 +87,10 @@ class NeuralNetwork
   NeuralNetwork& operator*=(double);
   NeuralNetwork& operator+=(const ScaledNeuralNetwork&);
   friend ScaledNeuralNetwork operator*(double, const NeuralNetwork&);      
-  friend NeuralNetwork operator+(const NeuralNetwork&, const NeuralNetwork&);  
-  friend NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs);
+	      
+  NeuralNetwork operator+(const NeuralNetwork&);  
+
+  // friend NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs);
     
   // Console output
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
@@ -101,10 +105,8 @@ class NeuralNetwork
   // Initialization state of the neural network
   bool initialized;
   
-  // Random number generator
-  std::mt19937 rnd_gen;
-  std::uniform_real_distribution<> random_real;
-  std::normal_distribution<> random_normal;
+  // Update step with gradient method
+  void update(double momentum, const NeuralNetwork& gradient, double learning_rate);
   
   // Gradient test (for debugging and testing)
   void gradientTest(const NeuralNetwork&,

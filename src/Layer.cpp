@@ -8,51 +8,28 @@ std::unordered_map<LayerType, const char*> Layer::LayerName =
     {CLASSIFICATION, "Classification Layer"},
     {CONVOLUTION, "Convolution Layer"},
     {POOLING, "Pooling Layer"},
-    {FLATTENING, "Flattening Layer"}
+    {FLATTENING, "Flattening Layer"},
+    {UNKNOWN, "Unknown Layer Type"}
   };
 
-Layer::Layer(std::pair<size_t, size_t> dimension, LayerType layer_type, ActivationFunction activation_function)
-  : dimension(dimension), layer_type(layer_type), activation_function(activation_function), 
-    weight(), bias(), S(0), P(0)
+Layer::Layer(std::vector<size_t> dim, LayerType layer_type)
+  : dim(dim), layer_type(layer_type)
 {}
-
-double Layer::dot(const Layer& rhs) const
-{
-  double val = 0.;
-
-  switch(layer_type)
-    {
-    case FULLY_CONNECTED:
-    case CLASSIFICATION:
-    case CONVOLUTION:      
-      val += weight.inner(rhs.weight);
-      val += bias.inner(rhs.bias);		
-      break;
-    case VECTOR_INPUT:
-    case MATRIX_INPUT:
-    case FLATTENING:
-    case POOLING:
-      // These layers have no weight and bias
-      break;
-    default:
-      std::cerr << "ERROR: Inner product for layer type " << LayerName[layer_type] << " not implemented yet.\n";
-    }
-  return val;
-}
 
 std::ostream& operator<<(std::ostream& os, const Layer& layer)
 {
-  os << Layer::LayerName[layer.layer_type] << " (";
-  os << layer.dimension.first;
-  // Print second dimension if present
-  switch(layer.layer_type)
-    {
-    case MATRIX_INPUT:
-    case CONVOLUTION:
-    case POOLING:
-      os << " x " << layer.dimension.second ;
-    }
-  os << " neurons)\n";
+  os << layer.get_name() << " (";
+  os << layer.dim[0];
 
+  for(auto it = layer.dim.begin()+1; it != layer.dim.end(); ++it)
+    os << "x" << *it;
+
+  os << " neurons)\n";
+  
   return os;
+}
+
+std::string Layer::get_name() const
+{
+  return Layer::LayerName[layer_type];
 }

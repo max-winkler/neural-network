@@ -1,4 +1,13 @@
-OBJ = 	src/DataArray.o src/Vector.o src/Matrix.o src/Layer.o src/NeuralNetwork.o src/Activation.o src/TrainingData.o
+OBJ = 	src/DataArray.o \
+	src/Vector.o \
+	src/Matrix.o \
+	src/Layer.o \
+	src/VectorInputLayer.o \
+	src/FullyConnectedLayer.o \
+	src/NeuralNetwork.o \
+	src/Activation.o \
+	src/TrainingData.o
+
 TESTS = test/DigitRecognition.o
 CPP_INCLUDE = -Iinclude
 CPP_FLAGS = -O3
