@@ -33,3 +33,16 @@ std::string Layer::get_name() const
 {
   return Layer::LayerName[layer_type];
 }
+
+// Virtual functions that must be overridden
+DataArray Layer::eval(const DataArray&) const { return Vector(0); }
+void Layer::eval_functional(const DataArray& x, DataArray& z, DataArray& y) const {}
+Layer Layer::backpropagate(std::vector<DataArray*>&,
+			   const std::vector<DataArray*>&,
+			   const std::vector<DataArray*>&) const {
+  return Layer(std::vector<size_t>(0), LayerType::UNKNOWN);
+}
+double Layer::dot(const Layer&) const { return 0.;}
+void Layer::initialize() {}  
+void Layer::update_increment(double, const Layer&, double) {}
+void Layer::apply_increment(const Layer&) {}

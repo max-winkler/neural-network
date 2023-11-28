@@ -15,15 +15,18 @@ class FullyConnectedLayer : public Layer
   Layer backpropagate(std::vector<DataArray*>&,
 		      const std::vector<DataArray*>&,
 		      const std::vector<DataArray*>&) const override;  
-
+  
   
   double dot(const Layer&) const override;
-
+  
   void initialize() override;  
   
-  void update(double, const Layer&, double) override;
-    
+  void update_increment(double, const Layer&, double) override;
+  void apply_increment(const Layer&) override;
+  
  private:
+  
+  // Layer-specific parameters
   Matrix weight;
   Vector bias;
   ActivationFunction act;  

@@ -11,7 +11,6 @@
 
 // Forward declarations for friend definitions
 class NeuralNetwork;
-class ScaledNeuralNetwork;
 
 enum LayerType
   {
@@ -39,15 +38,14 @@ class Layer
 			      const std::vector<DataArray*>&) const;
   
   virtual double dot(const Layer&) const;
-
-  virtual void initialize();
   
-  virtual void update(double, const Layer&, double);
+  virtual void initialize();
+  virtual void update_increment(double, const Layer&, double);
+  virtual void apply_increment(const Layer&);
   
   static std::unordered_map<LayerType, const char*> LayerName;
   std::string get_name() const;
-
-  virtual Layer operator+(const Layer&);
+  
 protected:
   
   Layer(std::vector<size_t>, LayerType);
@@ -57,13 +55,8 @@ protected:
   
 private:
 
-  // LayerType layer_type; // Do we need this when using inheritence?
-
-  friend class NeuralNetwork;
-  friend class ScaledNeuralNetwork;  
+  friend NeuralNetwork;
   friend std::ostream& operator<<(std::ostream&, const Layer&);
-  friend NeuralNetwork operator+(const NeuralNetwork& lhs, const NeuralNetwork& rhs);
-  friend NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs);
 };
 
 #endif

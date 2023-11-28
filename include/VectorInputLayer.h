@@ -8,7 +8,11 @@ class VectorInputLayer : public Layer
  public:
   VectorInputLayer(size_t);
 
-  virtual DataArray eval(const DataArray&) const;
+  DataArray eval(const DataArray&) const override;
+  void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const override;
+  Layer backpropagate(std::vector<DataArray*>&,
+		      const std::vector<DataArray*>&,
+		      const std::vector<DataArray*>&) const override;
   
  private:
 };

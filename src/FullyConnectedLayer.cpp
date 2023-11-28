@@ -2,7 +2,8 @@
 #include "Random.h"
 
 FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFunction act)
-  : Layer(std::vector(1, dim), LayerType::FULLY_CONNECTED), act(act), bias(dim), weight(dim, in_dim)
+  : Layer(std::vector(1, dim), LayerType::FULLY_CONNECTED),
+    act(act), bias(dim), weight(dim, in_dim)
 {
 }
 
@@ -61,11 +62,13 @@ double FullyConnectedLayer::dot(const Layer& other) const
 
 void FullyConnectedLayer::initialize()
 {
-  for(auto it = weight.begin(); it != weight.end(); ++it)
-    *it = -1.+2*Random::get_uniform();
+  Random gen = Random::create_uniform_random_generator();
+  for(size_t i=0; i<weight.nRows(); ++i)
+    for(size_t j=0; j<weight.nCols(); ++j)
+      weight[i][j] = -1.+2*gen();
 }
 
-void FullyConnectedLayer::update(double momentum, const Layer& grad_layer_, double learning_rate)
+void FullyConnectedLayer::update_increment(double momentum, const Layer& grad_layer_, double learning_rate)
 {
   const FullyConnectedLayer& grad_layer = dynamic_cast<const FullyConnectedLayer&>(grad_layer_);
   
@@ -74,6 +77,13 @@ void FullyConnectedLayer::update(double momentum, const Layer& grad_layer_, doub
   
   bias *= momentum;
   bias += (-learning_rate)*grad_layer.bias;
+}
 
-  return res;  
+void FullyConnectedLayer::apply_increment(const Layer& inc_layer_)
+{
+  const FullyConnectedLayer& inc_layer = dynamic_cast<const FullyConnectedLayer&>(inc_layer_);
+
+  // TODO: Implement operator-= instead
+  weight += (-1.)*inc_layer.weight;
+  bias += (-1.)*inc_layer.bias;
 }

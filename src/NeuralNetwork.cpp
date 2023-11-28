@@ -2,6 +2,7 @@
 
 #include "VectorInputLayer.h"
 #include "FullyConnectedLayer.h"
+#include "Random.h"
 
 #include <fstream>
 #include <algorithm>
@@ -10,49 +11,37 @@
 #include <iomanip>
 
 NeuralNetwork::NeuralNetwork()
-  : initialized(false), layers(), rnd_gen(std::random_device()()), random_normal(0., 1.)
+  : initialized(false), layers()
 {
   layers.reserve(10);
 }
 
 NeuralNetwork::NeuralNetwork(size_t n_layers)
-  : initialized(false), layers(layers), rnd_gen(std::random_device()()), random_normal(0., 1.)
+  : initialized(false), layers(layers)
 {}
 
 
 NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
-  : initialized(true), layers(std::move(other.layers)), rnd_gen(std::random_device()())
+  : initialized(true), layers(std::move(other.layers))
 {}
 
-/*
 NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 {
   NeuralNetwork other;
 
-  for(auto layer = net.layers.begin(); layer != net.layers.end(); ++layer)
-    {
-      // Create now layer with zero weights
-      Layer new_layer(layer->dimension, layer->layer_type, layer->activation_function);
-      
-      new_layer.weight = Matrix(layer->weight.nRows(), layer->weight.nCols());
-      new_layer.bias = Vector(layer->bias.length());
-
-      new_layer.S = layer->S;
-      new_layer.P = layer->P;
-      
-      other.layers.push_back(new_layer);
-    }
-
+  // TODO: This copies all parameters. We must set parameters to zero!
+  for(auto layer = net.layers.begin(); layer != net.layers.end(); ++layer)    
+    other.layers.push_back(Layer::createLike(*layer));
+  
   return other;
 }
-*/
+
 
 void NeuralNetwork::addInputLayer(size_t i, size_t j)
 {
   if(j==0)
     {
-      VectorInputLayer layer(i);
-      layers.push_back(layer);
+      layers.push_back(std::make_unique<VectorInputLayer>(i));
     }
   else
     {
@@ -154,14 +143,12 @@ void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, si
 
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 {
-  FullyConnectedLayer layer(width, layers.back().dim[0], act);
-  layers.push_back(layer);
+  layers.push_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], act));
 }
 
 void NeuralNetwork::addClassificationLayer(size_t width)
 {
-  FullyConnectedLayer layer(width, layers.back().dim[0], /*LayerType::CLASSIFICATION,*/ ActivationFunction::SOFTMAX);
-  layers.push_back(layer);
+  layers.push_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], ActivationFunction::SOFTMAX));
 }
 
 void NeuralNetwork::initialize()
@@ -171,7 +158,7 @@ void NeuralNetwork::initialize()
   
   for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
     {
-      it->initialize();
+      (*it)->initialize();
       /*
       switch(it->layer_type)
 	{
@@ -244,12 +231,12 @@ size_t NeuralNetwork::n_layers() const
 Vector NeuralNetwork::eval(const DataArray& x) const
 {
   // Input layer
-  DataArray x_tmp = layers.front().eval(x);
+  DataArray x_tmp = layers.front()->eval(x);
 
   // Hidden and output layers
   for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)
     {
-      x_tmp = layer_it->eval(x_tmp);
+      x_tmp = (*layer_it)->eval(x_tmp);
     }
   
   // OLD VERSION
@@ -321,6 +308,9 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   // Auxiliary variables reused in backpropagation
   std::vector<std::vector<DataArray*>> z(layers.size());
   std::vector<std::vector<DataArray*>> y(layers.size()+1);
+
+  // Random number generator for shuffling batches
+  Random rnd_gen = Random::create_mt19937_random_generator();
   
   // Allocate memory for auxiliary vectors
   for(size_t l=0; l<layers.size(); ++l)
@@ -330,7 +320,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 
       for(size_t idx = 0; idx < options.batch_size; ++idx)
 	{	  
-	  switch(layers[l].layer_type)
+	  switch(layers[l]->layer_type)
 	    {
 	    case MATRIX_INPUT:
 	    case POOLING:
@@ -345,13 +335,13 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:
 	    case FLATTENING:
-	      z[l][idx] = new Vector(layers[l].dim[0]);
-	      y[l][idx] = new Vector(layers[l].dim[0]);
+	      z[l][idx] = new Vector(layers[l]->dim[0]);
+	      y[l][idx] = new Vector(layers[l]->dim[0]);
 	      break;
 	      
 	    default:
 	      std::cerr << "ERROR: Allocation of memory not implemented for "
-			<< Layer::LayerName[layers[l].layer_type] << " yet.\n";
+			<< Layer::LayerName[layers[l]->layer_type] << " yet.\n";
 	    }
 	}
     }
@@ -368,7 +358,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   os.open("training.csv");  
   
   // Save increment for momentum method
-  NeuralNetwork increment;
+  NeuralNetwork increment = NeuralNetwork::createLike(*this);
 
   double grad_norm = 1.;  
   size_t i=0;
@@ -382,7 +372,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 		<< std::setw(20) << "Functional value"
 		<< std::setw(20) << "gradient norm" << std::endl;
       
-      std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen);
+      std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
       
       for(size_t start_idx = 0;
 	  start_idx < n_data-options.batch_size;
@@ -409,19 +399,11 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	  //gradientTest(grad_net, data, data_idx, options);
 	  //return;
 
-	  // Update weights
-	  if(epoch==0 && start_idx==0)
-	    {
-	      increment = (-options.learning_rate)*grad_net;
-	    }
-	  else
-	    {
-	      // increment = (-options.learning_rate)*grad_net + momentum*increment;
-	      increment *= momentum;
-	      increment += (-options.learning_rate)*grad_net;	  
-	    }
-      
-	  *this += 1.*increment;
+	  // Update increment
+	  increment.update_increment(momentum, grad_net, options.learning_rate);
+
+	  // Subtract increment
+	  apply_increment(increment);
         }
     }
 
@@ -442,13 +424,22 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       }
 }
 
-void NeuralNetwork::update(double momentum, const NeuralNetwork& gradient, double learning_rate)
+void NeuralNetwork::update_increment(double momentum, const NeuralNetwork& gradient, double step)
 {
   auto layer = layers.begin();
   auto grad_layer = gradient.layers.begin();
   
   for(; layer != layers.end(); ++layer, ++grad_layer)    
-    layer->update(momentum, *grad_layer, learning_rate);    
+    (*layer)->update_increment(momentum, **grad_layer, step);    
+}
+
+void NeuralNetwork::apply_increment(const NeuralNetwork& increment)
+{
+  auto layer = layers.begin();
+  auto inc_layer = increment.layers.begin();
+  
+  for(; layer != layers.end(); ++layer, ++inc_layer)    
+    (*layer)->apply_increment(**inc_layer);    
 }
 
 double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
@@ -460,7 +451,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   size_t n_data = data.size();
 
   // Set initial layer
-  switch(layers[0].layer_type)
+  switch(layers[0]->layer_type)
     {
     case VECTOR_INPUT:
       for(size_t idx=0; idx<options.batch_size; ++idx)
@@ -485,7 +476,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
     {
       for(size_t idx=0; idx<options.batch_size; ++idx)
-	layer->eval_functional(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
+	(*layer)->eval_functional(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
     }
   
   // Forward propagation
@@ -605,7 +596,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	  
 	case OptimizationOptions::LossFunction::LOG:
 	  {
-	    size_t nL = layers.back().dim[0];
+	    size_t nL = layers.back()->dim[0];
 	    Dy[idx] = new Vector(nL);	  
 
 	    for(size_t i=0; i<nL; ++i)
@@ -618,8 +609,8 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >1; )
     {
-      Layer grad = layers[l].backpropagate(Dy, y[l-1], z[l-1]);
-      grad_net.layers[l] = grad;
+      Layer* grad = &(layers[l]->backpropagate(Dy, y[l-1], z[l-1]));
+      (*grad_net.layers[l]) = grad;
     }
   
   // Backward propagation (old version)
@@ -752,92 +743,13 @@ void NeuralNetwork::save(const std::string& filename) const
   os.close();
 }
 
-
-NeuralNetwork& NeuralNetwork::operator=(const ScaledNeuralNetwork& other)
-{
-  /**
-  for(auto layer = other.network->layers.begin(); layer != other.network->layers.end(); ++layer)
-    {
-      // Create new layer with zero weights
-      Layer new_layer(layer->dim, layer->layer_type, layer->act);
-      
-      new_layer.weight = layer->weight;
-      new_layer.bias = layer->bias;
-
-      new_layer.weight *= other.scale;
-      new_layer.bias *= other.scale;
-
-      new_layer.S = layer->S;
-      new_layer.P = layer->P;
-
-      layers.push_back(new_layer);
-    }
-  */
-  std::cerr << "ERROR: The function operator=(ScaleledNeuralNetwork) is deprecated.\n";
-  return *this;
-}
-
-ScaledNeuralNetwork::ScaledNeuralNetwork(double scale ,
-					 const NeuralNetwork& network)
-  : scale(scale), network(&network)
-{
-}
-
-ScaledNeuralNetwork operator*(double scale, const NeuralNetwork& params)
-{
-  return ScaledNeuralNetwork(scale, params);
-}
-
-NeuralNetwork NeuralNetwork::operator+(const NeuralNetwork& rhs)
-{
-  NeuralNetwork net;
-
-  auto lhs_it = layers.begin();
-  auto rhs_it = rhs.layers.begin();
-    
-  for(; lhs_it != layers.end(); ++lhs_it, ++rhs_it)
-    {
-      net.layers.push_back((*lhs_it) + (*rhs_it));
-    }
-
-  return net;
-  
-  // Old version:
-  // return lhs + ScaledNeuralNetwork(1., rhs);
-}
-
-/*
-NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs)
-{
-  NeuralNetwork net;
-
-  for(auto lhs_layer = lhs.layers.begin(), rhs_layer = rhs.network->layers.begin();
-      lhs_layer != lhs.layers.end(); ++lhs_layer, ++rhs_layer)
-    {
-      // Create now layer with zero weights
-      Layer new_layer(lhs_layer->dimension, lhs_layer->layer_type, lhs_layer->activation_function);
-
-      new_layer.weight = lhs_layer->weight;
-      new_layer.weight+= rhs.scale * rhs_layer->weight;            
-      
-      new_layer.bias = lhs_layer->bias;
-      new_layer.bias+= rhs.scale * rhs_layer->bias;
-      
-      new_layer.S = lhs_layer->S;
-      new_layer.P = lhs_layer->P;
-      
-      net.layers.push_back(new_layer);
-    }
-
-  return net;
-}
-*/
-
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 				 const std::vector<TrainingData>& data,
 				 const std::vector<size_t>& data_idx,
 				 OptimizationOptions options) const
-{  
+{
+  // TODO: Make gradient test working. Find a nice way to initialize the direction
+  /*
   // Initialize a direction
   NeuralNetwork direction;
   
@@ -935,6 +847,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	delete y[l][idx];
 	delete z[l][idx];
       }
+  */
 }
 
 double NeuralNetwork::dot(const NeuralNetwork& rhs) const
@@ -953,31 +866,6 @@ double NeuralNetwork::dot(const NeuralNetwork& rhs) const
 double NeuralNetwork::norm() const
 {
   return dot(*this);
-}
-
-NeuralNetwork& NeuralNetwork::operator*=(double s)
-{
-  for(auto layer = layers.begin(); layer != layers.end(); ++layer)
-    {
-      layer->scale_params(s);
-    }
-
-  return *this;       
-}
-
-NeuralNetwork& NeuralNetwork::operator+=(const ScaledNeuralNetwork& other)
-{
-  auto layer = layers.begin();
-  auto layer_rhs = other.network->layers.begin();
-  
-  for(; layer != layers.end();
-      ++layer, ++layer_rhs)
-    {    
-      layer->weight += other.scale * layer_rhs->weight;
-      layer->bias += other.scale * layer_rhs->bias;
-    }
-  
-  return *this;
 }
 
 OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),

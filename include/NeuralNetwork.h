@@ -3,15 +3,13 @@
 
 #include <vector>
 #include <random>
+#include <memory>
 
 #include "Layer.h"
 #include "Matrix.h"
 #include "Vector.h"
 #include "Activation.h"
 #include "TrainingData.h"
-
-// Forward class declarations
-struct ScaledNeuralNetwork;
 
 // Struct for optimization options used in Neuralnetwork::train
 struct OptimizationOptions
@@ -42,7 +40,6 @@ class NeuralNetwork
 
   /// Assignment operators
   NeuralNetwork& operator=(NeuralNetwork&&);
-  NeuralNetwork& operator=(const ScaledNeuralNetwork&);
   
   // Static creator function with zero-initialization but correct dimensions
   static NeuralNetwork createLike(const NeuralNetwork&);
@@ -83,15 +80,6 @@ class NeuralNetwork
   double dot(const NeuralNetwork&) const;
   double norm() const;  
 
-  // Operations on neural network parameters
-  NeuralNetwork& operator*=(double);
-  NeuralNetwork& operator+=(const ScaledNeuralNetwork&);
-  friend ScaledNeuralNetwork operator*(double, const NeuralNetwork&);      
-	      
-  NeuralNetwork operator+(const NeuralNetwork&);  
-
-  // friend NeuralNetwork operator+(const NeuralNetwork& lhs, const ScaledNeuralNetwork& rhs);
-    
   // Console output
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
 
@@ -100,26 +88,20 @@ class NeuralNetwork
   
  private:
   // Layer list of neural network
-  std::vector<Layer> layers;  
+  std::vector<std::unique_ptr<Layer>> layers;  
 
   // Initialization state of the neural network
   bool initialized;
   
   // Update step with gradient method
-  void update(double momentum, const NeuralNetwork& gradient, double learning_rate);
+  void update_increment(double momentum, const NeuralNetwork& gradient, double learning_rate);
+  void apply_increment(const NeuralNetwork& increment);
   
   // Gradient test (for debugging and testing)
   void gradientTest(const NeuralNetwork&,
 		    const std::vector<TrainingData>&,
 		    const std::vector<size_t>&,
 		    OptimizationOptions) const;
-};
-
-struct ScaledNeuralNetwork
-{
-  ScaledNeuralNetwork(double, const NeuralNetwork&);
-  double scale;
-  const NeuralNetwork* network;
 };
 
 #endif
