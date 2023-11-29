@@ -5,9 +5,8 @@ VectorInputLayer::VectorInputLayer(size_t dim)
 {  
 }
 
-DataArray VectorInputLayer::eval(const DataArray& input) const
+void VectorInputLayer::forward_propagate(DataArray& x) const
 {
-  return input;
 }
 
 void VectorInputLayer::eval_functional(const DataArray& x_, DataArray& z_, DataArray& y_) const

@@ -7,11 +7,11 @@ FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFu
 {
 }
 
-DataArray FullyConnectedLayer::eval(const DataArray& input) const
+void FullyConnectedLayer::forward_propagate(DataArray& x_) const
 {
-  const Vector& x = dynamic_cast<const Vector&>(input);
+  Vector& x = dynamic_cast<Vector&>(x_);
   
-  return activate(weight * x + bias, act);
+  x = activate(weight * x + bias, act);
 }
 
 void FullyConnectedLayer::eval_functional(const DataArray& x_, DataArray& z_, DataArray& y_) const

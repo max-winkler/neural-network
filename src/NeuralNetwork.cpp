@@ -233,13 +233,21 @@ size_t NeuralNetwork::n_layers() const
 Vector NeuralNetwork::eval(const DataArray& x) const
 {
   // Input layer
-  DataArray x_tmp = layers.front()->eval(x);
-
-  // Hidden and output layers
-  for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)
+  DataArray* x_tmp;
+  switch(layers.front()->layer_type)
     {
-      x_tmp = (*layer_it)->eval(x_tmp);
+    case LayerType::VECTOR_INPUT:
+      // Create vector in first layer
+      x_tmp = new Vector(dynamic_cast<const Vector&>(x));
+      break;
+    case LayerType::MATRIX_INPUT:
+      x_tmp = new Matrix(dynamic_cast<const Matrix&>(x));
+      break;      
     }
+  
+  // Hidden and output layers
+  for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)    
+    (*layer_it)->forward_propagate(*x_tmp);
   
   // OLD VERSION
   /*
@@ -292,7 +300,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
     }
   */
   
-  Vector y = dynamic_cast<Vector&>(x_tmp);
+  Vector y = dynamic_cast<Vector&>(*x_tmp);
   
   return y;
 }
