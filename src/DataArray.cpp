@@ -22,7 +22,8 @@ DataArray::DataArray(const DataArray& other)
 
 DataArray::~DataArray()
 {
-  delete[] data;
+  if(data)
+    delete[] data;
 }
 
 double& DataArray::operator[](size_t i)
