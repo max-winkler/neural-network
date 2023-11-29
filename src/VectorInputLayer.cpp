@@ -18,10 +18,15 @@ void VectorInputLayer::eval_functional(const DataArray& x_, DataArray& z_, DataA
   y = x;
 }
 
-Layer VectorInputLayer::backpropagate(std::vector<DataArray*>& DY,
-				      const std::vector<DataArray*>& Y,
-				      const std::vector<DataArray*>& Z) const
+std::unique_ptr<Layer> VectorInputLayer::backpropagate(std::vector<DataArray*>& DY,
+						       const std::vector<DataArray*>& Y,
+						       const std::vector<DataArray*>& Z) const
 {
   VectorInputLayer output(dim[0]);
-  return output;
+  return std::unique_ptr<Layer>(new VectorInputLayer(dim[0]));
+}
+
+std::unique_ptr<Layer> VectorInputLayer::zeros_like() const
+{
+  return std::unique_ptr<Layer>(new VectorInputLayer(dim[0]));
 }

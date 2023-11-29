@@ -24,11 +24,11 @@ void FullyConnectedLayer::eval_functional(const DataArray& x_, DataArray& z_, Da
   y = activate(z, act);
 }
 
-Layer FullyConnectedLayer::backpropagate(std::vector<DataArray*>& DY,
-					 const std::vector<DataArray*>& Y,
-					 const std::vector<DataArray*>& Z) const
+std::unique_ptr<Layer> FullyConnectedLayer::backpropagate(std::vector<DataArray*>& DY,
+							  const std::vector<DataArray*>& Y,
+							  const std::vector<DataArray*>& Z) const
 {
-  FullyConnectedLayer output(dim[0], weight.nCols(), act);
+  FullyConnectedLayer* output = new FullyConnectedLayer(dim[0], weight.nCols(), act);
 
   auto y_it = Y.begin(), z_it = Z.begin();
   auto Dy_it = DY.begin();
@@ -43,14 +43,14 @@ Layer FullyConnectedLayer::backpropagate(std::vector<DataArray*>& DY,
       Vector Dz = Dy * diag(Dactivate(z, act)); 
 
       // Update gradient w.r.t. weight and bias
-      output.weight += outer(Dz, y);
-      output.bias += Dz;
+      output->weight += outer(Dz, y);
+      output->bias += Dz;
 
       // Update gradient w.r.t. input data
       Dy = Dz * weight;
     }
 
-  return output;
+  return std::unique_ptr<Layer>(output);
 }
 
 double FullyConnectedLayer::dot(const Layer& other) const
@@ -86,4 +86,9 @@ void FullyConnectedLayer::apply_increment(const Layer& inc_layer_)
   // TODO: Implement operator-= instead
   weight += (-1.)*inc_layer.weight;
   bias += (-1.)*inc_layer.bias;
+}
+
+std::unique_ptr<Layer> FullyConnectedLayer::zeros_like() const
+{
+  return std::unique_ptr<Layer>(new FullyConnectedLayer(dim[0], weight.nCols(), act));
 }

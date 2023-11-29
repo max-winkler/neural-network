@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstring>
+#include <memory>
 
 #include "Activation.h"
 #include "Matrix.h"
@@ -33,15 +34,16 @@ class Layer
   virtual void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const;
 			       
   // Get gradient
-  virtual Layer backpropagate(std::vector<DataArray*>&,
-			      const std::vector<DataArray*>&,
-			      const std::vector<DataArray*>&) const;
+  virtual std::unique_ptr<Layer> backpropagate(std::vector<DataArray*>&,
+					       const std::vector<DataArray*>&,
+					       const std::vector<DataArray*>&) const;
   
   virtual double dot(const Layer&) const;
   
   virtual void initialize();
   virtual void update_increment(double, const Layer&, double);
   virtual void apply_increment(const Layer&);
+  virtual std::unique_ptr<Layer> zeros_like() const;
   
   static std::unordered_map<LayerType, const char*> LayerName;
   std::string get_name() const;

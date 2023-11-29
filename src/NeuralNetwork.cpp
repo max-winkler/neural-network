@@ -17,8 +17,10 @@ NeuralNetwork::NeuralNetwork()
 }
 
 NeuralNetwork::NeuralNetwork(size_t n_layers)
-  : initialized(false), layers(layers)
-{}
+  : initialized(false), layers()
+{
+  layers.reserve(n_layers);
+}
 
 
 NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
@@ -31,7 +33,7 @@ NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 
   // TODO: This copies all parameters. We must set parameters to zero!
   for(auto layer = net.layers.begin(); layer != net.layers.end(); ++layer)    
-    other.layers.push_back(Layer::createLike(*layer));
+    other.layers.push_back((*layer)->zeros_like());
   
   return other;
 }
@@ -609,8 +611,8 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >1; )
     {
-      Layer* grad = &(layers[l]->backpropagate(Dy, y[l-1], z[l-1]));
-      (*grad_net.layers[l]) = grad;
+      std::unique_ptr<Layer> grad = layers[l]->backpropagate(Dy, y[l-1], z[l-1]);
+      grad_net.layers[l] = std::move(grad);
     }
   
   // Backward propagation (old version)
@@ -706,7 +708,7 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net)
       if(layer != net.layers.begin())
 	os << "       ↓\n";
       
-      os << "  " << *layer << std::endl;
+      os << "  " << **layer << std::endl;
     }
       
   return os;
@@ -718,8 +720,8 @@ void NeuralNetwork::save(const std::string& filename) const
 
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
     {
-      os << "[ " << Layer::LayerName[layer->layer_type] << " ]\n";
-      os << "  dimension : " << layer->dim[0] << '\n'; // << ", " << layer->dim[1] << '\n';
+      os << "[ " << (*layer)->get_name() << " ]\n";
+      os << "  dimension : " << (*layer)->dim[0] << '\n'; // << ", " << layer->dim[1] << '\n';
       // TODO: Reimplement this
       /*
 	os << "  stride    : " << layer->S << '\n';
@@ -858,7 +860,7 @@ double NeuralNetwork::dot(const NeuralNetwork& rhs) const
   auto layer_rhs = rhs.layers.begin()+1;
   
   for(; layer != layers.end(); ++layer, ++layer_rhs)
-    val += layer->dot(*layer_rhs);
+    val += (*layer)->dot(**layer_rhs);
    
   return val;
 }

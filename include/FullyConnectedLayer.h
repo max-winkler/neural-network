@@ -12,9 +12,9 @@ class FullyConnectedLayer : public Layer
 
   void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const override;
 
-  Layer backpropagate(std::vector<DataArray*>&,
-		      const std::vector<DataArray*>&,
-		      const std::vector<DataArray*>&) const override;  
+  std::unique_ptr<Layer> backpropagate(std::vector<DataArray*>&,
+				       const std::vector<DataArray*>&,
+				       const std::vector<DataArray*>&) const override;  
   
   
   double dot(const Layer&) const override;
@@ -23,7 +23,7 @@ class FullyConnectedLayer : public Layer
   
   void update_increment(double, const Layer&, double) override;
   void apply_increment(const Layer&) override;
-  
+  std::unique_ptr<Layer> zeros_like() const override;  
  private:
   
   // Layer-specific parameters

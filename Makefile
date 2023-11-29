@@ -11,7 +11,7 @@ OBJ = 	src/DataArray.o \
 
 TESTS = test/DigitRecognition.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -O3
+CPP_FLAGS = -g
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
