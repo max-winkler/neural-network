@@ -29,3 +29,8 @@ std::unique_ptr<Layer> VectorInputLayer::zeros_like() const
 {
   return std::unique_ptr<Layer>(new VectorInputLayer(dim[0]));
 }
+
+std::unique_ptr<Layer> VectorInputLayer::clone() const
+{
+  return std::unique_ptr<Layer>(new VectorInputLayer(*this));
+}

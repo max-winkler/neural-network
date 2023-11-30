@@ -17,9 +17,16 @@ NeuralNetwork::NeuralNetwork()
 }
 
 NeuralNetwork::NeuralNetwork(size_t n_layers)
-  : initialized(false), layers()
+  : initialized(false), layers(n_layers)
 {
-  layers.reserve(n_layers);
+  // layers.reserve(n_layers);
+}
+
+NeuralNetwork::NeuralNetwork(const NeuralNetwork& other)
+  : initialized(true), layers()
+{  
+  for(auto layer = other.layers.begin(); layer != other.layers.end(); ++layer)    
+    layers.push_back((*layer)->clone());  
 }
 
 
@@ -619,8 +626,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >1; )
     {
-      std::unique_ptr<Layer> grad = layers[l]->backpropagate(Dy, y[l-1], z[l-1]);
-      grad_net.layers[l] = std::move(grad);
+      grad_net.layers[l] = layers[l]->backpropagate(Dy, y[l-1], z[l-1]);
     }
   
   // Backward propagation (old version)
@@ -757,14 +763,13 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 				 const std::vector<TrainingData>& data,
 				 const std::vector<size_t>& data_idx,
 				 OptimizationOptions options) const
-{
-  // TODO: Make gradient test working. Find a nice way to initialize the direction
-  /*
+{    
   // Initialize a direction
-  NeuralNetwork direction;
-  
-  direction.layers.reserve(layers.size());
- 
+  NeuralNetwork direction = NeuralNetwork::createLike(*this);
+  NeuralNetwork zero_net = NeuralNetwork::createLike(*this);  
+  direction.initialize(); // fills weights with random data
+
+  /*
   for(auto layer = layers.begin(); layer != layers.end(); ++layer)
     {
       const size_t m = layer->weight.nRows();
@@ -791,7 +796,8 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 
       direction.layers.push_back(new_layer);
     }
-
+  */
+  
   double deriv_exact = grad_net.dot(direction);
 
   size_t n_data = data.size();
@@ -807,47 +813,51 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 
       for(size_t idx = 0; idx < options.batch_size; ++idx)
 	{	  
-	  switch(layers[l].layer_type)
+	  switch(layers[l]->layer_type)
 	    {
 	    case MATRIX_INPUT:
 	    case POOLING:
 	    case CONVOLUTION:
 	      // TODO: Are y and z really needed in input layers?
-	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-
+	      /*
+		y[l][idx] = new Matrix(layers[l].dim[0], layers[l].dimension.second);
+		z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
+	      */
 	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:
 	    case FLATTENING:
-	      z[l][idx] = new Vector(layers[l].dimension.first);
-	      y[l][idx] = new Vector(layers[l].dimension.first);
+	      z[l][idx] = new Vector(layers[l]->dim[0]);
+	      y[l][idx] = new Vector(layers[l]->dim[0]);
 	      break;
 	      
 	    default:
 	      std::cerr << "ERROR: Allocation of memory not implemented for "
-			<< Layer::LayerName[layers[l].layer_type] << " yet.\n";
+			<< layers[l]->get_name() << " yet.\n";
 	    }
 	}
     }
-    
+  
   double f = evalFunctional(data, y, z, data_idx, options);
   std::cout << "Value in x0: " << f << std::endl; 
-            
+  
   for(double s=1.; s>1.e-12; s*=0.5)
-    {
+    {      
+      NeuralNetwork dir_s(direction);
+      dir_s.update_increment(-s, zero_net, 0.);
+      
       NeuralNetwork net_s(*this);
-      net_s.update(1, direction, s);
+      net_s.apply_increment(dir_s);
   
       double f_s = net_s.evalFunctional(data, y, z, data_idx, options);
       std::cout << "Value in x+s*d: " << f_s << std::endl;
       
       double deriv_fd = (f_s - f)/s;
-
+      
       std::cout << "  derivative by gradient: " << deriv_exact
-	      << " vs. by difference quotient: " << deriv_fd
-	      << " relative error: " << std::abs(deriv_exact - deriv_fd)/deriv_exact << std::endl;
+		<< " vs. by difference quotient: " << deriv_fd
+		<< " relative error: " << std::abs(deriv_exact - deriv_fd)/deriv_exact << std::endl;
       
     }
 
@@ -856,8 +866,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
       {
 	delete y[l][idx];
 	delete z[l][idx];
-      }
-  */
+      }  
 }
 
 double NeuralNetwork::dot(const NeuralNetwork& rhs) const

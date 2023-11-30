@@ -13,7 +13,10 @@ class VectorInputLayer : public Layer
   std::unique_ptr<Layer> backpropagate(std::vector<DataArray*>&,
 				       const std::vector<DataArray*>&,
 				       const std::vector<DataArray*>&) const override;
+
+  std::unique_ptr<Layer> clone() const override;
   std::unique_ptr<Layer> zeros_like() const override;
+  
  private:
 };
 

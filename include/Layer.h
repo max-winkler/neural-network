@@ -28,7 +28,7 @@ enum LayerType
 class Layer
 {
  public:
-  
+
   // Process layers
   virtual void forward_propagate(DataArray&) const;
   virtual void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const;
@@ -44,6 +44,7 @@ class Layer
   virtual void update_increment(double, const Layer&, double);
   virtual void apply_increment(const Layer&);
   virtual std::unique_ptr<Layer> zeros_like() const;
+  virtual std::unique_ptr<Layer> clone() const;
   
   static std::unordered_map<LayerType, const char*> LayerName;
   std::string get_name() const;

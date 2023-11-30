@@ -23,6 +23,8 @@ class FullyConnectedLayer : public Layer
   
   void update_increment(double, const Layer&, double) override;
   void apply_increment(const Layer&) override;
+  
+  std::unique_ptr<Layer> clone() const override;
   std::unique_ptr<Layer> zeros_like() const override;  
  private:
   

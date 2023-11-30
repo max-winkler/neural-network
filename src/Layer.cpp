@@ -50,3 +50,7 @@ std::unique_ptr<Layer> Layer::zeros_like() const
 {
   return std::unique_ptr<Layer>(new Layer(std::vector<size_t>(0), LayerType::UNKNOWN));
 }
+std::unique_ptr<Layer> Layer::clone() const
+{
+  return std::unique_ptr<Layer>(new Layer(*this));
+}

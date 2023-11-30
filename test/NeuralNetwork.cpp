@@ -55,7 +55,7 @@ int main()
 
   // Train neural network
   OptimizationOptions options;
-  options.loss_function = OptimizationOptions::LossFunction::LOG;
+  options.loss_function = OptimizationOptions::LossFunction::MSE;
   options.batch_size = 100;
   options.max_iter = 2e5;
   options.learning_rate = 0.01;

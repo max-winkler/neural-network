@@ -73,10 +73,10 @@ void FullyConnectedLayer::update_increment(double momentum, const Layer& grad_la
   const FullyConnectedLayer& grad_layer = dynamic_cast<const FullyConnectedLayer&>(grad_layer_);
   
   weight *= momentum;
-  weight += (-learning_rate)*grad_layer.weight;
+  weight += learning_rate*grad_layer.weight;
   
   bias *= momentum;
-  bias += (-learning_rate)*grad_layer.bias;
+  bias += learning_rate*grad_layer.bias;
 }
 
 void FullyConnectedLayer::apply_increment(const Layer& inc_layer_)
@@ -91,4 +91,9 @@ void FullyConnectedLayer::apply_increment(const Layer& inc_layer_)
 std::unique_ptr<Layer> FullyConnectedLayer::zeros_like() const
 {
   return std::unique_ptr<Layer>(new FullyConnectedLayer(dim[0], weight.nCols(), act));
+}
+
+std::unique_ptr<Layer> FullyConnectedLayer::clone() const
+{
+  return std::unique_ptr<Layer>(new FullyConnectedLayer(*this));
 }

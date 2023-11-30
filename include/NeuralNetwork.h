@@ -36,6 +36,7 @@ class NeuralNetwork
   // Constructors
   NeuralNetwork();
   NeuralNetwork(size_t);
+  NeuralNetwork(const NeuralNetwork&);
   NeuralNetwork(NeuralNetwork&&);
 
   /// Assignment operators
