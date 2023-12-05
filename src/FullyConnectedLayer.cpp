@@ -57,7 +57,7 @@ double FullyConnectedLayer::dot(const Layer& other) const
 {
   const FullyConnectedLayer& b = dynamic_cast<const FullyConnectedLayer&>(other);
   
-  return weight.inner(b.weight) + bias.inner(b.weight);
+  return weight.inner(b.weight) + bias.inner(b.bias);
 }
 
 void FullyConnectedLayer::initialize()

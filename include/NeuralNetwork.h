@@ -89,7 +89,7 @@ class NeuralNetwork
   
  private:
   // Layer list of neural network
-  std::vector<std::unique_ptr<Layer>> layers;  
+  std::vector<std::unique_ptr<Layer>> layers;
 
   // Initialization state of the neural network
   bool initialized;

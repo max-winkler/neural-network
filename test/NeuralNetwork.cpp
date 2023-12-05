@@ -12,11 +12,12 @@ int main()
   
   NeuralNetwork net;
   net.addInputLayer(2); // input layer
-  net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
+  /*  net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(8, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(8, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(4, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(2, ActivationFunction::SIGMOID); // hidden layer
+  */
   net.addFullyConnectedLayer(1, ActivationFunction::SIGMOID);    // output layer
   
   net.initialize();

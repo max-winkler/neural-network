@@ -37,8 +37,7 @@ NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
 NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 {
   NeuralNetwork other;
-
-  // TODO: This copies all parameters. We must set parameters to zero!
+  
   for(auto layer = net.layers.begin(); layer != net.layers.end(); ++layer)    
     other.layers.push_back((*layer)->zeros_like());
   
@@ -152,7 +151,7 @@ void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, si
 
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 {
-  layers.push_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], act));
+  layers.emplace_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], act));
 }
 
 void NeuralNetwork::addClassificationLayer(size_t width)
@@ -413,8 +412,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    }
 	
 	  // for testing only. remove later
-	  //gradientTest(grad_net, data, data_idx, options);
-	  //return;
+	  // gradientTest(grad_net, data, data_idx, options);
+	  // return;
 
 	  // Update increment
 	  increment.update_increment(momentum, grad_net, options.learning_rate);
@@ -624,7 +623,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
     }
 
   // Backward propagation (desired version)
-  for(size_t l=layers.size(); l-- >1; )
+  for(size_t l=layers.size(); l-- >0; )
     {
       grad_net.layers[l] = layers[l]->backpropagate(Dy, y[l-1], z[l-1]);
     }
@@ -873,8 +872,8 @@ double NeuralNetwork::dot(const NeuralNetwork& rhs) const
 { 
   double val = 0.;
   
-  auto layer = layers.begin()+1;
-  auto layer_rhs = rhs.layers.begin()+1;
+  auto layer = layers.begin();
+  auto layer_rhs = rhs.layers.begin();
   
   for(; layer != layers.end(); ++layer, ++layer_rhs)
     val += (*layer)->dot(**layer_rhs);

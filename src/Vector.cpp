@@ -4,9 +4,9 @@
 
 #include "Vector.h"
 
-Vector::Vector() : DataArray(1)
-{
-}
+Vector::Vector()
+  : DataArray(1)
+{ }
 
 Vector::Vector(size_t n)
   : DataArray(n)
@@ -28,10 +28,6 @@ Vector::Vector(std::initializer_list<double> val) : DataArray(val.size())
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
-}
-
-Vector::~Vector()
-{
 }
 
 Vector& Vector::operator=(const Vector& other)

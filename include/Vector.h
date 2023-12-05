@@ -98,7 +98,7 @@ class Vector : public DataArray {
    *
    * @brief Desctructor
    */
-  ~Vector();
+  // ~Vector();
   
   /**
    * Copy assignment opertor creating a hard copy of another vector.
