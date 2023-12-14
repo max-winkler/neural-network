@@ -1,6 +1,7 @@
 #include "NeuralNetwork.h"
 
 #include "VectorInputLayer.h"
+#include "MatrixInputLayer.h"
 #include "FullyConnectedLayer.h"
 #include "Random.h"
 
@@ -53,7 +54,7 @@ void NeuralNetwork::addInputLayer(size_t i, size_t j)
     }
   else
     {
-      std::cerr << "ERROR: Implement matrix input layer first.\n";
+      layers.push_back(std::make_unique<MatrixInputLayer>(i, j));
     }
 }
 
@@ -89,10 +90,9 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
 }
 
 void NeuralNetwork::addFlatteningLayer()
-{
-  /*
+{  
   const Layer& prev_layer = layers.back();
-
+  
   // Check if previous layer produces a matrix
   switch(prev_layer.layer_type)
     {
@@ -106,12 +106,11 @@ void NeuralNetwork::addFlatteningLayer()
 		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
       return;
     }
+  
   // Dimension of flattened matrix
   size_t dim = prev_layer.dimension.first * prev_layer.dimension.second;
   
-  Layer layer(std::pair<size_t, size_t>(dim, 0), LayerType::FLATTENING, ActivationFunction::NONE);
-  layers.push_back(layer);
-  */
+  layers.emplace_back(std::make_unique<FlatteningLayer>(dim));  
 }
 
 void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, size_t S, size_t P)
@@ -314,7 +313,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method
-  const double momentum = 0.3;
+  const double momentum = 0.9;
   
   size_t n_data = data.size();
   
@@ -341,11 +340,10 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    case MATRIX_INPUT:
 	    case POOLING:
 	    case CONVOLUTION:
-	      // TODO: Are y and z really needed in input layers?
-	      /*
-	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-	      */
+	      // TODO: Are y and z really needed in input layers?	      
+	      y[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
+	      z[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
+	      
 	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:

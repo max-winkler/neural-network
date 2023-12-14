@@ -4,6 +4,7 @@ OBJ = 	src/DataArray.o \
 	src/Random.o \
 	src/Layer.o \
 	src/VectorInputLayer.o \
+	src/MatrixInputLayer.o \
 	src/FullyConnectedLayer.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
@@ -11,7 +12,7 @@ OBJ = 	src/DataArray.o \
 
 TESTS = test/DigitRecognition.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -O3
+CPP_FLAGS = -g
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
