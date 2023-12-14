@@ -10,7 +10,7 @@ FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFu
 void FullyConnectedLayer::forward_propagate(DataArray& x_) const
 {
   Vector& x = dynamic_cast<Vector&>(x_);
-  
+
   x = activate(weight * x + bias, act);
 }
 
@@ -39,9 +39,22 @@ std::unique_ptr<Layer> FullyConnectedLayer::backpropagate(std::vector<DataArray*
       Vector& Dy = dynamic_cast<Vector&>(**Dy_it);
       const Vector& y = dynamic_cast<const Vector&>(**y_it);
       const Vector& z = dynamic_cast<const Vector&>(**z_it);
-      
-      Vector Dz = Dy * diag(Dactivate(z, act)); 
 
+      Vector Dz;
+
+      switch(act)
+	{
+	case ActivationFunction::SOFTMAX:
+	  // Activation functions taking all components into account
+	  Dz = Dy * DactivateCoupled(z, act);
+	  break;
+	  
+	default:
+	  // Activation functions applied component-wise
+	  Dz = Dy * diag(Dactivate(z, act));
+	  break;
+	}
+      
       // Update gradient w.r.t. weight and bias
       output->weight += outer(Dz, y);
       output->bias += Dz;
@@ -62,10 +75,15 @@ double FullyConnectedLayer::dot(const Layer& other) const
 
 void FullyConnectedLayer::initialize()
 {
+  double a = 1./sqrt(weight.nCols());
+  a = 2.;
+  
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<weight.nRows(); ++i)
     for(size_t j=0; j<weight.nCols(); ++j)
-      weight[i][j] = -1.+2*gen();
+      weight[i][j] = -a+2.*a*gen();
+
+  std::cout << "Initial weight: \n" << weight << std::endl;
 }
 
 void FullyConnectedLayer::update_increment(double momentum, const Layer& grad_layer_, double learning_rate)

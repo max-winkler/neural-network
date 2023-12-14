@@ -156,7 +156,7 @@ void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 
 void NeuralNetwork::addClassificationLayer(size_t width)
 {
-  layers.push_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], ActivationFunction::SOFTMAX));
+  layers.emplace_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], ActivationFunction::SOFTMAX));
 }
 
 void NeuralNetwork::initialize()
@@ -314,7 +314,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method
-  const double momentum = 0.9;
+  const double momentum = 0.3;
   
   size_t n_data = data.size();
   
@@ -391,7 +391,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
       
       for(size_t start_idx = 0;
-	  start_idx < n_data-options.batch_size;
+	  start_idx < n_data-options.batch_size+1;
 	  start_idx+= options.batch_size)
         {	
 	  std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
