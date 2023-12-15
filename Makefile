@@ -6,6 +6,7 @@ OBJ = 	src/DataArray.o \
 	src/VectorInputLayer.o \
 	src/MatrixInputLayer.o \
 	src/FullyConnectedLayer.o \
+	src/FlatteningLayer.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
 	src/TrainingData.o

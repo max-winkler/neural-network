@@ -205,7 +205,7 @@ int main()
   options.batch_size    = 100;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 10;
+  options.epochs        = 1;
   
   net.train(training_data, options);
   

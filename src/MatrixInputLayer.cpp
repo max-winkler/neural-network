@@ -5,7 +5,7 @@ MatrixInputLayer::MatrixInputLayer(size_t dim1, size_t dim2)
 {
 }
 
-void MatrixInputLayer::forward_propagate(DataArray& x) const
+void MatrixInputLayer::forward_propagate(DataArray*& x) const
 {
 }
 

@@ -8,7 +8,7 @@ class FullyConnectedLayer : public Layer
  public:
   FullyConnectedLayer(size_t, size_t, ActivationFunction);
   
-  void forward_propagate(DataArray&) const override;
+  void forward_propagate(DataArray*&) const override;
 
   void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const override;
 

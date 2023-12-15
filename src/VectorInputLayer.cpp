@@ -5,7 +5,7 @@ VectorInputLayer::VectorInputLayer(size_t dim)
 {  
 }
 
-void VectorInputLayer::forward_propagate(DataArray& x) const
+void VectorInputLayer::forward_propagate(DataArray*& x) const
 {
 }
 

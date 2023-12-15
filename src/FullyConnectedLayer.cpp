@@ -7,11 +7,11 @@ FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFu
 {
 }
 
-void FullyConnectedLayer::forward_propagate(DataArray& x_) const
+void FullyConnectedLayer::forward_propagate(DataArray*& x_) const
 {
-  Vector& x = dynamic_cast<Vector&>(x_);
+  Vector* x = dynamic_cast<Vector*>(x_);
 
-  x = activate(weight * x + bias, act);
+  *x = activate(weight * (*x) + bias, act);
 }
 
 void FullyConnectedLayer::eval_functional(const DataArray& x_, DataArray& z_, DataArray& y_) const
@@ -83,7 +83,7 @@ void FullyConnectedLayer::initialize()
     for(size_t j=0; j<weight.nCols(); ++j)
       weight[i][j] = -a+2.*a*gen();
 
-  std::cout << "Initial weight: \n" << weight << std::endl;
+  // std::cout << "Initial weight: \n" << weight << std::endl;
 }
 
 void FullyConnectedLayer::update_increment(double momentum, const Layer& grad_layer_, double learning_rate)

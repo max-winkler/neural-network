@@ -30,7 +30,7 @@ class Layer
  public:
 
   // Process layers
-  virtual void forward_propagate(DataArray&) const;
+  virtual void forward_propagate(DataArray*&) const;
   virtual void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const;
 			       
   // Get gradient
