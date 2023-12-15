@@ -1,7 +1,10 @@
 #include "NeuralNetwork.h"
 
 #include "VectorInputLayer.h"
+#include "MatrixInputLayer.h"
 #include "FullyConnectedLayer.h"
+#include "FlatteningLayer.h"
+#include "ConvolutionalLayer.h"
 #include "Random.h"
 
 #include <fstream>
@@ -53,7 +56,7 @@ void NeuralNetwork::addInputLayer(size_t i, size_t j)
     }
   else
     {
-      std::cerr << "ERROR: Implement matrix input layer first.\n";
+      layers.push_back(std::make_unique<MatrixInputLayer>(i, j));
     }
 }
 
@@ -89,10 +92,9 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
 }
 
 void NeuralNetwork::addFlatteningLayer()
-{
-  /*
-  const Layer& prev_layer = layers.back();
-
+{  
+  const Layer& prev_layer = *layers.back();
+  
   // Check if previous layer produces a matrix
   switch(prev_layer.layer_type)
     {
@@ -106,16 +108,30 @@ void NeuralNetwork::addFlatteningLayer()
 		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
       return;
     }
-  // Dimension of flattened matrix
-  size_t dim = prev_layer.dimension.first * prev_layer.dimension.second;
   
-  Layer layer(std::pair<size_t, size_t>(dim, 0), LayerType::FLATTENING, ActivationFunction::NONE);
-  layers.push_back(layer);
-  */
+  layers.emplace_back(std::make_unique<FlatteningLayer>(prev_layer.dim[0], prev_layer.dim[1]));  
 }
 
 void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, size_t S, size_t P)
 {
+  const Layer& prev_layer = *layers.back();
+  
+  // Check if previous layer produces a matrix
+  switch(prev_layer.layer_type)
+    {
+    case LayerType::MATRIX_INPUT:
+    case LayerType::CONVOLUTION:
+    case LayerType::POOLING:
+      break;
+    default:
+      std::cerr << "ERROR: A convolution layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
+		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
+		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      return;
+    }  
+  
+  layers.emplace_back(std::make_unique<ConvolutionalLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, S, P, act));
+    
   /*
   const Layer& prev_layer = layers.back();
   
@@ -156,7 +172,7 @@ void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
 
 void NeuralNetwork::addClassificationLayer(size_t width)
 {
-  layers.push_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], ActivationFunction::SOFTMAX));
+  layers.emplace_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], ActivationFunction::SOFTMAX));
 }
 
 void NeuralNetwork::initialize()
@@ -253,7 +269,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
   
   // Hidden and output layers
   for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)    
-    (*layer_it)->forward_propagate(*x_tmp);
+    (*layer_it)->eval(x_tmp);
   
   // OLD VERSION
   /*
@@ -341,11 +357,10 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    case MATRIX_INPUT:
 	    case POOLING:
 	    case CONVOLUTION:
-	      // TODO: Are y and z really needed in input layers?
-	      /*
-	      y[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-	      z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-	      */
+	      // TODO: Are y and z really needed in input layers?	      
+	      y[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
+	      z[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
+	      
 	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
@@ -391,7 +406,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
       
       for(size_t start_idx = 0;
-	  start_idx < n_data-options.batch_size;
+	  start_idx < n_data-options.batch_size+1;
 	  start_idx+= options.batch_size)
         {	
 	  std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
@@ -492,7 +507,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
     {
       for(size_t idx=0; idx<options.batch_size; ++idx)
-	(*layer)->eval_functional(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
+	(*layer)->forward_propagate(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
     }
   
   // Forward propagation
@@ -625,7 +640,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >0; )
     {
-      grad_net.layers[l] = layers[l]->backpropagate(Dy, y[l-1], z[l-1]);
+      grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l-1]);
     }
   
   // Backward propagation (old version)
@@ -817,12 +832,12 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	    case MATRIX_INPUT:
 	    case POOLING:
 	    case CONVOLUTION:
-	      // TODO: Are y and z really needed in input layers?
-	      /*
-		y[l][idx] = new Matrix(layers[l].dim[0], layers[l].dimension.second);
-		z[l][idx] = new Matrix(layers[l].dimension.first, layers[l].dimension.second);
-	      */
+
+	      // TODO: Are y and z really needed in input layers?	      
+	      y[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
+	      z[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);	      
 	      break;
+	      
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:

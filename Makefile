@@ -4,14 +4,17 @@ OBJ = 	src/DataArray.o \
 	src/Random.o \
 	src/Layer.o \
 	src/VectorInputLayer.o \
+	src/MatrixInputLayer.o \
 	src/FullyConnectedLayer.o \
+	src/FlatteningLayer.o \
+	src/ConvolutionalLayer.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
 	src/TrainingData.o
 
 TESTS = test/DigitRecognition.o
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -g
+CPP_FLAGS = -O3
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
@@ -28,7 +31,7 @@ EXISTING_FILES := $(wildcard $(MNIST_FILES))
 %.o: %.cpp
 	g++ -c $< ${CPP_INCLUDE} ${CPP_FLAGS} -o $@
 
-test: $(OBJ)
+test: $(OBJ) test/NeuralNetwork.cpp
 	g++ -c test/LinAlg.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/LinAlg.o
 	g++ test/LinAlg.o ${OBJ} -o linalg_test
 	g++ -c test/NeuralNetwork.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/NeuralNetwork.o	

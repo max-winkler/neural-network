@@ -45,7 +45,7 @@ int main()
 
       Vector label = Vector(3);
       label[c] = 1.;
-
+      
       training_data.push_back(TrainingData(Vector({x, y}), label));
     }
 

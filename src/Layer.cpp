@@ -35,11 +35,11 @@ std::string Layer::get_name() const
 }
 
 // Virtual functions that must be overridden
-void Layer::forward_propagate(DataArray& x) const {}
-void Layer::eval_functional(const DataArray& x, DataArray& z, DataArray& y) const {}
-std::unique_ptr<Layer> Layer::backpropagate(std::vector<DataArray*>&,
-					    const std::vector<DataArray*>&,
-					    const std::vector<DataArray*>&) const {
+void Layer::eval(DataArray*& x) const {}
+void Layer::forward_propagate(const DataArray& x, DataArray& z, DataArray& y) const {}
+std::unique_ptr<Layer> Layer::backward_propagate(std::vector<DataArray*>&,
+						 const std::vector<DataArray*>&,
+						 const std::vector<DataArray*>&) const {
   return std::unique_ptr<Layer>(new Layer(std::vector<size_t>(0), LayerType::UNKNOWN));
 }
 double Layer::dot(const Layer&) const { return 0.;}
