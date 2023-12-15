@@ -1,12 +1,12 @@
-#ifndef _FULLY_CONNECTED_LAYER_H_
-#define _FULLY_CONNECTED_LAYER_H_
+#ifndef _CONVOLUTIONAL_LAYER_H_
+#define _CONVOLUTIONAL_LAYER_H_
 
 #include "Layer.h"
 
-class FullyConnectedLayer : public Layer
-{  
- public:
-  FullyConnectedLayer(size_t, size_t, ActivationFunction);
+class ConvolutionalLayer : public Layer
+{
+ public:  
+  ConvolutionalLayer(size_t, size_t, size_t k, size_t S=0, size_t P=0, ActivationFunction act=ActivationFunction::NONE);
   
   void eval(DataArray*&) const override;
 
@@ -26,13 +26,19 @@ class FullyConnectedLayer : public Layer
   
   std::unique_ptr<Layer> clone() const override;
   std::unique_ptr<Layer> zeros_like() const override;  
+  
  private:
   
-  // Layer-specific parameters
-  Matrix weight;
-  Vector bias;
-  ActivationFunction act;  
+  Matrix K;
+  double bias;
+  ActivationFunction act;
+  
+  size_t k;
+  size_t S;
+  size_t P;
+
+  size_t in_dim1;
+  size_t in_dim2;
 };
 
 #endif
-

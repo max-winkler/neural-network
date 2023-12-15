@@ -6,14 +6,14 @@ FlatteningLayer::FlatteningLayer(size_t dim1, size_t dim2)
 {
 }
 
-void FlatteningLayer::forward_propagate(DataArray*& x_) const
+void FlatteningLayer::eval(DataArray*& x_) const
 {  
   Matrix* x = dynamic_cast<Matrix*>(x_);
   x_ = new Vector(x->flatten());
   delete x;
 }
 
-void FlatteningLayer::eval_functional(const DataArray& x_, DataArray& z_, DataArray& y_) const
+void FlatteningLayer::forward_propagate(const DataArray& x_, DataArray& z_, DataArray& y_) const
 {
   const Matrix& x = dynamic_cast<const Matrix&>(x_);
   Vector& y = dynamic_cast<Vector&>(y_);
@@ -21,9 +21,9 @@ void FlatteningLayer::eval_functional(const DataArray& x_, DataArray& z_, DataAr
   y = x.flatten();
 }
 
-std::unique_ptr<Layer> FlatteningLayer::backpropagate(std::vector<DataArray*>& DY,
-						      const std::vector<DataArray*>& Y,
-						      const std::vector<DataArray*>& Z) const
+std::unique_ptr<Layer> FlatteningLayer::backward_propagate(std::vector<DataArray*>& DY,
+							   const std::vector<DataArray*>& Y,
+							   const std::vector<DataArray*>& Z) const
 {
   FlatteningLayer* output = new FlatteningLayer(in_dim1, in_dim2);
 

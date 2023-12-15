@@ -4,6 +4,7 @@
 #include "MatrixInputLayer.h"
 #include "FullyConnectedLayer.h"
 #include "FlatteningLayer.h"
+#include "ConvolutionalLayer.h"
 #include "Random.h"
 
 #include <fstream>
@@ -113,6 +114,24 @@ void NeuralNetwork::addFlatteningLayer()
 
 void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, size_t S, size_t P)
 {
+  const Layer& prev_layer = *layers.back();
+  
+  // Check if previous layer produces a matrix
+  switch(prev_layer.layer_type)
+    {
+    case LayerType::MATRIX_INPUT:
+    case LayerType::CONVOLUTION:
+    case LayerType::POOLING:
+      break;
+    default:
+      std::cerr << "ERROR: A convolution layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
+		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
+		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      return;
+    }  
+  
+  layers.emplace_back(std::make_unique<ConvolutionalLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, S, P, act));
+    
   /*
   const Layer& prev_layer = layers.back();
   
@@ -250,7 +269,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
   
   // Hidden and output layers
   for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)    
-    (*layer_it)->forward_propagate(x_tmp);
+    (*layer_it)->eval(x_tmp);
   
   // OLD VERSION
   /*
@@ -488,7 +507,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
     {
       for(size_t idx=0; idx<options.batch_size; ++idx)
-	(*layer)->eval_functional(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
+	(*layer)->forward_propagate(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
     }
   
   // Forward propagation
@@ -621,7 +640,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >0; )
     {
-      grad_net.layers[l] = layers[l]->backpropagate(Dy, y[l-1], z[l-1]);
+      grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l-1]);
     }
   
   // Backward propagation (old version)

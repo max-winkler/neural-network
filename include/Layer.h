@@ -30,13 +30,13 @@ class Layer
  public:
 
   // Process layers
-  virtual void forward_propagate(DataArray*&) const;
-  virtual void eval_functional(const DataArray& x, DataArray& z, DataArray& y) const;
+  virtual void eval(DataArray*&) const;
+  virtual void forward_propagate(const DataArray& x, DataArray& z, DataArray& y) const;
 			       
   // Get gradient
-  virtual std::unique_ptr<Layer> backpropagate(std::vector<DataArray*>&,
-					       const std::vector<DataArray*>&,
-					       const std::vector<DataArray*>&) const;
+  virtual std::unique_ptr<Layer> backward_propagate(std::vector<DataArray*>&,
+						    const std::vector<DataArray*>&,
+						    const std::vector<DataArray*>&) const;
   
   virtual double dot(const Layer&) const;
   

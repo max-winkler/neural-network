@@ -7,14 +7,14 @@ FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFu
 {
 }
 
-void FullyConnectedLayer::forward_propagate(DataArray*& x_) const
+void FullyConnectedLayer::eval(DataArray*& x_) const
 {
   Vector* x = dynamic_cast<Vector*>(x_);
 
   *x = activate(weight * (*x) + bias, act);
 }
 
-void FullyConnectedLayer::eval_functional(const DataArray& x_, DataArray& z_, DataArray& y_) const
+void FullyConnectedLayer::forward_propagate(const DataArray& x_, DataArray& z_, DataArray& y_) const
 {
   const Vector& x = dynamic_cast<const Vector&>(x_);
   Vector& z = dynamic_cast<Vector&>(z_);
@@ -24,9 +24,9 @@ void FullyConnectedLayer::eval_functional(const DataArray& x_, DataArray& z_, Da
   y = activate(z, act);
 }
 
-std::unique_ptr<Layer> FullyConnectedLayer::backpropagate(std::vector<DataArray*>& DY,
-							  const std::vector<DataArray*>& Y,
-							  const std::vector<DataArray*>& Z) const
+std::unique_ptr<Layer> FullyConnectedLayer::backward_propagate(std::vector<DataArray*>& DY,
+							       const std::vector<DataArray*>& Y,
+							       const std::vector<DataArray*>& Z) const
 {
   FullyConnectedLayer* output = new FullyConnectedLayer(dim[0], weight.nCols(), act);
 
