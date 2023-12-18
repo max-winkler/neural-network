@@ -118,39 +118,7 @@ void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, si
       return;
     }  
   
-  layers.emplace_back(std::make_unique<ConvolutionalLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, S, P, act));
-    
-  /*
-  const Layer& prev_layer = layers.back();
-  
-  // Check if previous layer produces a matrix
-  switch(prev_layer.layer_type)
-    {
-    case LayerType::MATRIX_INPUT:
-    case LayerType::CONVOLUTION:
-    case LayerType::POOLING:
-      break;
-    default:
-      std::cerr << "ERROR: A convolution layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
-		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
-		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
-      return;
-    }
-
-  const size_t m1 = prev_layer.dimension.first;
-  const size_t n1 = prev_layer.dimension.second;
-
-  // TODO: This not neccesarily yields an integer. Catch this case?
-  size_t m2 = (m1-batch+2*P)/S+1;
-  size_t n2 = (n1-batch+2*P)/S+1;
-
-  Layer layer(std::pair<size_t, size_t>(m2, n2), LayerType::CONVOLUTION, act);
-  layer.m = batch;
-  layer.S = S;
-  layer.P = P;
-  
-  layers.push_back(layer);
-  */
+  layers.emplace_back(std::make_unique<ConvolutionalLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, S, P, act));    
 }
 
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
@@ -169,68 +137,7 @@ void NeuralNetwork::initialize()
   auto it_pred = layers.begin();
   
   for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
-    {
-      (*it)->initialize();
-      /*
-      switch(it->layer_type)
-	{
-	case FULLY_CONNECTED:
-	case CLASSIFICATION:	  
-	  if(it_pred->layer_type == LayerType::FULLY_CONNECTED
-	     || it_pred->layer_type == LayerType::VECTOR_INPUT
-	     || it_pred->layer_type == LayerType::FLATTENING)	    
-	    {
-	      // Get layer
-	      auto layer = dynamic_cast<FullyConnectedLayer&>(*it);
-		
-	      // Build weight matrix and bias vector
-	      size_t m = it->dim[0];
-	      size_t n = it_pred->dim[0];
-
-	      // Initialize random matrix
-	      Matrix W(m, n);
-	      for(size_t i=0; i<m; ++i)
-		for(size_t j=0; j<n; ++j)
-		  W[i][j] = -1.+2*random_real(rnd_gen);
-	      
-	      layer.set_weight(W);
-	      layer.set_bias(Vector(m));
-	    }
-	  else
-	    {
-	      std::cerr << "ERROR: A " << Layer::LayerName[it->layer_type]
-			<< " follows a " << Layer::LayerName[it_pred->layer_type]
-			<< " which is incompatible.\n";
-	      return;
-	    }
-	  break;
-	  
-	case FLATTENING:
-	case POOLING:
-	  // nothing to be done here
-	  break;
-	  
-	case CONVOLUTION:
-	  
-	  {
-	    Matrix W(it->m,it->m);
-	    for(size_t i=0; i<it->m; ++i)
-	      for(size_t j=0; j<it->m; ++j)
-		W[i][j] = 0.5+random_normal(rnd_gen);
-
-	    it->weight = W;
-	    it->bias = Vector(1);
-	  }
-	  
-	  break;
-	  
-	default:
-	  std::cerr << "ERROR: Initialization of neural network with " << Layer::LayerName[it->layer_type]
-		    << " is not implemented yet.\n";
-	  break;
-	}
-      */
-    }
+    (*it)->initialize();
   
   initialized = true;
 }
@@ -258,57 +165,6 @@ Vector NeuralNetwork::eval(const DataArray& x) const
   // Hidden and output layers
   for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)    
     (*layer_it)->eval(x_tmp);
-  
-  // OLD VERSION
-  /*
-  for(auto layer = layers.begin(); layer != layers.end(); ++layer)
-    {      
-      switch(layer->layer_type)
-	{
-	case LayerType::VECTOR_INPUT:
-	  // Create vector in first layer
-	  x_tmp = new Vector(dynamic_cast<const Vector&>(x));
-	  break;
-	case LayerType::MATRIX_INPUT:
-	  x_tmp = new Matrix(dynamic_cast<const Matrix&>(x));
-	  break;
-	case LayerType::FULLY_CONNECTED:
-	case LayerType::CLASSIFICATION:
-	  {
-	    Vector& x_ref = dynamic_cast<Vector&>(*x_tmp);
-	    
-	    dynamic_cast<Vector&>(*x_tmp) = activate(layer->weight * x_ref + layer->bias, layer->activation_function);
-	  }
-	  break;
-	case LayerType::FLATTENING:
-	  {
-	    // TODO: Delete old x_tmp after flattening
-	    const Matrix* tmp = dynamic_cast<const Matrix*>(x_tmp);
-	    x_tmp = new Vector(tmp->flatten());
-	    delete tmp;
-	  }
-	  break;
-	case LayerType::POOLING:
-	  {
-	    Matrix& x_ref = dynamic_cast<Matrix&>(*x_tmp);
-	    x_ref = x_ref.pool(POOLING_MAX, layer->S, 0);
-	  }
-	  break;
-	case LayerType::CONVOLUTION:
-	  {
-	    Matrix& x_ref = dynamic_cast<Matrix&>(*x_tmp);
-	    x_ref = x_ref.convolve(layer->weight, layer->S, layer->P);
-	    x_ref += layer->bias[0];
-	    x_ref = activate(x_ref, layer->activation_function);
-	  }
-	  break;	  
-	default:
-	  std::cerr << "ERROR: Evaluation of neural networks involving " << Layer::LayerName[layer->layer_type]
-		  << " is invalid or not implemented yet.\n";
-	  return Vector();
-	}      
-    }
-  */
   
   Vector y = dynamic_cast<Vector&>(*x_tmp);
   
@@ -498,63 +354,6 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	(*layer)->forward_propagate(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
     }
   
-  // Forward propagation
-  /*
-  int l=0;
-  for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
-    {
-       switch(layer->layer_type)
-	{
-	case FULLY_CONNECTED:
-	case CLASSIFICATION:
-	  for(size_t idx=0; idx<options.batch_size; ++idx)
-	    {
-	      Vector& y_prev = dynamic_cast<Vector&>(*y[l][idx]);
-	      
-	      dynamic_cast<Vector&>(*z[l][idx]) = layer->weight * y_prev + layer->bias;	      
-	      dynamic_cast<Vector&>(*y[l+1][idx]) = activate(dynamic_cast<Vector&>(*z[l][idx]), layer->activation_function);
-	    }	    
-	  break;
-	  
-	case FLATTENING:
-	  for(size_t idx=0; idx<options.batch_size; ++idx)
-	    {
-	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
-	  
-	      // z is unused here
-	      dynamic_cast<Vector&>(*y[l+1][idx]) = y_prev.flatten();
-	    }
-	  break;
-	  
-	case POOLING:
-	  for(size_t idx=0; idx<options.batch_size; ++idx)
-	    {
-	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
-	      
-	      // z is unused here
-	      dynamic_cast<Matrix&>(*y[l+1][idx]) = y_prev.pool(POOLING_MAX, layer->S, layer->P);
-	    }
-	  break;
-	  
-	case CONVOLUTION:
-	  for(size_t idx=0; idx<options.batch_size; ++idx)
-	    {
-	      Matrix& y_prev = dynamic_cast<Matrix&>(*y[l][idx]);
-	      Matrix& z_idx = dynamic_cast<Matrix&>(*z[l][idx]);
-	      
-	      z_idx = y_prev.convolve(layer->weight, layer->S, layer->P);
-	      z_idx += layer->bias[0];
-	      dynamic_cast<Matrix&>(*y[l+1][idx]) = activate(z_idx, layer->activation_function);
-	    }
-	  break;
-	  
-	default:
-	  std::cerr << "ERROR: Forward propagation not implemented yet for layer type "
-		  << Layer::LayerName[layer->layer_type] << ".\n";
-	}
-    }
-  */
-  
   // Evaluate objective functional
   double f = 0.;
   for(size_t idx=0; idx<options.batch_size; ++idx)
@@ -627,87 +426,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >0; )
-    {
-      grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l-1]);
-    }
-  
-  // Backward propagation (old version)
-  /*
-  for(size_t l=layers.size(); l-- >1; )
-    {      
-      for(size_t idx=0; idx<options.batch_size; ++idx)
-        {
-	switch(layers[l].layer_type)
-	  {
-	  case FULLY_CONNECTED:
-	  case CLASSIFICATION:
-	    {
-	      const Vector& y_idx = dynamic_cast<Vector&>(*y[l-1][idx]);
-	      const Vector& z_idx = dynamic_cast<Vector&>(*z[l-1][idx]);
-	      Vector& Dy_idx = dynamic_cast<Vector&>(*Dy[idx]);
-	      Vector Dz_idx;
-	      
-	      switch(layers[l].act)
-	        {
-	        case ActivationFunction::SOFTMAX:
-		// Activation functions taking all components into account
-	          Dz_idx = Dy_idx * DactivateCoupled(z_idx, layers[l].activation_function);		  
-		break;
-		  
-	        default:
-		// Activation functions applied component-wise
-		  Dz_idx = Dy_idx * diag(Dactivate(z_idx, layers[l].activation_function));
-	        }
-	      
-	      
-	      // Gradient w.r.t. weight and bias
-	      grad_net.layers[l].weight += outer(Dz_idx, y_idx);
-	      grad_net.layers[l].bias += Dz_idx;
-
-	      // Gradient w.r.t. data
-	      Dy_idx = Dz_idx * layers[l].weight;
-	    }
-	    break;
-
-	  case FLATTENING:
-	    {
-	      DataArray* tmp = Dy[idx];
-	      Dy[idx] = new Matrix(dynamic_cast<Vector&>(*Dy[idx]).reshape(layers[l-1].dimension.first,
-							       layers[l-1].dimension.second));
-	      delete tmp;
-	    }
-	    break;
-	  case POOLING:
-	    {
-	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
-	      const Matrix& y_res = dynamic_cast<Matrix&>(*y[l-1][idx]);
-	      
-	      Dy_idx = Dy_idx.unpool(y_res, POOLING_MAX, layers[l].S, layers[l].P);
-	    }	    
-	    break;
-	  case CONVOLUTION:
-	    {
-	      Matrix& Dy_idx = dynamic_cast<Matrix&>(*Dy[idx]);
-	      const Matrix& z_idx = dynamic_cast<Matrix&>(*z[l-1][idx]);	      
-	      const Matrix& y_idx = dynamic_cast<Matrix&>(*y[l-1][idx]);
-	      const Matrix Dz_idx = Dactivate(z_idx, layers[l].activation_function);
-	      
-	      // Gradient w.r.t. kernel matrix and bias
-	      grad_net.layers[l].weight += y_idx.back_convolve(multiply(Dz_idx, Dy_idx), layers[l].S, layers[l].P);
-	      grad_net.layers[l].bias[0] += Dy_idx.inner(Dz_idx);
-	      
-	      // Gradient w.r.t. data
-	      Dy_idx = multiply(Dz_idx, Dy_idx).kron(layers[l].weight);
-	    }
-	    break;
-	  default:
-	    std::cerr << "ERROR: Backpropagation over " << Layer::LayerName[layers[l].layer_type]
-		    << " not implemented yet.\n";
-	    break;
-	  }
-        }
-    }
-  */
+    grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l-1]);
   
   for(size_t idx=0; idx<options.batch_size; ++idx)         
     delete Dy[idx];    
@@ -771,35 +490,6 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
   NeuralNetwork zero_net = NeuralNetwork::createLike(*this);  
   direction.initialize(); // fills weights with random data
 
-  /*
-  for(auto layer = layers.begin(); layer != layers.end(); ++layer)
-    {
-      const size_t m = layer->weight.nRows();
-      const size_t n = layer->weight.nCols();
-
-      const size_t bias_dim = (layer->layer_type == LayerType::CONVOLUTION ? 1 : m);
-      
-      Matrix weight(m, n);
-      Vector bias(bias_dim);
-      
-      for(size_t i=0; i<m; ++i)
-        {
-	for(size_t j=0; j<n; ++j)
-	  {
-	    weight[i][j] = 1.;
-	  }
-	bias[i] = 1.;
-        }
-
-      Layer new_layer(layer->dimension, layer->layer_type, layer->activation_function);
-      
-      new_layer.weight = weight;
-      new_layer.bias = bias;
-
-      direction.layers.push_back(new_layer);
-    }
-  */
-  
   double deriv_exact = grad_net.dot(direction);
 
   size_t n_data = data.size();
@@ -886,7 +576,7 @@ double NeuralNetwork::dot(const NeuralNetwork& rhs) const
 
 double NeuralNetwork::norm() const
 {
-  return dot(*this);
+  return sqrt(dot(*this));
 }
 
 OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),
