@@ -5,7 +5,7 @@ ConvolutionalLayer::ConvolutionalLayer(size_t in_dim1, size_t in_dim2,
 				       size_t k, size_t S, size_t P, ActivationFunction act)
   : Layer(std::vector<size_t>(2,0), LayerType::CONVOLUTION),
     in_dim1(in_dim1), in_dim2(in_dim2),
-    k(k), S(S==0 ? k : S), P(P), K(k,k), act(act)
+    k(k), S(S==0 ? k : S), P(P), K(k,k), bias(0.), act(act)
 {
   // Apply a simple convolution to get the dimension of the layer
   Matrix A(in_dim1, in_dim2);
@@ -30,6 +30,7 @@ void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, D
   Matrix& y = dynamic_cast<Matrix&>(y_);
   
   z = x.convolve(K, S, P);
+  z += bias;
   y = activate(z, act);
 }
 
@@ -76,8 +77,7 @@ void ConvolutionalLayer::initialize()
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<K.nRows(); ++i)
     for(size_t j=0; j<K.nCols(); ++j)
-      K[i][j] = -a+2*a*gen();
-
+      K[i][j] = -a+2.*a*gen();
 }
 
 void ConvolutionalLayer::update_increment(double momentum, const Layer& grad_layer_, double learning_rate)

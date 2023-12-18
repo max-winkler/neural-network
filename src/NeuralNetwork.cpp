@@ -1,10 +1,13 @@
 #include "NeuralNetwork.h"
 
+// Include layer classes
 #include "VectorInputLayer.h"
 #include "MatrixInputLayer.h"
 #include "FullyConnectedLayer.h"
 #include "FlatteningLayer.h"
 #include "ConvolutionalLayer.h"
+#include "PoolingLayer.h"
+
 #include "Random.h"
 
 #include <fstream>
@@ -51,21 +54,15 @@ NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 void NeuralNetwork::addInputLayer(size_t i, size_t j)
 {
   if(j==0)
-    {
-      layers.push_back(std::make_unique<VectorInputLayer>(i));
-    }
+    layers.emplace_back(std::make_unique<VectorInputLayer>(i));
   else
-    {
-      layers.push_back(std::make_unique<MatrixInputLayer>(i, j));
-    }
+    layers.emplace_back(std::make_unique<MatrixInputLayer>(i, j));
 }
 
 void NeuralNetwork::addPoolingLayer(size_t batch)
 {
-  /*
-  const Layer prev_layer = layers.back();
+  const Layer& prev_layer = *layers.back();
   
-  // Check if layer matches previous layer
   switch(prev_layer.layer_type)
     {
     case LayerType::MATRIX_INPUT:
@@ -79,16 +76,7 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
       return;
     }
 
-  // Dimension of resulting matrix
-  size_t m = (prev_layer.dimension.first-1) / batch + 1;
-  size_t n = (prev_layer.dimension.second-1) / batch + 1;
-
-  // Add layer
-  Layer layer(std::pair<size_t, size_t>(m, n), LayerType::POOLING, ActivationFunction::NONE);
-  // TODO: Extend this function to variable padding P
-  layer.S = batch;
-  layers.push_back(layer);
-  */
+  layers.emplace_back(std::make_unique<PoolingLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, batch, 0));
 }
 
 void NeuralNetwork::addFlatteningLayer()

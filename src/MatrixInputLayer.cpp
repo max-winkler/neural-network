@@ -1,7 +1,7 @@
 #include "MatrixInputLayer.h"
 
 MatrixInputLayer::MatrixInputLayer(size_t dim1, size_t dim2)
-  : Layer(std::vector({dim1, dim2}), LayerType::MATRIX_INPUT)
+  : Layer(std::vector<size_t>({dim1, dim2}), LayerType::MATRIX_INPUT)
 {
 }
 

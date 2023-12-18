@@ -8,6 +8,7 @@ OBJ = 	src/DataArray.o \
 	src/FullyConnectedLayer.o \
 	src/FlatteningLayer.o \
 	src/ConvolutionalLayer.o \
+	src/PoolingLayer.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
 	src/TrainingData.o
