@@ -139,11 +139,13 @@ Vector Vector::operator*(const Matrix& A) const
 
   double* A_col;
   double* x_data;
-      
+
+  const double* x_data_end = data+m;
+  
   for(size_t i=0; i<n; ++i)
     {
-      double val=0;
-      for(A_col = A.data + i, x_data = data; x_data != data+m; x_data++, A_col+=n)
+      double val=0;      
+      for(A_col = A.data + i, x_data = data; x_data != x_data_end; x_data++, A_col+=n)
         val += (*A_col)*(*x_data);
 
       y[i] = val;

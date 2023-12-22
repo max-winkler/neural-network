@@ -188,7 +188,7 @@ int main()
   // Create neural network
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
-  net.addConvolutionLayer(2, ActivationFunction::RELU, 2);    
+  net.addConvolutionLayer(2, ActivationFunction::RELU, 2);
   net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(49, ActivationFunction::SIGMOID); // hidden layer
