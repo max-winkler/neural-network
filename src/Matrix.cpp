@@ -134,8 +134,10 @@ Vector Matrix::operator*(const Vector& b) const
   for(int i=0; i<m; ++i)
     {
       double val = 0.;
+      
+      const double* data_row_end = &(data[(i+1)*n]);
       for(double *data_row = &(data[i*n]), *data_vec = b.data;
-	  data_row != &(data[(i+1)*n]);
+	  data_row != data_row_end;
 	  ++data_row, ++data_vec)
 	{
 	  val += (*data_row)*(*data_vec);
@@ -193,13 +195,17 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
   const double* u_data_ptr;
   const double* v_data_ptr;
 
+  // TODO: Use the blas operation dger here!
+  
   for(data_ptr = data, u_data_ptr = B.u->data;
       data_ptr != data+m*n; ++u_data_ptr)
-    for(v_data_ptr = B.v->data; v_data_ptr != B.v->data+n; ++data_ptr, ++v_data_ptr)
-      {
-	*data_ptr += (*u_data_ptr)*(*v_data_ptr);
-      }
-  
+    {
+      const double* v_data_end = B.v->data+n;
+      for(v_data_ptr = B.v->data; v_data_ptr != v_data_end; ++data_ptr, ++v_data_ptr)
+	{
+	  *data_ptr += (*u_data_ptr)*(*v_data_ptr);
+	}
+    }
   return *this;
 }
 
