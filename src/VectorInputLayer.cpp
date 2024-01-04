@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "VectorInputLayer.h"
 
 VectorInputLayer::VectorInputLayer(size_t dim)
@@ -33,4 +35,10 @@ std::unique_ptr<Layer> VectorInputLayer::zeros_like() const
 std::unique_ptr<Layer> VectorInputLayer::clone() const
 {
   return std::unique_ptr<Layer>(new VectorInputLayer(*this));
+}
+
+void VectorInputLayer::save(std::ostream& os) const
+{
+  os << "[ " << get_name() << " ]\n";
+  os << std::setw(16) << "  dimension : " << dim[0] << '\n';  
 }

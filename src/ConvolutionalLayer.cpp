@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "ConvolutionalLayer.h"
 #include "Random.h"
 
@@ -108,4 +110,22 @@ std::unique_ptr<Layer> ConvolutionalLayer::zeros_like() const
 std::unique_ptr<Layer> ConvolutionalLayer::clone() const
 {
   return std::unique_ptr<Layer>(new ConvolutionalLayer(*this));
+}
+
+void ConvolutionalLayer::save(std::ostream& os) const
+{
+  os << "[ " << get_name() << " ]\n";
+  os << std::setw(16) << " dimension : " << dim[0] << ", " << dim[1] << '\n';
+
+  os << std::setw(16) << " kernel : ";
+  for(size_t i=0; i<K.nRows(); ++i)
+    for(size_t j=0; j<K.nCols(); ++j)
+      os << K[i][j] << ", ";
+  os << '\n';
+
+  os << std::setw(16) << " bias : " << bias << '\n';  
+  os << std::setw(16) << " activation : " << act << '\n';  
+
+  os << std::setw(16) << " stride : " << S << '\n';
+  os << std::setw(16) << " padding : " << P << '\n';
 }

@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "FullyConnectedLayer.h"
 #include "Random.h"
 
@@ -114,4 +116,23 @@ std::unique_ptr<Layer> FullyConnectedLayer::zeros_like() const
 std::unique_ptr<Layer> FullyConnectedLayer::clone() const
 {
   return std::unique_ptr<Layer>(new FullyConnectedLayer(*this));
+}
+
+void FullyConnectedLayer::save(std::ostream& os) const
+{
+  os << "[ " << get_name() << " ]\n";
+  os << std::setw(16) << " dimension : " << dim[0] << '\n';
+
+  os << std::setw(16) << " weight : ";
+  for(size_t i=0; i<weight.nRows(); ++i)
+    for(size_t j=0; j<weight.nCols(); ++j)
+      os << weight[i][j] << ", ";
+  os << '\n';
+  
+  os << std::setw(16) << " bias : ";
+  for(size_t i=0; i<bias.length(); ++i)
+    os << bias[i] << ", ";
+  os << '\n';
+
+  os << std::setw(16) << " activation : " << act << '\n';  
 }

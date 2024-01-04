@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "FlatteningLayer.h"
 
 FlatteningLayer::FlatteningLayer(size_t dim1, size_t dim2)
@@ -50,4 +52,10 @@ std::unique_ptr<Layer> FlatteningLayer::clone() const
 std::unique_ptr<Layer> FlatteningLayer::zeros_like() const
 {
   return std::unique_ptr<Layer>(new FlatteningLayer(in_dim1, in_dim2));
+}
+
+void FlatteningLayer::save(std::ostream& os) const
+{
+  os << "[ " << get_name() << " ]\n";
+  os << std::setw(16) << " dimension : " << dim[0] << '\n';
 }

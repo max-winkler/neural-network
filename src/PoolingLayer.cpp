@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "PoolingLayer.h"
 
 PoolingLayer::PoolingLayer(size_t in_dim1, size_t in_dim2,
@@ -59,4 +61,15 @@ std::unique_ptr<Layer> PoolingLayer::clone() const
 std::unique_ptr<Layer> PoolingLayer::zeros_like() const
 {
   return std::unique_ptr<Layer>(new PoolingLayer(*this));
+}
+
+void PoolingLayer::save(std::ostream& os) const
+{
+  os << "[ " << get_name() << " ]\n";
+  os << std::setw(16) << " dimension : " << dim[0] << ", " << dim[1] << '\n';
+
+  os << std::setw(16) << " batch size : " << k << '\n';
+  os << std::setw(16) << " stride : " << S << '\n';
+  os << std::setw(16) << " padding : " << P << '\n';
+  os << std::setw(16) << " pooling type : " << type << '\n';
 }

@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "MatrixInputLayer.h"
 
 MatrixInputLayer::MatrixInputLayer(size_t dim1, size_t dim2)
@@ -35,3 +37,8 @@ std::unique_ptr<Layer> MatrixInputLayer::clone() const
   return std::unique_ptr<Layer>(new MatrixInputLayer(*this));
 }
 
+void MatrixInputLayer::save(std::ostream& os) const
+{
+  os << "[ " << get_name() << " ]\n";
+  os << std::setw(16) << "  dimension : " << dim[0] << ", " << dim[1] << '\n';  
+}
