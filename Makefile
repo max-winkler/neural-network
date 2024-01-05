@@ -13,9 +13,14 @@ OBJ = 	src/DataArray.o \
 	src/Activation.o \
 	src/TrainingData.o
 
-TESTS = test/DigitRecognition.o
+TESTS = test/DigitRecognition.o \
+	test/Classification.o \
+	test/NeuralNetwork.o \
+	test/Convolution.o \
+	test/Pooling.o
+
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -O3
+CPP_FLAGS = -g
 LIBS = -lpng
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
@@ -32,18 +37,12 @@ EXISTING_FILES := $(wildcard $(MNIST_FILES))
 %.o: %.cpp
 	g++ -c $< ${CPP_INCLUDE} ${CPP_FLAGS} -o $@
 
-test: $(OBJ) test/NeuralNetwork.cpp
-	g++ -c test/LinAlg.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/LinAlg.o
+test: $(OBJ) $(TESTS)
 	g++ test/LinAlg.o ${OBJ} -o linalg_test
-	g++ -c test/NeuralNetwork.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/NeuralNetwork.o	
 	g++ test/NeuralNetwork.o ${OBJ} -o neuralnetwork_test
-	g++ -c test/Classification.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Classification.o	
 	g++ test/Classification.o ${OBJ} ${LIBS} -o classification_test
-	g++ -c test/Convolution.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Convolution.o	
 	g++ test/Convolution.o ${OBJ} ${LIBS} -o convolution_test
-	g++ -c test/DigitRecognition.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/DigitRecognition.o	
 	g++ test/DigitRecognition.o ${OBJ} ${LIBS} -o digitrecognition_test
-	g++ -c test/Pooling.cpp ${CPP_INCLUDE} ${CPP_FLAGS} -o test/Pooling.o	
 	g++ test/Pooling.o ${OBJ} ${LIBS} -o pooling_test
 
 # Target to create the output directory
@@ -65,7 +64,7 @@ $(MNIST_FILES): $(MNIST_FILES_GZ)
 
 ressources: $(MNIST_FILES)
 
-default: $(OBJ)
+default: $(OBJ) test
 
 clean:
 	rm -f src/*.o mnist/*.gz
