@@ -21,7 +21,7 @@ TESTS = test/DigitRecognition.o \
 
 CPP_INCLUDE = -Iinclude
 CPP_FLAGS = -g
-LIBS = -lpng
+LIBS = -lpng -lblas
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
 	http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz \
@@ -37,9 +37,10 @@ EXISTING_FILES := $(wildcard $(MNIST_FILES))
 %.o: %.cpp
 	g++ -c $< ${CPP_INCLUDE} ${CPP_FLAGS} -o $@
 
+
 test: $(OBJ) $(TESTS)
-	g++ test/LinAlg.o ${OBJ} -o linalg_test
-	g++ test/NeuralNetwork.o ${OBJ} -o neuralnetwork_test
+	g++ test/LinAlg.o ${OBJ} ${LIBS} -o linalg_test
+	g++ test/NeuralNetwork.o ${OBJ} ${LIBS} -o neuralnetwork_test
 	g++ test/Classification.o ${OBJ} ${LIBS} -o classification_test
 	g++ test/Convolution.o ${OBJ} ${LIBS} -o convolution_test
 	g++ test/DigitRecognition.o ${OBJ} ${LIBS} -o digitrecognition_test

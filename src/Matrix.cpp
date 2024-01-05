@@ -1,5 +1,6 @@
 #include <iomanip>
 #include <cstring>
+#include <cblas.h>
 
 #include "Matrix.h"
 #include "Vector.h"
@@ -97,6 +98,16 @@ double& MatrixRow::operator[](size_t j)
   return data_ptr[j];
 }
 
+double& Matrix::operator()(size_t i, size_t j)
+{
+  return data[i*size/m + j];
+}
+
+const double& Matrix::operator()(size_t i, size_t j) const
+{
+  return data[i*size/m + j];
+}
+
 Matrix& Matrix::operator*=(double a)
 {
   for(double* data_ptr = data; data_ptr != data+size; ++data_ptr)
@@ -131,6 +142,9 @@ Vector Matrix::operator*(const Vector& b) const
 
   Vector c(m);
 
+  cblas_dgemv(CblasRowMajor, CblasNoTrans, nRows(), nCols(), 1., data, nCols(), b.data, 1, 0., c.data, 1);
+  
+  /**
   for(int i=0; i<m; ++i)
     {
       double val = 0.;
@@ -144,6 +158,7 @@ Vector Matrix::operator*(const Vector& b) const
 	}
       c[i] = val;
     }
+  */
   return c;
 }
 
@@ -190,13 +205,14 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
       std::cerr << "  (" << m << ", " << n << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
     }
-
+  
+  cblas_dger(CblasRowMajor, nRows(), nCols(), 1., B.u->data, 1, B.v->data, 1, data, nCols());
+  
+  /*
   double* data_ptr;
   const double* u_data_ptr;
-  const double* v_data_ptr;
+  const double* v_data_ptr;  
 
-  // TODO: Use the blas operation dger here!
-  
   for(data_ptr = data, u_data_ptr = B.u->data;
       data_ptr != data+m*n; ++u_data_ptr)
     {
@@ -206,6 +222,7 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
 	  *data_ptr += (*u_data_ptr)*(*v_data_ptr);
 	}
     }
+  */
   return *this;
 }
 
@@ -259,11 +276,15 @@ Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
 
   for(size_t i=0; i<n1_new; ++i)
     for(size_t j=0; j<n2_new; ++j)
-      for(size_t k=0; k<m; ++k)
-        for(size_t l=0; l<m; ++l)
-	{	    
-	  A[i][j] += (*this)[i*S+k][j*S+l] * K[k][l];
-	}
+      {
+	double val = 0.;
+	for(size_t k=0; k<m; ++k)
+	  for(size_t l=0; l<m; ++l)
+	    {	    
+	      val += (*this)(i*S+k,j*S+l) * K(k,l);
+	    }
+	A(i,j) = val;
+      }
   
   return A;    
 }
@@ -288,9 +309,13 @@ Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const
 
   for(size_t k=0; k<n1_new; ++k)
     for(size_t l=0; l<n2_new; ++l)
-      for(size_t i=0; i<M; ++i)
-	for(size_t j=0; j<M; ++j)
-	  K[k][l] += (*this)[i*J+k][j*J+l] * Y[i][j];
+      {
+	double val = 0.;
+	for(size_t i=0; i<M; ++i)	
+	  for(size_t j=0; j<M; ++j)
+	    val += (*this)(i*J+k,j*J+l) * Y(i,j);
+	K(k,l) = val;
+      }
 
   return K;
 }
@@ -330,12 +355,12 @@ Matrix Matrix::pool(int type, size_t S, size_t P) const
 		if(i2 < 0 || i2 >= n1 || j2 < 0 || j2 >= n2)
 		  continue;
 		      
-		double cur_val = (*this)[i2][j2];
+		double cur_val = (*this)(i2,j2);
 		if(cur_val > max_val)
 		  max_val = cur_val;		    
 	        }
 		
-	    A[i][j] = max_val;
+	    A(i,j) = max_val;
 	    break;
 	  }
 	default:
@@ -373,14 +398,14 @@ Matrix Matrix::unpool(const Matrix& A, int type, size_t S, size_t P) const
 	    for(int i=0; i<S; ++i)
 	      for(int j=0; j<S; ++j)
 	        {
-		if(A[S*k+i][S*l+j] > val_max)
+		  if(A(S*k+i,S*l+j) > val_max)
 		  {
 		    i_max = i; j_max = j;
-		    val_max = A[S*k+i][S*l+j];
+		    val_max = A(S*k+i,S*l+j);
 		  }
 	        }
 
-	    B[k*S+i_max][l*S+j_max] = operator[](k)[l];
+	    B(k*S+i_max,l*S+j_max) = (*this)(k,l);
 	  }
 	  break;
 	default:
@@ -403,9 +428,12 @@ Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
 
   for(size_t i=0; i<n1; ++i)
     for(size_t j=0; j<n2; ++j)
-      for(size_t k=0; k<m; ++k)
-	for(size_t l=0; l<m; ++l)	    
-	  G[i*S+k][j*S+l] += (*this)[i][j] * K[k][l];	    
+      {
+	double scale = (*this)(i,j);
+	for(size_t k=0; k<m; ++k)
+	  for(size_t l=0; l<m; ++l)	    
+	    G(i*S+k,j*S+l) += scale * K(k,l);	    
+      }
   
   return G;
 }

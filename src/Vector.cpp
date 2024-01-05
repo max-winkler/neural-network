@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstring>
 #include <iomanip>
+#include <cblas.h>
 
 #include "Vector.h"
 
@@ -101,14 +102,19 @@ Vector Vector::operator-(const Vector& other) const
       std::cerr << "Error: Vector sized are incompatible for summation: (" << size << ") vs. (" << other.size << ")\n";
       return Vector(0);
     }
+  
+  Vector c(*this);
+  cblas_daxpy(size, -1., other.data, 1, c.data, 1);
 
-  Vector c(size);
+  /*
   for(double *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
       data_ptr != data+size;
       ++data_ptr, ++data_ptr_other, ++data_ptr_c)
     {
       (*data_ptr_c) = (*data_ptr)-(*data_ptr_other);
     }
+  */
+  
   return c;
 }
 
@@ -137,6 +143,10 @@ Vector Vector::operator*(const Matrix& A) const
   
   Vector y(n);
 
+  // TODO: As we transpose A, will nRows and nCols have to be changed?
+  cblas_dgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1., A.data, A.nCols(), data, 1, 0., y.data, 1);
+
+  /*
   double* A_col;
   double* x_data;
 
@@ -150,7 +160,8 @@ Vector Vector::operator*(const Matrix& A) const
 
       y[i] = val;
     }
-
+  */
+  
   return y;
 }
 
@@ -166,7 +177,7 @@ Vector Vector::operator*(const DiagonalMatrix& A) const
     }
   
   Vector y(n);
-      
+  
   for(size_t i=0; i<n; ++i)
     y[i] = (*A.diagonal)[i]*data[i];
 
@@ -187,19 +198,28 @@ Vector& Vector::operator+=(const ScaledVector& B)
       std::cerr << "  (" << size << ") vs. (" << B.vector->size  << ")\n";
     }
 
+  cblas_daxpy(size, B.scale, B.vector->data, 1, data, 1);
+
+  /*
   double* data_ptr;
   const double* B_data_ptr;
-
+  
   for(data_ptr = data, B_data_ptr = B.vector->data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
     *data_ptr += B.scale * (*B_data_ptr);
+    */
   
   return *this;
 }
 
 Vector& Vector::operator*=(double a)
 {
-  for(double* data_ptr = data; data_ptr != data + size; ++data_ptr)
+  cblas_dscal(length(), a, data, 1);
+
+  /*
+    for(double* data_ptr = data; data_ptr != data + size; ++data_ptr)
     (*data_ptr) *= a;
+  */
+  
   return *this;
 }
 
@@ -241,10 +261,10 @@ Rank1Matrix outer(const Vector& x, const Vector& y)
 
 double norm(const Vector& x, double p)
 {
-  double val = 0.;
-  for(double* it = x.data; it != x.data+x.size; ++it)
-    val += pow(*it, 2.);
-  return sqrt(val);
+  if(p!=2.)
+    std::cerr << "Non-Euklidean vector norm not implemented. Use Euklidean norm instead\n";
+
+  return cblas_dnrm2(x.length(), x.data, 1);
 }
 
 ScaledVector::ScaledVector(double scale, const Vector& vector) : scale(scale), vector(&vector) {}

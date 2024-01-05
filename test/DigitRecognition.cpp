@@ -191,8 +191,10 @@ int main()
   net.addConvolutionLayer(2, ActivationFunction::RELU, 2);
   net.addPoolingLayer(2);
   net.addFlatteningLayer();
-  net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
-  net.addFullyConnectedLayer(80, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(49, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(100, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(n_classes); // output layer
   
   net.initialize();

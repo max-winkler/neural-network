@@ -46,7 +46,7 @@ class MatrixRow
    * @param i Index of the element to be accessed.
    */
   const double& operator[](size_t) const;
-
+  
 private:
   /**
    * Pointer to the first element of the matrix row.
@@ -177,6 +177,22 @@ class Matrix : public DataArray
    */
   const MatrixRow operator[](size_t) const;  
 
+    /**
+   * Access single element using the notation A(i,j), which is more efficient that A[i][j].
+   *
+   * @param i Row index of the element to be accessed.
+   * @param j Column index of the element to be accessed.
+   */
+  double& operator()(size_t, size_t);
+
+  /**
+   * Access single element using the notation A(i,j), which is more efficient that A[i][j].
+   *
+   * @param i Row index of the element to be accessed.
+   * @param j Column index of the element to be accessed.
+   */
+  const double& operator()(size_t, size_t) const;
+  
   /**
    * Multiplies all matrix entries with a given value.
    *
