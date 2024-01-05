@@ -375,7 +375,8 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 	      std::cerr << "  to avoid this consider using the Sigmoid activation function in the output layer.\n";
 	      return 0;
 	    }
-	  f -= (Y[0] * log(P[0]) + (1-Y[0])*log(1-P[0])); 
+	  for(size_t i=0; i<layers.back()->dim[0]; ++i)
+	    f -= (Y[i] * log(P[i]) + (1-Y[i])*log(1-P[i])); 
 	  break;
 	default:
 	  std::cerr << "Error: Unknown loss function provided.\n";
