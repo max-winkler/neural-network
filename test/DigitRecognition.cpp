@@ -191,9 +191,9 @@ int main()
   net.addConvolutionLayer(2, ActivationFunction::RELU, 2);
   net.addPoolingLayer(2);
   net.addFlatteningLayer();
-  net.addFullyConnectedLayer(49, ActivationFunction::SIGMOID); // hidden layer
-  net.addFullyConnectedLayer(100, ActivationFunction::SIGMOID); // hidden layer
-  net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(89, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(200, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(80, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(n_classes); // output layer
   
@@ -207,7 +207,7 @@ int main()
   options.batch_size    = 100;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 1;
+  options.epochs        = 10;
   
   net.train(training_data, options);
   

@@ -53,8 +53,8 @@ Matrix activate(const Matrix& x, ActivationFunction act=ActivationFunction::SIGM
   // Component-wise applied activation functions
   for(size_t i=0; i<x.nRows(); ++i)
     for(size_t j=0; j<x.nCols(); ++j)    
-      y[i][j] = activate(x[i][j], act);
-
+      y(i,j) = activate(x(i,j), act);
+  
   return y;
 }
 
@@ -92,8 +92,8 @@ Matrix Dactivate(const Matrix& x, ActivationFunction act=ActivationFunction::SIG
   // Component-wise applied activation functions
   for(size_t i=0; i<x.nRows(); ++i)
     for(size_t j=0; j<x.nCols(); ++j)    
-      y[i][j] = Dactivate(x[i][j], act);
-
+      y(i,j) = Dactivate(x(i,j), act);
+  
   return y;
 }
 
