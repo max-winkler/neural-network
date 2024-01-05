@@ -1,5 +1,6 @@
 #include <iomanip>
 #include <cstring>
+#include <cblas.h>
 
 #include "Matrix.h"
 #include "Vector.h"
@@ -131,6 +132,9 @@ Vector Matrix::operator*(const Vector& b) const
 
   Vector c(m);
 
+  cblas_dgemv(CblasRowMajor, CblasNoTrans, nRows(), nCols(), 1., data, nCols(), b.data, 1, 0., c.data, 1);
+  
+  /**
   for(int i=0; i<m; ++i)
     {
       double val = 0.;
@@ -144,6 +148,7 @@ Vector Matrix::operator*(const Vector& b) const
 	}
       c[i] = val;
     }
+  */
   return c;
 }
 
@@ -190,13 +195,14 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
       std::cerr << "  (" << m << ", " << n << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
     }
-
+  
+  cblas_dger(CblasRowMajor, nRows(), nCols(), 1., B.u->data, 1, B.v->data, 1, data, nCols());
+  
+  /*
   double* data_ptr;
   const double* u_data_ptr;
-  const double* v_data_ptr;
+  const double* v_data_ptr;  
 
-  // TODO: Use the blas operation dger here!
-  
   for(data_ptr = data, u_data_ptr = B.u->data;
       data_ptr != data+m*n; ++u_data_ptr)
     {
@@ -206,6 +212,7 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
 	  *data_ptr += (*u_data_ptr)*(*v_data_ptr);
 	}
     }
+  */
   return *this;
 }
 

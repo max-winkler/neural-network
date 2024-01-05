@@ -46,5 +46,14 @@ int main()
   Vector g(f);
   g += c;
   std::cout << "g = " << g << std::endl;
+
+  // Rank1Matrix
+  Vector u({1.,1.});
+  Vector v({1.,2.});
+  
+  Rank1Matrix C(u,v);
+  B += C;
+  std::cout << "B+(1 1)^T*(1 2) =\n" << B << std::endl;
+
   return 0;
 }

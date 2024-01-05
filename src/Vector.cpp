@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstring>
 #include <iomanip>
+#include <cblas.h>
 
 #include "Vector.h"
 
@@ -137,6 +138,10 @@ Vector Vector::operator*(const Matrix& A) const
   
   Vector y(n);
 
+  // TODO: As we transpose A, will nRows and nCols have to be changed?
+  cblas_dgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1., A.data, A.nCols(), data, 1, 0., y.data, 1);
+
+  /*
   double* A_col;
   double* x_data;
 
@@ -150,7 +155,8 @@ Vector Vector::operator*(const Matrix& A) const
 
       y[i] = val;
     }
-
+  */
+  
   return y;
 }
 
