@@ -48,6 +48,7 @@ class Layer
   
   static std::unordered_map<LayerType, const char*> LayerName;
   std::string get_name() const;
+  virtual void save(std::ostream&) const;
   
 protected:
   

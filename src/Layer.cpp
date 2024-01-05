@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "Layer.h"
 
 std::unordered_map<LayerType, const char*> Layer::LayerName =
@@ -54,3 +56,4 @@ std::unique_ptr<Layer> Layer::clone() const
 {
   return std::unique_ptr<Layer>(new Layer(*this));
 }
+void Layer::save(std::ostream&) const {}

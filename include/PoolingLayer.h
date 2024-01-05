@@ -18,6 +18,8 @@ class PoolingLayer : public Layer
   
   std::unique_ptr<Layer> clone() const override;
   std::unique_ptr<Layer> zeros_like() const override;  
+
+  void save(std::ostream&) const override;
   
  private:
   

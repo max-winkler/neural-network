@@ -454,28 +454,7 @@ void NeuralNetwork::save(const std::string& filename) const
   std::ofstream os(filename);
 
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
-    {
-      os << "[ " << (*layer)->get_name() << " ]\n";
-      os << "  dimension : " << (*layer)->dim[0] << '\n'; // << ", " << layer->dim[1] << '\n';
-      // TODO: Reimplement this
-      /*
-	os << "  stride    : " << layer->S << '\n';
-	os << "  padding   : " << layer->P << '\n';
-	os << "  weight    : ";
-      
-      for(size_t i=0; i<layer->weight.nRows(); ++i)
-        {
-	if(i>0)
-	  os << "             ";
-	
-	for(size_t j=0; j<layer->weight.nCols(); ++j)
-	  os << std::setw(12) << layer->weight[i][j] << (j<layer->weight.nCols()-1 ? ", " : "\n");
-        }
-      os << "  bias      : ";
-      for(size_t i=0; i<layer->bias.length(); ++i)
-        os << std::setw(12) << layer->bias[i] << (i<layer->bias.length()-1 ? ", " : "\n");	  
-      */
-    }
+    (*layer)->save(os);
   
   os.close();
 }
