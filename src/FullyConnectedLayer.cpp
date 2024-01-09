@@ -53,7 +53,8 @@ std::unique_ptr<Layer> FullyConnectedLayer::backward_propagate(std::vector<DataA
 	  
 	default:
 	  // Activation functions applied component-wise
-	  Dz = Dy * diag(Dactivate(z, act));
+	  Vector tmp(Dactivate(z, act));
+	  Dz = Dy * diag(tmp);
 	  break;
 	}
       

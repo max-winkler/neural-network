@@ -9,7 +9,7 @@ double activate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::NONE:
       return x;
     case ActivationFunction::SIGMOID:
-      return 1./(1.+exp(-x));
+      return x>0. ? 1./(1.+exp(-x)) : exp(x)/(1+exp(x));
     case ActivationFunction::TANH:
       return 2./(1.+exp(-2.*x)) - 1.;
     case ActivationFunction::RELU:
@@ -65,7 +65,7 @@ double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::NONE:
       return 1.;
     case ActivationFunction::SIGMOID:
-      return exp(-x)/pow(1.+exp(-x), 2.);
+      return x>0. ? exp(-x)/pow(1.+exp(-x), 2.) : exp(x)/pow(1+exp(x), 2.);
     case ActivationFunction::TANH:
       return 4.*exp(-2.*x)/pow(1.+exp(-2.*x), 2.);
     case ActivationFunction::RELU:

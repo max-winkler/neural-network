@@ -262,6 +262,12 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	
 	  grad_norm = grad_net.norm();
 
+	  if(grad_norm < 1.e-8 || std::isnan(grad_norm))
+	    {
+	      std::cerr << "WARNING: The norm of the gradient is " << grad_norm << ", so we might be stuck in a local minimum.\n";
+	      return;
+	    }
+
 	  // Console output
 	  if(i++%options.output_every == 0)
 	    {

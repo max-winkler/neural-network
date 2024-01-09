@@ -189,7 +189,7 @@ int main()
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
   net.addConvolutionLayer(2, ActivationFunction::RELU, 2);
-  net.addPoolingLayer(2);
+  // net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(100, ActivationFunction::SIGMOID); // hidden layer

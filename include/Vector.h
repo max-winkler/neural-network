@@ -228,7 +228,7 @@ private:
 // Class representing a diagonal matrix
 class DiagonalMatrix {
 public:
-  DiagonalMatrix(const Vector&);
+  DiagonalMatrix(const Vector&); // What happens when we invoke this with an rvalue?
 
   friend class Vector;
 private:
