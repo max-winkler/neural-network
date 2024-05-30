@@ -77,14 +77,13 @@ double FullyConnectedLayer::dot(const Layer& other) const
 
 void FullyConnectedLayer::initialize()
 {
-  double a = 1./sqrt(weight.nCols());
-  a = 2.;
+  double a = 2.;
   
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<weight.nRows(); ++i)
     for(size_t j=0; j<weight.nCols(); ++j)
-      weight[i][j] = -a+2.*a*gen();
-
+      weight(i,j) = -a+2.*a*gen();
+  
   // std::cout << "Initial weight: \n" << weight << std::endl;
 }
 

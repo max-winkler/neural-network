@@ -74,7 +74,7 @@ double ConvolutionalLayer::dot(const Layer& other) const
 
 void ConvolutionalLayer::initialize()
 {
-  double a = 0.3;
+  double a = 0.6;
   
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<K.nRows(); ++i)

@@ -189,12 +189,12 @@ int main()
   NeuralNetwork net;
   net.addInputLayer(width, height); // input layer
   net.addConvolutionLayer(2, ActivationFunction::RELU, 2);
-  net.addPoolingLayer(2);
+  // net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(100, ActivationFunction::SIGMOID); // hidden layer
   net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID); // hidden layer
-  net.addFullyConnectedLayer(10, ActivationFunction::SIGMOID); // hidden layer
+  net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID); // hidden layer
   net.addClassificationLayer(n_classes); // output layer
   
   net.initialize();
@@ -208,7 +208,6 @@ int main()
   options.max_iter      = 1e4;
   options.output_every  = 10;
   options.epochs        = 10;
-  options.learning_rate = 0.01;
   
   net.train(training_data, options);
   
