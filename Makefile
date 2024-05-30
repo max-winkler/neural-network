@@ -20,8 +20,8 @@ TESTS = test/DigitRecognition.o \
 	test/Pooling.o
 
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -O3
-LIBS = -lpng -lcblas
+CPP_FLAGS = -g
+LIBS = -lpng -lblas
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
 	http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz \

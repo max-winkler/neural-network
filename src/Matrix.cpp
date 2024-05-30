@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <cstring>
 #include <cblas.h>
+#include <cmath>
 
 #include "Matrix.h"
 #include "Vector.h"
@@ -16,7 +17,7 @@ Matrix::Matrix(size_t m, size_t n) : DataArray(m*n), m(m)
 Matrix::Matrix(size_t m, size_t n, const double* x)
   : DataArray(m*n), m(m)
 {
-  memcpy(data, x, size*sizeof(double));  
+  memcpy(data, x, size*sizeof(double));
 }
 
 Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : DataArray(m*n), m(m)
