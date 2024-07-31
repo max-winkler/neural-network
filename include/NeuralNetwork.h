@@ -33,58 +33,172 @@ class NeuralNetwork
 {
  public:
   
-  // Constructors
+  /**
+   * Default constructor creating an empty (0 layers) neural network.
+   */
   NeuralNetwork();
-  NeuralNetwork(size_t);
-  NeuralNetwork(const NeuralNetwork&);
-  NeuralNetwork(NeuralNetwork&&);
 
-  /// Assignment operators
-  NeuralNetwork& operator=(NeuralNetwork&&);
+  /**
+   * Constructor initializing a neural network with \p l layers.
+   *
+   * @param l The number of layers the neural network should have (including input layer)
+   */
+  NeuralNetwork(size_t l);
+
+  /**
+   * Copy constructor creating a hard copy of \p other.
+   *
+   * @param other The neural network to be copied.
+   */
+  NeuralNetwork(const NeuralNetwork& other);
+
+  /**
+   * Move constructor replacing the current instance by \p other.
+   *
+   * @param other The neural network to be moved.
+   */
+  NeuralNetwork(NeuralNetwork&& other);
+
+  /**
+   * Move assignment operator replacing the current instance by \p other.
+   *
+   * @param other The neural network to be moved.
+   */
+  NeuralNetwork& operator=(NeuralNetwork&& other);
   
   // Static creator function with zero-initialization but correct dimensions
   static NeuralNetwork createLike(const NeuralNetwork&);
 
   // Add neural network layers
+  /**
+   * Adds an input layer with input dimension \p i x \p j to the neural network.
+   * If \p j is 0, a vector input layer is created, otherwise a matrix input layer.
+   *
+   * @param i The number of components in the first dimension
+   * @param j The number of components in the second dimension (optional). 
+   */
   void addInputLayer(size_t i, size_t j=0);
-  void addPoolingLayer(size_t);
-  void addFlatteningLayer();
-  void addConvolutionLayer(size_t, ActivationFunction, size_t S=1, size_t P=0);
-  void addFullyConnectedLayer(size_t, ActivationFunction);
-  void addClassificationLayer(size_t);
 
-  // Initialization of neural network, set weights randomly
+  /**
+   * Adds a pooling layer to the neural network. The currently implemented method is the max pooling.
+   *
+   * @param batch The number of rows/columns of the batched for the pooling operation.
+   */
+  void addPoolingLayer(size_t batch);
+
+  /**
+   * Adds a flattening layer to the neural network. Works only when the previous layer outputs matrix-valued data.
+   */
+  void addFlatteningLayer();
+
+  /**
+   * Adds a convolutional layer to the neural network. The output of the previous layer must be matrix-valued.
+   *
+   * @param batch The number of rows/columns of the kernel matrix to be used.
+   * @param act The activation function applied component-wise after the convolution operation.
+   * @param S The stride used in the convolution operation (default value is 1).
+   * @param P The padding used in the convolution operation (default value is 0).
+   */
+  void addConvolutionLayer(size_t batch, ActivationFunction act, size_t S=1, size_t P=0);
+
+  /**
+   * Adds a fully connected layer to the neural network. The both input and output are vector-valued.
+   *
+   * @param i The output dimension of the layer.
+   * @param act The activation function.
+   */
+  void addFullyConnectedLayer(size_t i, ActivationFunction act);
+
+  /**
+   * Adds a fully connexted layer but with softmax activation function returning probabilities of how likely the 
+   * input belongs to the respective class.
+   * 
+   * @param i The output dimension of the layer (equal to the number of classes).
+   */
+  void addClassificationLayer(size_t i);
+
+  /**
+   * Initializes the neural network after the arcitecture using addInputLayer(), addFullyConnectedLayer(), etc. 
+   * has been called. The weights and biases are initialized with random values.
+   */
   void initialize();
+
+  /**
+   * Returns the number of layers of the neural network.
+   */
   size_t n_layers() const;
   
-  // Evaluate neural network in given point
-  Vector eval(const DataArray&) const;
+  /**
+   * Computes the output of the neural network for the given input.
+   *
+   * @param input Input data to be evaluated. Must be a matrix when the input layer is of type \c MatrixInputLayer
+   * and a vector when the input layer is of type \c VectorInputLayer.
+   */
+  Vector eval(const DataArray& input) const;
 
-  // Train neural network for according to given training data
-  void train(const std::vector<TrainingData>&, OptimizationOptions options=OptimizationOptions());
+  /**
+   * Train the neural network for the given training data. This method implements a mini batch stochastic gradient
+   * using a forward propagation implemented in evalFunctional() and for the gradient computation a backward
+   * propagation implemented in evalGradient().
+   *
+   * @param data A vector of training data to which the neural network will be matched.
+   * @param options A collection of parameters used in the optimization routine. If omitted reasonable default
+   * values will be used.
+   */
+  void train(const std::vector<TrainingData>& data, OptimizationOptions options=OptimizationOptions());
 
-  // Functional evaluation (for training routine)
-  double evalFunctional(const std::vector<TrainingData>&,
-			 std::vector<std::vector<DataArray*>>&,
-			 std::vector<std::vector<DataArray*>>&,
-			 const std::vector<size_t>&,
-			 OptimizationOptions) const;
+  /**
+   * Evaluate the loss function used for the training of the neural network for a set of training data.
+   * 
+   * @param data The training data set used for the training.
+   * @param y Auxiliary output variable that will be reused in evalGradient().
+   * @param z Auxiliary output variable that will be reused in evalGradient().
+   * @param batch_idx Indices of the training samples belonging to the batch for which we want to 
+   * evaluate the neural network.
+   * @param options Collection of parameters for fine tuning of the optimization algorithm.
+   */
+  double evalFunctional(const std::vector<TrainingData>& data,
+		    std::vector<std::vector<DataArray*>>& y,
+		    std::vector<std::vector<DataArray*>>& z,
+		    const std::vector<size_t>& batch_idx,
+		    OptimizationOptions options) const;
   
-  // Gradient evaluation (for training routine)
-  NeuralNetwork evalGradient(const std::vector<TrainingData>&,
-			      const std::vector<std::vector<DataArray*>>&,
-			      const std::vector<std::vector<DataArray*>>&,
-			      const std::vector<size_t>&,
-			      OptimizationOptions) const;
+  /**
+   * Evaluate the gradient of the loss function used for the training of the neural network.
+   *
+   * @param data The training data set used for the training.
+   * @param y Auxiliary data produced in evalFunctional() that can be reused here.
+   * @param z Auxiliary data produced in evalFunctional() that can be reused here.
+   * @param batch_idx Indices of the training samples belonging to the batch for which we want to 
+   * evaluate the neural network.
+   * @param options Collection of parameters for fine tuning of the optimization algorithm.
+   */
+  NeuralNetwork evalGradient(const std::vector<TrainingData>& data,
+			      const std::vector<std::vector<DataArray*>>& y,
+			      const std::vector<std::vector<DataArray*>>& z,
+			      const std::vector<size_t>& batch_idx,
+			      OptimizationOptions options) const;
 
-  // Scalar product and norm (used in gradient test and stopping criterion)
-  double dot(const NeuralNetwork&) const;
+  /**
+   * Returns the scalar product of two neural networks. This is basically the sum of the inner products of all 
+   * weight and kernel matrices and bias vectors in the neural nerwork.
+   *
+   * @param Right argument of the scalar product.
+   */
+  double dot(const NeuralNetwork& other) const;
+
+  /**
+   * Returns the norm of a neural network which is the square root of the scalar product of the neural network 
+   * with itself.
+   */
   double norm() const;  
 
   // Console output
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
 
-  // File IO
+  /**
+   * Stores the neural network arcitecture and all the weight and kernel matrices and bias vectors in a file.
+   */
   void save(const std::string&) const;
   
  private:
