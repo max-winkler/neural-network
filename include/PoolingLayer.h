@@ -59,24 +59,16 @@ class PoolingLayer : public Layer
 
   /**
    * Creates a copy of the layer.
-   *
-   * @brief Create copy.
    */
   std::unique_ptr<Layer> clone() const override;
 
   /**
    * Create empty layer of the same type.
-   *
-   * @brief Create empty layer.
    */
   std::unique_ptr<Layer> zeros_like() const override;  
 
   /**
-   * Save the layer to text written in the output stream
-   *
-   * @brief Save layer
-   *
-   * @param os Output stream to be written into.
+   * Save the layer to text written in the output stream.
    */
   void save(std::ostream&) const override;
   
