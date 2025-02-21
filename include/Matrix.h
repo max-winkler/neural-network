@@ -278,7 +278,7 @@ class Matrix : public DataArray
   Vector flatten() const;
 
   /**
-   * Computes convolution of the matrix with the kernal matrix \p K. Without specifying the default parameters
+   * Computes convolution of the matrix with the kernel matrix \p K. Without specifying the default parameters
    * a stride of 1 no padding is used. The size of the resulting matrix is determined automatically.
    *
    * @brief Convolution with kernel matrix
