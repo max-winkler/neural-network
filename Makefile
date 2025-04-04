@@ -1,6 +1,7 @@
 OBJ = 	src/DataArray.o \
 	src/Vector.o \
 	src/Matrix.o \
+	src/Tensor.o \
 	src/Random.o \
 	src/Layer.o \
 	src/VectorInputLayer.o \
