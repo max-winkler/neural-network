@@ -198,7 +198,7 @@ class Matrix : public DataArray
    *
    * @brief Scale matrix
    *
-   * @param The value to multiply to each matrix entry.
+   * @param a The value to multiply to each matrix entry.
    */
   Matrix& operator*=(double);
 
