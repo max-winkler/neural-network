@@ -76,11 +76,16 @@ Matrix Vector::reshape(size_t m, size_t n) const
   return Matrix(m, n, data);
 }
 
+Tensor Vector::reshape(size_t d, size_t m, size_t n) const
+{
+  return Tensor(d, m, n, data);
+}
+
 Vector Vector::operator+(const Vector& other) const
 {
   if(size != other.size)
     {
-      std::cerr << "Error: Vector sized are incompatible for summation: (" << size << ") vs. (" << other.size << ")\n";
+      std::cerr << "Error: Vector sizes are incompatible for summation: (" << size << ") vs. (" << other.size << ")\n";
       return Vector(0);
     }
 

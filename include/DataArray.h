@@ -2,6 +2,7 @@
 #define _DATA_ARRAY_H_
 
 #include <iostream>
+
 /**
  * Base class for all types of tensors (vectors, matrices, etc.). 
  *
@@ -64,7 +65,9 @@ class DataArray
    * Getter method returning the number of components of the DataArray.
    */
   size_t nEntries() const;
-  
+
+  // TODO: Add a method apply(std::function) for element-wise application of functions, e.g.,
+  // the activation function.
  protected:
   /**
    * Pointer to the memory where the entries of the DataArray are stored

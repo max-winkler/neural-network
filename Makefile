@@ -2,6 +2,7 @@ OBJ = 	src/DataArray.o \
 	src/Vector.o \
 	src/Matrix.o \
 	src/Tensor.o \
+	src/LinAlg.o \
 	src/Random.o \
 	src/Layer.o \
 	src/VectorInputLayer.o \
@@ -14,13 +15,15 @@ OBJ = 	src/DataArray.o \
 	src/Activation.o \
 	src/TrainingData.o
 
-TESTS = test/DigitRecognition.o \
+TESTS = test/LinAlg.o \
+	test/DigitRecognition.o \
 	test/Classification.o \
 	test/NeuralNetwork.o \
 	test/Convolution.o \
 	test/Pooling.o
 
 CPP_INCLUDE = -Iinclude
+# CPP_FLAGS = -g -O0
 CPP_FLAGS = -O3
 LIBS = -lpng -lblas -lcblas
 
@@ -40,12 +43,12 @@ EXISTING_FILES := $(wildcard $(MNIST_FILES))
 
 
 test: $(OBJ) $(TESTS)
-	g++ test/LinAlg.o ${OBJ} ${LIBS} -o linalg_test
-	g++ test/NeuralNetwork.o ${OBJ} ${LIBS} -o neuralnetwork_test
-	g++ test/Classification.o ${OBJ} ${LIBS} -o classification_test
-	g++ test/Convolution.o ${OBJ} ${LIBS} -o convolution_test
-	g++ test/DigitRecognition.o ${OBJ} ${LIBS} -o digitrecognition_test
-	g++ test/Pooling.o ${OBJ} ${LIBS} -o pooling_test
+	g++ test/LinAlg.o ${OBJ} ${LIBS} ${CPP_FLAGS} -o linalg_test
+	g++ test/NeuralNetwork.o ${OBJ} ${LIBS} ${CPP_FLAGS} -o neuralnetwork_test
+	g++ test/Classification.o ${OBJ} ${LIBS} ${CPP_FLAGS} -o classification_test
+	g++ test/Convolution.o ${OBJ} ${LIBS} ${CPP_FLAGS} -o convolution_test
+	g++ test/DigitRecognition.o ${OBJ} ${LIBS} ${CPP_FLAGS} -o digitrecognition_test
+	g++ test/Pooling.o ${OBJ} ${LIBS} ${CPP_FLAGS} -o pooling_test
 
 # Target to create the output directory
 $(MNIST_FILE_DIR):
@@ -69,4 +72,4 @@ ressources: $(MNIST_FILES)
 default: $(OBJ) test
 
 clean:
-	rm -f src/*.o mnist/*.gz
+	rm -f src/*.o test/*.o mnist/*.gz

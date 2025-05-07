@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Matrix.h"
+#include "Tensor.h"
 
 // Forward class declarations
 class DiagonalMatrix;
@@ -197,7 +198,19 @@ class Vector : public DataArray {
    * @param m Number of columns of the resulting matrix.
    */
   Matrix reshape(size_t, size_t) const;
-  
+
+  /**
+   * Reshapes a vector with N entries to an \p d x \p m x \p n tensor. The parameters must satisfy
+   * N=d*m*n, otherwise a null tensor is returned.
+   *
+   * @brief Reshape vector to a tensor
+   *
+   * @param d Number of channels of the resulting tensor.
+   * @param m Number of rows of the resulting tensor.
+   * @param n Number of columns of the resulting tensor.
+   */
+  Tensor reshape(size_t, size_t, size_t) const;
+    
   /**
    * Output stream operator. Used to write the vector to console or to a file.
    *

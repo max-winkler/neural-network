@@ -97,10 +97,10 @@ void NeuralNetwork::addFlatteningLayer()
       return;
     }
   
-  layers.emplace_back(std::make_unique<FlatteningLayer>(prev_layer.dim[0], prev_layer.dim[1]));  
+  layers.emplace_back(std::make_unique<FlatteningLayer>(prev_layer.dim[0], prev_layer.dim[1], prev_layer.dim[2]));  
 }
 
-void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, size_t S, size_t P)
+void NeuralNetwork::addConvolutionLayer(size_t F, size_t batch, ActivationFunction act, size_t S, size_t P)
 {
   const Layer& prev_layer = *layers.back();
   
@@ -118,7 +118,7 @@ void NeuralNetwork::addConvolutionLayer(size_t batch, ActivationFunction act, si
       return;
     }  
   
-  layers.emplace_back(std::make_unique<ConvolutionalLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, S, P, act));    
+  layers.emplace_back(std::make_unique<ConvolutionalLayer>(prev_layer.dim, F, batch, S, P, act));    
 }
 
 void NeuralNetwork::addFullyConnectedLayer(size_t width, ActivationFunction act)
@@ -158,7 +158,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
       x_tmp = new Vector(dynamic_cast<const Vector&>(x));
       break;
     case LayerType::MATRIX_INPUT:
-      x_tmp = new Matrix(dynamic_cast<const Matrix&>(x));
+      x_tmp = new Tensor(dynamic_cast<const Matrix&>(x));
       break;      
     }
   
@@ -202,8 +202,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    case POOLING:
 	    case CONVOLUTION:
 	      // TODO: Are y and z really needed in input layers?	      
-	      y[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
-	      z[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
+	      y[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
+	      z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
 	      
 	      break;
 	    case FULLY_CONNECTED:
@@ -277,8 +277,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    }
 	
 	  // for testing only. remove later
-	  // gradientTest(grad_net, data, data_idx, options);
-	  // return;
+	  //gradientTest(grad_net, data, data_idx, options);
+	  //return;
 
 	  // Update increment
 	  increment.update_increment(momentum, grad_net, options.learning_rate);
@@ -344,7 +344,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
     case MATRIX_INPUT:
       for(size_t idx=0; idx<options.batch_size; ++idx)
 	{
-	  dynamic_cast<Matrix&>(*y[0][idx]) = dynamic_cast<Matrix&>(*data[data_indices[idx]].x);
+	  dynamic_cast<Tensor&>(*y[0][idx]) = dynamic_cast<Tensor&>(*data[data_indices[idx]].x);
 	}      
       break;
       
@@ -357,7 +357,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
     {
       for(size_t idx=0; idx<options.batch_size; ++idx)
-	(*layer)->forward_propagate(*y[l][idx], *z[l][idx], *y[l+1][idx]);			     
+	(*layer)->forward_propagate(*y[l][idx], *z[l+1][idx], *y[l+1][idx]);			     
     }
   
   // Evaluate objective functional
@@ -433,7 +433,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 
   // Backward propagation (desired version)
   for(size_t l=layers.size(); l-- >0; )
-    grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l-1]);
+    grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l]);
   
   for(size_t idx=0; idx<options.batch_size; ++idx)         
     delete Dy[idx];    
@@ -490,45 +490,81 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
       y[l] = std::vector<DataArray*>(options.batch_size);
 
       for(size_t idx = 0; idx < options.batch_size; ++idx)
-	{	  
-	  switch(layers[l]->layer_type)
-	    {
-	    case MATRIX_INPUT:
-	    case POOLING:
-	    case CONVOLUTION:
-
-	      // TODO: Are y and z really needed in input layers?	      
-	      y[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);
-	      z[l][idx] = new Matrix(layers[l]->dim[0], layers[l]->dim[1]);	      
-	      break;
+        {
+	switch(layers[l]->layer_type)
+	  {
+	  case MATRIX_INPUT:
+	  case POOLING:
+	  case CONVOLUTION:
+	    // TODO: Are y and z really needed in input layers?	      
+	    y[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
+	    z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
 	      
-	    case FULLY_CONNECTED:
-	    case VECTOR_INPUT:
-	    case CLASSIFICATION:
-	    case FLATTENING:
-	      z[l][idx] = new Vector(layers[l]->dim[0]);
-	      y[l][idx] = new Vector(layers[l]->dim[0]);
-	      break;
+	    break;
+	  case FULLY_CONNECTED:
+	  case VECTOR_INPUT:
+	  case CLASSIFICATION:
+	  case FLATTENING:
+	    z[l][idx] = new Vector(layers[l]->dim[0]);
+	    y[l][idx] = new Vector(layers[l]->dim[0]);
+	    break;
 	      
-	    default:
-	      std::cerr << "ERROR: Allocation of memory not implemented for "
-			<< layers[l]->get_name() << " yet.\n";
-	    }
-	}
+	  default:
+	    std::cerr << "ERROR: Allocation of memory not implemented for "
+		    << Layer::LayerName[layers[l]->layer_type] << " yet.\n";
+	  }
+        }
     }
   
   double f = evalFunctional(data, y, z, data_idx, options);
   std::cout << "Value in x0: " << f << std::endl; 
   
   for(double s=1.; s>1.e-12; s*=0.5)
-    {      
+    {
+      // NEW
+      std::vector<std::vector<DataArray*>> z_s(layers.size());
+      std::vector<std::vector<DataArray*>> y_s(layers.size()+1);
+
+      // Allocate memory for auxiliary vectors
+      for(size_t l=0; l<layers.size(); ++l)
+        {
+	z_s[l] = std::vector<DataArray*>(options.batch_size);
+	y_s[l] = std::vector<DataArray*>(options.batch_size);
+
+	for(size_t idx = 0; idx < options.batch_size; ++idx)
+	  {
+	    switch(layers[l]->layer_type)
+	      {
+	      case MATRIX_INPUT:
+	      case POOLING:
+	      case CONVOLUTION:
+	        // TODO: Are y and z really needed in input layers?	      
+	        y_s[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
+	        z_s[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
+	      
+	        break;
+	      case FULLY_CONNECTED:
+	      case VECTOR_INPUT:
+	      case CLASSIFICATION:
+	      case FLATTENING:
+	        z_s[l][idx] = new Vector(layers[l]->dim[0]);
+	        y_s[l][idx] = new Vector(layers[l]->dim[0]);
+	        break;
+	      
+	      default:
+	        std::cerr << "ERROR: Allocation of memory not implemented for "
+		        << Layer::LayerName[layers[l]->layer_type] << " yet.\n";
+	      }
+	  }
+        }
+      
       NeuralNetwork dir_s(direction);
       dir_s.update_increment(-s, zero_net, 0.);
       
       NeuralNetwork net_s(*this);
       net_s.apply_increment(dir_s);
   
-      double f_s = net_s.evalFunctional(data, y, z, data_idx, options);
+      double f_s = net_s.evalFunctional(data, y_s, z_s, data_idx, options);
       std::cout << "Value in x+s*d: " << f_s << std::endl;
       
       double deriv_fd = (f_s - f)/s;

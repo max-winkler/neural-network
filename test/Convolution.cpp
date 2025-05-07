@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "Matrix.h"
+#include "LinAlg.h"
 
 png_bytep* read_image_pixels(const std::string& filename, int& width, int& height, int& color_type, int& bit_depth)
 {
@@ -94,7 +95,7 @@ int main()
   int width, height, color_type, bit_depth;
 
   // Read image file
-  png_bytep* row_pointers_in = read_image_pixels("chemnitz.png", width, height, color_type, bit_depth);
+  png_bytep* row_pointers_in = read_image_pixels("cat.png", width, height, color_type, bit_depth);
 
   // Convert to black/white picture
   png_byte* image_data = new png_byte[height*width];
@@ -112,11 +113,11 @@ int main()
       
   // manipulate image with filters
   Matrix K(3,3);
-  K = {0, 1, 0, 1, 4, 1, 0, 1, 0};
+  K = {0, 0, 0, -1, 0, 1, 0, 0, 0};
   K *= (1./8);
   
-  image = image.convolve(K, 2);
-  image = image.pool(POOLING_MAX, 2);
+  image = linalg::convolve(image, K, 1, 0, false);
+  // image = image.pool(POOLING_MAX, 2);
   
   int width_new = image.nCols();
   int height_new = image.nRows();
@@ -135,7 +136,7 @@ int main()
   image.write_pixels(image_data);
   
   // Write image  
-  write_image("chemnitz_bw.png", width_new, height_new, row_pointers);
+  write_image("cat_bw.png", width_new, height_new, row_pointers);
   
   return 0;
 }

@@ -6,7 +6,7 @@
 class FlatteningLayer : public Layer
 {
  public:
-  FlatteningLayer(size_t, size_t);
+  FlatteningLayer(size_t, size_t, size_t);
 
   void eval(DataArray*&) const override;
   void forward_propagate(const DataArray& x, DataArray& z, DataArray& y) const override;
@@ -22,6 +22,7 @@ class FlatteningLayer : public Layer
  private:
   size_t in_dim1;
   size_t in_dim2;
+  size_t in_dim3;
 };
 
 #endif

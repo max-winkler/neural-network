@@ -94,12 +94,13 @@ class NeuralNetwork
   /**
    * Adds a convolutional layer to the neural network. The output of the previous layer must be matrix-valued.
    *
+   * @param F the number of feature maps.
    * @param batch The number of rows/columns of the kernel matrix to be used.
    * @param act The activation function applied component-wise after the convolution operation.
    * @param S The stride used in the convolution operation (default value is 1).
    * @param P The padding used in the convolution operation (default value is 0).
    */
-  void addConvolutionLayer(size_t batch, ActivationFunction act, size_t S=1, size_t P=0);
+  void addConvolutionLayer(size_t F, size_t batch, ActivationFunction act, size_t S=1, size_t P=0);
 
   /**
    * Adds a fully connected layer to the neural network. The both input and output are vector-valued.

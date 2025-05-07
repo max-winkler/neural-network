@@ -227,67 +227,9 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
   return *this;
 }
 
-Matrix multiply(const Matrix& A, const Matrix& B)
-{
-  const size_t m = A.nRows();
-  const size_t n = A.nCols();
-  
-  if(m != B.nRows() || n != B.nCols())
-    {
-      std::cerr << "ERROR: Matrices have incompatible dimension for Hadamard product.\n";
-      return Matrix();
-    }
-
-  Matrix C(m,n);
-
-  double* data_ptr;
-  const double* A_data_ptr;
-  const double* B_data_ptr;
-
-  for(data_ptr = C.data, A_data_ptr = A.data, B_data_ptr = B.data;
-      data_ptr != C.data+m*n; ++data_ptr, ++A_data_ptr, ++B_data_ptr)
-    *data_ptr = (*A_data_ptr)*(*B_data_ptr);
-
-  return C; 
-}
-
 Vector Matrix::flatten() const
 {
   return Vector(nRows()*nCols(), data);
-}
-
-Matrix Matrix::convolve(const Matrix& K, size_t S, size_t P) const
-{
-  if(P != 0)
-    {
-      std::cerr << "ERROR: Convolution with padding not implemented yet.\n";
-      return Matrix();
-    }
-  
-  // Size of current matrix and filter
-  const size_t n1 = nRows();
-  const size_t n2 = nCols();
-  const size_t m = K.nRows();
-
-  // Size of resulting matrix
-  const size_t n1_new = (n1-m+2*P)/S+1;
-  const size_t n2_new = (n2-m+2*P)/S+1;
-
-  Matrix A(n1_new, n2_new);
-
-  for(size_t i=0; i<n1_new; ++i)
-    for(size_t j=0; j<n2_new; ++j)
-      {
-	double val = 0.;
-	for(size_t k=0; k<m; ++k)
-	  for(size_t l=0; l<m; ++l)
-	    {	    
-	      val += (*this)(i*S+k,j*S+l) * K(k,l);
-	    }
-	A(i,j) = val;
-      }
-  
-  return A;    
 }
 
 Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const

@@ -11,11 +11,13 @@
 // Forward class declarations
 class Vector;
 class Rank1Matrix;
+class MatrixView;
 class Matrix;
 struct ScaledMatrix;
 
 // Forward declarations of free functions
 ScaledMatrix operator*(double, const Matrix&);
+
 
 /**
  * Proxy class representing a matrix row. This is used to allow element access of matrices 
@@ -259,16 +261,6 @@ class Matrix : public DataArray
    * @param A Rank 1 matrix to be added to (*this)
    */
   Matrix& operator+=(const Rank1Matrix&);
-
-  /**
-   * Computes the element-wise product of two matrices. Both matrices must have the same size.
-   *
-   * @brief Element-wise multiplication
-   *
-   * @param A Matrix on left-hand side of multiplication.
-   * @param B Matrix on right-hand side of multiplication.
-   */
-  friend Matrix multiply(const Matrix&, const Matrix&);
   
   /**
    * Flattens the matrix to a vector. The entries of the matrix are appended row-wise to the vector.
@@ -277,19 +269,6 @@ class Matrix : public DataArray
    */
   Vector flatten() const;
 
-  /**
-   * Computes convolution of the matrix with the kernel matrix \p K. Without specifying the default parameters
-   * a stride of 1 no padding is used. The size of the resulting matrix is determined automatically.
-   *
-   * @brief Convolution with kernel matrix
-   *
-   * @param K The kernel matrix for the convolution. It is assumed that \p K is a square matrix.
-   * @param S The stride parameter for the convolution, this is, the shift applied to the kernel 
-   * in the convolution.
-   * @param P The padding parameter for the convolution, this is, the matrix (*this) is extended by \p P
-   * leading and conclusive zero rows and columns.
-   */
-  Matrix convolve(const Matrix&, size_t S=1, size_t P=0) const;
 
   /**
    * Adjoint operation to the convolution. This method returns the gradient of the operation A.convolve(K)
@@ -360,6 +339,8 @@ class Matrix : public DataArray
 
   // Friend declarations
   friend class Vector;
+  friend class MatrixView;
+  //friend Matrix linalg::multiply(const MatrixView&, const MatrixView&);
   
 private:
   /**

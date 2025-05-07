@@ -3,6 +3,9 @@
 
 #include "Layer.h"
 
+#include "Tensor.h"
+#include "Matrix.h"
+
 /**
  * Class for convolution layers handling matrix-value input and computing the convolution with a kernel
  * matrix. The kernel matrix is the parameter to be trained.
@@ -16,13 +19,14 @@ class ConvolutionalLayer : public Layer
    *
    * @brief Create convolutional layer instance
    *
-   * @param in_dim1 Number of rows of the input matrix.
-   * @param in_dim2 Number of columns of the input matrix.
+   * @param in_dim Shape of the input tensor.
+   * @param F Number of features.
    * @param k Width/height of the kernel matrix.
    * @param S Stride parameter.
    * @param P Padding parameter.
    */
-  ConvolutionalLayer(size_t, size_t, size_t k, size_t S=0, size_t P=0,
+  ConvolutionalLayer(std::vector<size_t>, size_t, size_t,
+		 size_t S=0, size_t P=0,
 		 ActivationFunction act=ActivationFunction::NONE);
 
   /**
@@ -100,16 +104,15 @@ class ConvolutionalLayer : public Layer
   void save(std::ostream&) const override;
  private:
   
-  Matrix K;
-  double bias;
+  std::vector<Tensor> K;
+  std::vector<double> bias;
   ActivationFunction act;
   
   size_t k;
   size_t S;
   size_t P;
 
-  size_t in_dim1;
-  size_t in_dim2;
+  std::vector<size_t> in_dim;
 };
 
 #endif

@@ -1,7 +1,9 @@
 #include "TrainingData.h"
 
+#include "Tensor.h"
+
 TrainingData::TrainingData(const Vector& x, const Vector& y) : x(new Vector(x)), y(y) {}
-TrainingData::TrainingData(const Matrix& x, const Vector& y) : x(new Matrix(x)), y(y) {}
+TrainingData::TrainingData(const Matrix& x, const Vector& y) : x(new Tensor(x)), y(y) {}
 
 TrainingData::TrainingData(const TrainingData& other) : y(other.y) {
 
@@ -9,6 +11,8 @@ TrainingData::TrainingData(const TrainingData& other) : y(other.y) {
     x = new Vector(dynamic_cast<Vector&>(*other.x));
   else if(dynamic_cast<Matrix*>(other.x))
     x = new Matrix(dynamic_cast<Matrix&>(*other.x));
+  else if(dynamic_cast<Tensor*>(other.x))
+    x = new Tensor(dynamic_cast<Tensor&>(*other.x));
   else
     {
       std::cerr << "ERROR: Unable to copy training data as type of input is not accurate.\n";
