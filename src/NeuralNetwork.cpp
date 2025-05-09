@@ -158,7 +158,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
       x_tmp = new Vector(dynamic_cast<const Vector&>(x));
       break;
     case LayerType::MATRIX_INPUT:
-      x_tmp = new Tensor(dynamic_cast<const Matrix&>(x));
+      x_tmp = new Tensor(dynamic_cast<const Tensor&>(x));
       break;      
     }
   
@@ -277,8 +277,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    }
 	
 	  // for testing only. remove later
-	  //gradientTest(grad_net, data, data_idx, options);
-	  //return;
+	  // gradientTest(grad_net, data, data_idx, options);
+	  // return;
 
 	  // Update increment
 	  increment.update_increment(momentum, grad_net, options.learning_rate);

@@ -72,7 +72,6 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 {
   ConvolutionalLayer* output = new ConvolutionalLayer(in_dim, K.size(), k, S, P, act);
 
-  // TODO: Fix this
   auto y_it = Y.begin(), z_it = Z.begin();
   auto Dy_it = DY.begin();
   
@@ -114,13 +113,14 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 
 double ConvolutionalLayer::dot(const Layer& other) const
 {
-  const ConvolutionalLayer& b = dynamic_cast<const ConvolutionalLayer&>(other);
+  const ConvolutionalLayer& o = dynamic_cast<const ConvolutionalLayer&>(other);
 
   double s = 0;
-  for(auto e = K.begin(); e != K.end(); ++e)
-    s += (*e).inner(*e);
-  for(auto b = bias.begin(); b != bias.end(); ++b)
-    s += (*b)*(*b);
+  for(auto e = K.begin(), f=o.K.begin();
+      e != K.end(); ++e, ++f)
+    s += (*e).inner(*f);
+  for(auto b = bias.begin(), c = o.bias.begin(); b != bias.end(); ++b, ++c)
+    s += (*b)*(*c);
 
   return s;
 }
@@ -141,14 +141,11 @@ void ConvolutionalLayer::update_increment(double momentum, const Layer& grad_lay
 {
   const ConvolutionalLayer& grad_layer = dynamic_cast<const ConvolutionalLayer&>(grad_layer_);
 
-  // TODO: Fix this
-  /*
   for(size_t k=0; k<K.size(); ++k)
     {
       K[k] *= momentum;
       K[k] += learning_rate*grad_layer.K[k];
     }
-  */
 
   size_t i=0;
   for(auto& b: bias)
@@ -161,8 +158,7 @@ void ConvolutionalLayer::update_increment(double momentum, const Layer& grad_lay
 void ConvolutionalLayer::apply_increment(const Layer& inc_layer_)
 {
   const ConvolutionalLayer& inc_layer = dynamic_cast<const ConvolutionalLayer&>(inc_layer_);
-  
-  // TODO: Implement operator-= instead
+
   for(size_t k=0; k<K.size(); ++k)
     {
       K[k] -= inc_layer.K[k];
@@ -183,7 +179,7 @@ std::unique_ptr<Layer> ConvolutionalLayer::clone() const
 void ConvolutionalLayer::save(std::ostream& os) const
 {
   os << "[ " << get_name() << " ]\n";
-  os << std::setw(16) << " dimension : " << dim[0] << ", " << dim[1] << '\n';
+  os << std::setw(16) << " dimension : " << dim[0] << ", " << dim[1] << ", " << dim[2] << '\n';
 
   os << std::setw(16) << " kernel : ";
   for(auto e = K.begin(); e != K.end(); ++e)

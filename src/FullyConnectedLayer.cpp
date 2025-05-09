@@ -27,8 +27,8 @@ void FullyConnectedLayer::forward_propagate(const DataArray& x_, DataArray& z_, 
 }
 
 std::unique_ptr<Layer> FullyConnectedLayer::backward_propagate(std::vector<DataArray*>& DY,
-							       const std::vector<DataArray*>& Y,
-							       const std::vector<DataArray*>& Z) const
+						   const std::vector<DataArray*>& Y,
+						   const std::vector<DataArray*>& Z) const
 {
   FullyConnectedLayer* output = new FullyConnectedLayer(dim[0], weight.nCols(), act);
 

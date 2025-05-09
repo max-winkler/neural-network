@@ -9,6 +9,10 @@
 // forward declarations
 class Vector;
 class Tensor;
+class ScaledTensor;
+
+// forward declaration of free functions
+ScaledTensor operator*(double, const Tensor&);
 
 struct ScaledTensor
 {
@@ -52,7 +56,7 @@ public:
    * @param a The number to be added to the tensor slice.
    */
   TensorSlice& operator+=(double);
-
+  
   /**
    * Add a matrix to the tensor slice.
    *
@@ -243,6 +247,16 @@ class Tensor : public DataArray
    */
   Tensor& operator+=(const Tensor&);
 
+  /**
+   * Adds a multiple of another tensor to the current one. Tensors must have the same shape,
+   * otherwise an empty tensor is returned.
+   *
+   * @brief Add multiple of a tensor to (*this).
+   *
+   * @param S The scaled tensor, usually created by operator*(double, const Tensor&).
+   */
+  Tensor& operator+=(const ScaledTensor&);
+  
   /**
    * Subtracts another tensor from the current one. Tensors are assumed to have the same shape,
    * otherwise an empty tensor is returned.

@@ -6,7 +6,7 @@
 TensorSlice::TensorSlice(size_t m, size_t n, double* data) : m(m), n(n), data(data) {}
 
 double& TensorSlice::operator()(size_t i, size_t j)
-{
+{  
   return data[i*n + j];
 }
 
@@ -102,6 +102,11 @@ double& Tensor::operator()(size_t c, size_t i, size_t j)
 {
   // n = size/d/m
   // m = m
+
+  // Bound check
+  if(c >= d || i >= m || j >= size/d/m)    
+    std::cerr << "ERROR: Index out of bounds for tensor access.\n";          
+  
   return data[c*size/d + i*size/(d*m) + j];
 }
 
@@ -127,6 +132,20 @@ Tensor& Tensor::operator+=(const Tensor& T)
       data_ptr != data+size;
       ++data_ptr, ++data_ptr_T)
     (*data_ptr) += (*data_ptr_T);
+
+  return *this;
+}
+
+Tensor& Tensor::operator+=(const ScaledTensor& S)
+{
+  const double* data_ptr_T;
+  double* data_ptr;
+  double s = S.scale;
+  
+  for(data_ptr = data, data_ptr_T = S.tensor->data;
+      data_ptr != data+size;
+      ++data_ptr, ++data_ptr_T)
+    (*data_ptr) += s*(*data_ptr_T);
 
   return *this;
 }
