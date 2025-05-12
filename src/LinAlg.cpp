@@ -187,7 +187,103 @@ namespace linalg
     return U;
   }
 
-}
+  Matrix pool(const MatrixView& A, int type, size_t S, size_t P)
+  {    
+    const size_t n1 = A.nRows();
+    const size_t n2 = A.nCols();
+
+    const size_t n1_new = (n1 + -1 + 2*P)/S + 1;
+    const size_t n2_new = (n2 + -1 + 2*P)/S + 1;  
+  
+    Matrix B(n1_new, n2_new);
+
+    if(P!=0)
+      {
+        std::cerr << "ERROR: Pooling with padding not implemented yet.\n";
+        return Matrix();
+      }
+
+    for(size_t i=0; i < n1_new;  ++i)    
+      for(size_t j=0; j < n2_new;  ++j)
+        {
+	switch(type)
+	  {
+	  case POOLING_MAX:
+	    {
+	      double max_val = 0.;
+	      
+	      // Find maxiumum within the patch
+	      for(int k=0; k<S; ++k)		  
+	        for(int l=0; l<S; ++l)
+		{
+		  size_t i2 = i*S-P+k;
+		  size_t j2 = j*S-P+l;
+		      
+		  if(i2 < 0 || i2 >= n1 || j2 < 0 || j2 >= n2)
+		    continue;
+		      
+		  double cur_val = A(i2,j2);
+		  if(cur_val > max_val)
+		    max_val = cur_val;		    
+		}
+		
+	      B(i,j) = max_val;
+	      break;
+	    }
+	  default:
+	    std::cerr << "ERROR: Pooling type is not implemented yet.\n";
+	  }
+        }
+      
+    return B;
+  }
+
+  Matrix unpool(const MatrixView& A, const MatrixView& B, int type, size_t S, size_t P)
+  {
+    const size_t n1 = A.nRows();
+    const size_t n2 = A.nCols();
+
+    const size_t n1_new = B.nRows();
+    const size_t n2_new = B.nCols();
+  
+    Matrix D(n1_new, n2_new);
+  
+    // Iterate over
+    for(size_t k=0; k<n1; ++k)
+      for(size_t l=0; l<n2; ++l)
+        {
+	switch(type)
+	  {
+	  case POOLING_MAX:
+	    {
+	      // TODO: The following is only correct for P=0, implement padding later
+
+	      // Determine index for maximum
+	      int i_max = 0, j_max = 0;
+	      double val_max = B(S*k,S*l);
+	    
+	      for(int i=0; i<S; ++i)
+	        for(int j=0; j<S; ++j)
+		{
+		  if(B(S*k+i,S*l+j) > val_max)
+		    {
+		      i_max = i; j_max = j;
+		      val_max = B(S*k+i,S*l+j);
+		    }
+		}
+
+	      D(k*S+i_max,l*S+j_max) = A(k,l);
+	    }
+	    break;
+	  default:
+	    std::cerr << "ERROR: Unpooling for this type not implemented yet.\n";
+	  }
+        }
+    return D;
+  }
+
+} // end of namespace linalg
+
 
 MatrixView::MatrixView(const double* data, size_t m, size_t n) : data(data), m(m), n(n) {}
 MatrixView::MatrixView(const Matrix& A) : data(A.data), m(A.m), n(A.size/A.m) {}

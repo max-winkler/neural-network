@@ -16,13 +16,12 @@ class PoolingLayer : public Layer
    *
    * @brief Create pooling layer instance
    *
-   * @param in_dim1 Number of rows of the input matrix.
-   * @param in_dim2 Number of columns of the input matrix.
+   * @param in_dim Dimension of the input tensor (n_c x n_w x n_h)
    * @param k Width/height of the patches for the maximum pooling.
    * @param S Stride parameter.
    * @param P Padding parameter.
    */
-  PoolingLayer(size_t, size_t, size_t k, size_t S=0, size_t P=0);
+  PoolingLayer(std::vector<size_t>, size_t k, size_t S=0, size_t P=0);
 
   /**
    * Compute the output of the layer for provided input data.
@@ -78,9 +77,8 @@ class PoolingLayer : public Layer
   size_t S;
   size_t P;
 
-  size_t in_dim1;
-  size_t in_dim2;
-
+  std::vector<size_t> in_dim;
+  
   int type;
 };
 

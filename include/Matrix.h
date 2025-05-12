@@ -1,9 +1,6 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 
-#define POOLING_MAX 0
-#define POOLING_AVG 1
-
 #include <iostream>
 
 #include "DataArray.h"
@@ -281,31 +278,7 @@ class Matrix : public DataArray
    * @param P The padding parameter.
    */
   Matrix back_convolve(const Matrix&, size_t J=1, size_t P=0) const;
-
-  /**
-   * Pooling operation of a matrix. Produces a smaller matrix summarizing a batch of pixels of the original matrix.
-   *
-   * @brief Pooling of a matrix
-   *
-   * @param type The type of pooling that should be done. Implemented are POOLING_MAX for max pooling and POOLING_AVG
-   * for average pooling.
-   * @param S The stride parameter for the pooling operation (default is 2).
-   * @param P The padding to be added to the original matrix before pooling.
-   */
-  Matrix pool(int type=POOLING_MAX, size_t S=2, size_t P=0) const;
-
-  /**
-   * Operation that returns the gradient of the pooling operation with respect to the input matrix.
-   * 
-   * @brief Gradient of the pooling operation.
-   *
-   * @param A The original matrix the pooling was applied to.
-   * @param type The pooling type (POOLING_MAX or POOLING_AVG).
-   * @param S The stride parameter used for the pooling operation.
-   * @param P The padding that was added to the original matrix before pooling.
-   */
-  Matrix unpool(const Matrix&, int type=POOLING_MAX, size_t S=2, size_t P=0) const;
-
+  
   /**
    * Computes the Kronecker product of two matrices. This method is more general than the original Kronecker product
    * and allows overlaps and gaps. This depends on stride parameter and size of the kernel matrix. In machine learning 

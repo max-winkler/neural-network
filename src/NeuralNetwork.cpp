@@ -76,7 +76,7 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
       return;
     }
 
-  layers.emplace_back(std::make_unique<PoolingLayer>(prev_layer.dim[0], prev_layer.dim[1], batch, batch, 0));
+  layers.emplace_back(std::make_unique<PoolingLayer>(prev_layer.dim, batch, batch, 0));
 }
 
 void NeuralNetwork::addFlatteningLayer()

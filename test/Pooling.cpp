@@ -1,6 +1,9 @@
 #include <iostream>
 
-#include "Matrix.h"
+#include "LinAlg.h"
+
+using linalg::pool;
+using linalg::unpool;
 
 int main()
 {
@@ -15,8 +18,8 @@ int main()
     0.8, 1.6, 1.7, 0.8, 0.8, 1.8
   };
 
-  Matrix B = A.pool();
-  Matrix C = B.unpool(A);
+  Matrix B = pool(A);
+  Matrix C = unpool(B, A);
   
   std::cout << "Original matrix:\n";
   std::cout << A;
