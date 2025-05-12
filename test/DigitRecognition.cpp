@@ -190,6 +190,7 @@ int main()
   net.addInputLayer(width, height); // input layer
   net.addConvolutionLayer(8, 4, ActivationFunction::RELU, 1, 0);
   net.addPoolingLayer(5);
+  net.addConvolutionLayer(16, 2, ActivationFunction::RELU, 1, 0);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID); // hidden layer
   //net.addFullyConnectedLayer(100, ActivationFunction::SIGMOID); // hidden layer

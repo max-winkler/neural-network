@@ -77,13 +77,13 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
   
   for(; y_it != Y.end(); ++y_it, ++z_it, ++Dy_it)
     {
-      Tensor& Dy = dynamic_cast<Tensor&>(**Dy_it);
-      
-      Tensor Dx(Dy.nChannels(), Dy.nRows(), Dy.nCols());
+      Tensor& Dy = dynamic_cast<Tensor&>(**Dy_it);            
       
       const Tensor& y = dynamic_cast<const Tensor&>(**y_it);
       const Tensor& z = dynamic_cast<const Tensor&>(**z_it);
 
+      Tensor Dx(y.nChannels(), y.nRows(), y.nCols());
+      
       Tensor Dz(z);
       for(size_t c=0; c<Dz.nChannels(); ++c)
         for(size_t i=0; i<Dz.nRows(); ++i)
