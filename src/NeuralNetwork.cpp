@@ -277,8 +277,8 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	    }
 	
 	  // for testing only. remove later
-	  // gradientTest(grad_net, data, data_idx, options);
-	  // return;
+	  //gradientTest(grad_net, data, data_idx, options);
+	  //return;
 
 	  // Update increment
 	  increment.update_increment(momentum, grad_net, options.learning_rate);

@@ -43,22 +43,19 @@ TensorSlice& TensorSlice::operator+=(const Matrix& A)
   return *this;
 }
 
-Tensor::Tensor() : DataArray(1), d(1), m(1) {}
-Tensor::Tensor(size_t d, size_t m, size_t n) : DataArray(d*m*n), d(d), m(m) {}
-Tensor::Tensor(size_t d, size_t m, size_t n, const float* x) : DataArray(d*m*n), d(d), m(m)
+Tensor::Tensor()
+  : DataArray(1), d(1), m(1), c_stride(1), r_stride(1) {}
+Tensor::Tensor(size_t d, size_t m, size_t n)
+  : DataArray(d*m*n), d(d), m(m), c_stride(m*n), r_stride(n) {}
+Tensor::Tensor(size_t d, size_t m, size_t n, const float* x)
+  : DataArray(d*m*n), d(d), m(m), c_stride(m*n), r_stride(n)
 {
   memcpy(data, x, size*sizeof(float));
 }
-
 Tensor::Tensor(const Tensor& T)
-  : DataArray(T), d(T.d), m(T.m)
-{
-}
-
+  : DataArray(T), d(T.d), m(T.m), c_stride(size/d), r_stride(size/d/m) {}
 Tensor::Tensor(const Matrix& A)
-  : DataArray(A), d(1), m(A.nRows())
-{
-}
+  : DataArray(A), d(1), m(A.nRows()), c_stride(size/d), r_stride(size/d/m) {}
 
 Tensor& Tensor::operator=(const Tensor& other)
 {
@@ -69,6 +66,8 @@ Tensor& Tensor::operator=(const Tensor& other)
       d = other.d;
       m = other.m;
       size = other.size;
+      c_stride = other.c_stride;
+      r_stride = other.r_stride;
       
       data = new float[size];
     }
@@ -87,7 +86,9 @@ Tensor& Tensor::operator=(Tensor&& other)
   size = other.size;
   d = other.d;
   m = other.m;
-
+  c_stride = other.c_stride;
+  r_stride = other.r_stride;
+  
   data = other.data;
   other.data = nullptr;
 
@@ -98,14 +99,15 @@ size_t Tensor::nChannels() const {return d; }
 size_t Tensor::nRows() const {return m; }
 size_t Tensor::nCols() const {return size/m/d;}
 
+/*
 float& Tensor::operator()(size_t c, size_t i, size_t j)
 {
   // n = size/d/m
   // m = m
 
   // Bound check
-  if(c >= d || i >= m || j >= size/d/m)    
-    std::cerr << "ERROR: Index out of bounds for tensor access.\n";          
+  //if(c >= d || i >= m || j >= size/d/m)    
+  //  std::cerr << "ERROR: Index out of bounds for tensor access.\n";          
   
   return data[c*size/d + i*size/(d*m) + j];
 }
@@ -114,6 +116,7 @@ const float& Tensor::operator()(size_t c, size_t i, size_t j) const
 {
   return data[c*size/d + i*size/(d*m) + j];
 }
+*/
 
 Tensor& Tensor::operator*=(float a)
 {

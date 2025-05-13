@@ -215,7 +215,9 @@ class Tensor : public DataArray
    * @param i The index of the row.
    * @param j The index of the column.
    */
-  float& operator()(size_t, size_t, size_t);
+  inline float& operator()(size_t c, size_t i, size_t j) {
+    return data[c*c_stride + i*r_stride + j];
+  }
 
   /**
    * Access a single element using the notation T(c,i,j) for constant T (read only).
@@ -226,7 +228,9 @@ class Tensor : public DataArray
    * @param i The index of the row.
    * @param j The index of the column.   
    */
-  const float& operator()(size_t, size_t, size_t) const;
+  inline const float& operator()(size_t c, size_t i, size_t j) const {
+    return data[c*c_stride + i*r_stride + j];
+  }
 
   /**
    * Multiply a tensor with a scalar.
@@ -326,6 +330,16 @@ class Tensor : public DataArray
    * Height of the tensor
    */
   size_t m;
+
+  /**
+   * Stride to the next channel
+   */
+  size_t c_stride;
+
+  /**
+   * Stride to the next row
+   */
+  size_t r_stride;
 };
 
 #endif

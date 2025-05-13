@@ -160,7 +160,7 @@ int main()
   if(read_training_data(training_data_file, training_label_file,
 			n_images, width, height, n_classes, training_data) != 0)    
     return -1;
-
+  
   // Console output
   std::cout << "Data set:\n";
   std::cout << " images : " << n_images << std::endl;

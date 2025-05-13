@@ -9,9 +9,9 @@ float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::NONE:
       return x;
     case ActivationFunction::SIGMOID:
-      return x>0. ? 1.0f / (1.0f + exp(-x)) : exp(x) / (1.0f + exp(x));
+      return x>0.0f ? 1.0f / (1.0f + exp(-x)) : exp(x) / (1.0f + exp(x));
     case ActivationFunction::TANH:
-      return 2.0f / (1.0f + exp(-2.0f*x)) - 1.;
+      return 2.0f / (1.0f + exp(-2.0f*x)) - 1.0f;
     case ActivationFunction::RELU:
       return std::max(0.0f, x);
     }
@@ -65,7 +65,10 @@ float Dactivate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::NONE:
       return 1.0f;
     case ActivationFunction::SIGMOID:
-      return x>0.0f ? exp(-x) / pow(1.0f + exp(-x), 2.0f) : exp(x) / pow(1.0f + exp(x), 2.0f);
+      {
+        float sig = 1.0f / (1.0f + exp(-x));
+        return sig * (1.0f - sig);
+      }
     case ActivationFunction::TANH:
       return 4.0f*exp(-2.0f*x)/pow(1.+exp(-2.0f*x), 2.0f);
     case ActivationFunction::RELU:

@@ -289,9 +289,5 @@ MatrixView::MatrixView(const float* data, size_t m, size_t n) : data(data), m(m)
 MatrixView::MatrixView(const Matrix& A) : data(A.data), m(A.m), n(A.size/A.m) {}
 MatrixView::MatrixView(const TensorSlice& T) : data(T.data), m(T.m), n(T.n) {}
 
-float MatrixView::operator()(size_t i, size_t j) const{
-  return data[i*n + j];
-}
-
 size_t MatrixView::nRows() const { return m; }
 size_t MatrixView::nCols() const { return n; }

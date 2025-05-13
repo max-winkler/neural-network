@@ -95,7 +95,9 @@ public:
   size_t nRows() const;
   size_t nCols() const;
 
-  float operator()(size_t, size_t) const;
+  inline float operator()(size_t i, size_t j) const{
+    return data[i*n + j];
+  }  
 
   // TODO: Let multiply return a proxy object "HadamardView" to avoid memory allocation
   friend Matrix linalg::multiply(const MatrixView&, const MatrixView&);
