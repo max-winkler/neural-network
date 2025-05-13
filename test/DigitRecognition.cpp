@@ -236,8 +236,8 @@ int main()
       else
         correct++;
     }
-  std::cout << "Correctly classified : " << correct << " (" << (double)correct/n_test*100 << "%)\n";
-  std::cout << "Wrongly classified   : " << wrong << " (" << (double)wrong/n_test*100 << "%)\n";
+  std::cout << "Correctly classified : " << correct << " (" << (float)correct/n_test*100 << "%)\n";
+  std::cout << "Wrongly classified   : " << wrong << " (" << (float)wrong/n_test*100 << "%)\n";
 
   net.save("network.dat");
   

@@ -38,10 +38,10 @@ class Layer
 						    const std::vector<DataArray*>&,
 						    const std::vector<DataArray*>&) const;
   
-  virtual double dot(const Layer&) const;
+  virtual float dot(const Layer&) const;
   
   virtual void initialize();
-  virtual void update_increment(double, const Layer&, double);
+  virtual void update_increment(float, const Layer&, float);
   virtual void apply_increment(const Layer&);
   virtual std::unique_ptr<Layer> zeros_like() const;
   virtual std::unique_ptr<Layer> clone() const;

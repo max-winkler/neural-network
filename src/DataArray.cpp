@@ -5,19 +5,19 @@
 DataArray::DataArray(size_t size)
   : size(size)
 {
-  data = new double[size];
+  data = new float[size];
 
   // TODO: Valgrind throws "uninitialized value" when using memset
   for(size_t i=0; i<size; ++i)
     data[i] = 0.;
-  //std::memset(data, 0.0, size*sizeof(double));
+  //std::memset(data, 0.0, size*sizeof(float));
 }
 
 DataArray::DataArray(const DataArray& other)
   : size(other.size)
 {
-  data = new double[size];
-  std::memcpy(data, other.data, size*sizeof(double));
+  data = new float[size];
+  std::memcpy(data, other.data, size*sizeof(float));
 }
 
 DataArray::~DataArray()
@@ -25,23 +25,23 @@ DataArray::~DataArray()
   delete[] data;
 }
 
-double& DataArray::operator[](size_t i)
+float& DataArray::operator[](size_t i)
 {
   return data[i];
 }
 
-const double& DataArray::operator[](size_t i) const
+const float& DataArray::operator[](size_t i) const
 {
   return data[i];
 }
 
-double DataArray::inner(const DataArray& B) const
+float DataArray::inner(const DataArray& B) const
 {
   const DataArray& A = *this;
-  double val = 0.;
+  float val = 0.;
 
-  double* A_ptr = A.data;
-  double* B_ptr = B.data;
+  float* A_ptr = A.data;
+  float* B_ptr = B.data;
   
   for(size_t i=0; i<size; ++i, ++A_ptr, ++B_ptr)
     val += (*A_ptr)*(*B_ptr);
@@ -49,10 +49,10 @@ double DataArray::inner(const DataArray& B) const
   return val;
 }
 
-double sum(const DataArray& A)
+float sum(const DataArray& A)
 {
-  double val = 0.;
-  for(double* data_ptr = A.data; data_ptr!=A.data+A.size; ++data_ptr)
+  float val = 0.;
+  for(float* data_ptr = A.data; data_ptr!=A.data+A.size; ++data_ptr)
     val += *data_ptr;
   
   return val;

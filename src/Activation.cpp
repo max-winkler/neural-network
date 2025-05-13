@@ -2,18 +2,18 @@
 
 #include <algorithm>
 
-double activate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
+float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)
     {
     case ActivationFunction::NONE:
       return x;
     case ActivationFunction::SIGMOID:
-      return x>0. ? 1./(1.+exp(-x)) : exp(x)/(1+exp(x));
+      return x>0. ? 1.0f / (1.0f + exp(-x)) : exp(x) / (1.0f + exp(x));
     case ActivationFunction::TANH:
-      return 2./(1.+exp(-2.*x)) - 1.;
+      return 2.0f / (1.0f + exp(-2.0f*x)) - 1.;
     case ActivationFunction::RELU:
-      return std::max(0., x);
+      return std::max(0.0f, x);
     }
   
   return 0.;
@@ -25,7 +25,7 @@ Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGM
 
   if(act == ActivationFunction::SOFTMAX)
     {
-      double sum = 0.;
+      float sum = 0.0f;
       for(size_t i=0; i<x.length(); ++i)
         sum += exp(x[i]);
       for(size_t i=0; i<x.length(); ++i)
@@ -58,18 +58,18 @@ Matrix activate(const Matrix& x, ActivationFunction act=ActivationFunction::SIGM
   return y;
 }
 
-double Dactivate(double x, ActivationFunction act=ActivationFunction::SIGMOID)
+float Dactivate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)
     {
     case ActivationFunction::NONE:
-      return 1.;
+      return 1.0f;
     case ActivationFunction::SIGMOID:
-      return x>0. ? exp(-x)/pow(1.+exp(-x), 2.) : exp(x)/pow(1+exp(x), 2.);
+      return x>0.0f ? exp(-x) / pow(1.0f + exp(-x), 2.0f) : exp(x) / pow(1.0f + exp(x), 2.0f);
     case ActivationFunction::TANH:
-      return 4.*exp(-2.*x)/pow(1.+exp(-2.*x), 2.);
+      return 4.0f*exp(-2.0f*x)/pow(1.+exp(-2.0f*x), 2.0f);
     case ActivationFunction::RELU:
-      return x<0. ? 0. : 1.;
+      return x<0.0f ? 0.0f : 1.0f;
     }
   
   return 0.;
@@ -103,13 +103,13 @@ Matrix DactivateCoupled(const Vector& x, ActivationFunction act)
   Matrix J(n, n);
 
   // TODO: Assemble the fucking matrix here
-  double e_sum = 0.;
+  float e_sum = 0.;
   for(size_t i=0; i<n; ++i)
     e_sum += exp(x[i]);
 
   for(size_t i=0; i<n; ++i)
     for(size_t j=0; j<n; ++j)
-      J[i][j] = (exp(x[i]) / e_sum) * ((i==j ? 1. : 0) - (exp(x[j]) / e_sum));
+      J[i][j] = (exp(x[i]) / e_sum) * ((i==j ? 1.0f : 0.0f) - (exp(x[j]) / e_sum));
 
   return J;	       
 }

@@ -12,11 +12,11 @@ enum ActivationFunction
   };
 
 
-double activate(double, ActivationFunction);
+float activate(float, ActivationFunction);
 Vector activate(const Vector&, ActivationFunction);
 Matrix activate(const Matrix&, ActivationFunction);
 
-double Dactivate(double, ActivationFunction);
+float Dactivate(float, ActivationFunction);
 Vector Dactivate(const Vector&, ActivationFunction);
 Matrix Dactivate(const Matrix&, ActivationFunction);
 Matrix DactivateCoupled(const Vector&, ActivationFunction);

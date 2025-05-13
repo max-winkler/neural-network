@@ -29,7 +29,7 @@ namespace linalg{
    * @param A Matrix on the left-hand side of multiplication.
    * @param B Matrix on the right-hand side of multiplication.
    */
-  double dot(const MatrixView&, const MatrixView&);
+  float dot(const MatrixView&, const MatrixView&);
 
   /**
    * Computes convolution of the matrix with the kernel matrix \p K. Without specifying the
@@ -88,21 +88,21 @@ namespace linalg{
 class MatrixView
 {
 public:
-  MatrixView(const double*, size_t, size_t);
+  MatrixView(const float*, size_t, size_t);
   MatrixView(const Matrix&);
   MatrixView(const TensorSlice&);
   
   size_t nRows() const;
   size_t nCols() const;
 
-  double operator()(size_t, size_t) const;
+  float operator()(size_t, size_t) const;
 
   // TODO: Let multiply return a proxy object "HadamardView" to avoid memory allocation
   friend Matrix linalg::multiply(const MatrixView&, const MatrixView&);
-  friend double linalg::dot(const MatrixView&, const MatrixView&);
+  friend float linalg::dot(const MatrixView&, const MatrixView&);
   
 private:
-  const double* data;
+  const float* data;
   size_t m;
   size_t n;
 };

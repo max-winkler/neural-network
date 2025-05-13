@@ -13,7 +13,7 @@ class Matrix;
 struct ScaledMatrix;
 
 // Forward declarations of free functions
-ScaledMatrix operator*(double, const Matrix&);
+ScaledMatrix operator*(float, const Matrix&);
 
 
 /**
@@ -30,27 +30,27 @@ class MatrixRow
    *
    * @param row_ptr Pointer to the first entry of the matrix row. 
    */
-  MatrixRow(double*);
+  MatrixRow(float*);
 
   /**
    * Access single element of a matrix row by reference for writing.
    *
    * @param i Index of the element to be accessed.
    */
-  double& operator[](size_t);
+  float& operator[](size_t);
 
   /**
    * Access single element of a matrix row by const reference for reading.
    *
    * @param i Index of the element to be accessed.
    */
-  const double& operator[](size_t) const;
+  const float& operator[](size_t) const;
   
 private:
   /**
    * Pointer to the first element of the matrix row.
    */
-  double* data_ptr;
+  float* data_ptr;
 };
 
 /**
@@ -78,7 +78,7 @@ class Matrix : public DataArray
 
   /**
    * Constructor creating a matrix with a certain size and copying the values the poiner \p ptr points to.
-   * This assumes that \p ptr points to a contiguous block of \p m x \p n double values.
+   * This assumes that \p ptr points to a contiguous block of \p m x \p n float values.
    *
    * @brief Create matrix and initialize by values from given data block
    *
@@ -86,7 +86,7 @@ class Matrix : public DataArray
    * @param n Number of columns of the matrix.
    * @param ptr Pointer to the data block to be copied into the matrix.
    */
-  Matrix(size_t, size_t, const double*);  
+  Matrix(size_t, size_t, const float*);  
 
   /**
    * Copy constructor creating a hard copy of another matrix.
@@ -101,7 +101,7 @@ class Matrix : public DataArray
   /**
    * Constructor creating a matrix of size \p m x \p n and initializing their values with image data 
    * behind the pointer \p ptr. It is assumed that \p ptr points at a contiguous block of unsigned chars.
-   * The unsigned chars (0-255) are converted to double precision values in the range 0.0-1.0. 
+   * The unsigned chars (0-255) are converted to single precision values in the range 0.0-1.0. 
    * This constructor is helpful when image data should be processed in the neural network.
    *
    * @brief Create matrix from image data
@@ -138,7 +138,7 @@ class Matrix : public DataArray
    * @param list The entry list to be assigned to the current matrix. It is assumed that the 
    * number of elements in \p list is equal to \p m x \p n. 
    */
-  Matrix& operator=(std::initializer_list<double>);
+  Matrix& operator=(std::initializer_list<float>);
   
   /**
    * Return the number of rows of the matrix.
@@ -182,7 +182,7 @@ class Matrix : public DataArray
    * @param i Row index of the element to be accessed.
    * @param j Column index of the element to be accessed.
    */
-  double& operator()(size_t, size_t);
+  float& operator()(size_t, size_t);
 
   /**
    * Access single element using the notation A(i,j), which is more efficient that A[i][j].
@@ -190,7 +190,7 @@ class Matrix : public DataArray
    * @param i Row index of the element to be accessed.
    * @param j Column index of the element to be accessed.
    */
-  const double& operator()(size_t, size_t) const;
+  const float& operator()(size_t, size_t) const;
   
   /**
    * Multiplies all matrix entries with a given value.
@@ -199,7 +199,7 @@ class Matrix : public DataArray
    *
    * @param a The value to multiply to each matrix entry.
    */
-  Matrix& operator*=(double);
+  Matrix& operator*=(float);
 
   /**
    * Computes the matrix-vector product.
@@ -227,7 +227,7 @@ class Matrix : public DataArray
    *
    * @param x Value to be added to each matrix element.
    */  
-  Matrix& operator+=(double);
+  Matrix& operator+=(float);
 
   /**
    * Adds another matrix to the current one. Both matrices must have the same size.
@@ -240,7 +240,7 @@ class Matrix : public DataArray
 
   /**
    * Adds a scaled matrix a*X to the current one. The matrix X must have the correct size.
-   * ScaledMatrix is a proxy class representing the result of \ref operator*(double, const Matrix&) 
+   * ScaledMatrix is a proxy class representing the result of \ref operator*(float, const Matrix&) 
    * without storing this matrix directly.
    *
    * @brief Add a multiple of another matrix
@@ -323,7 +323,7 @@ private:
 };
 
 /**
- * Class represents the result of the opetration (double)*(Matrix). The result is computed on-the-fly at element access 
+ * Class represents the result of the opetration (float)*(Matrix). The result is computed on-the-fly at element access 
  * and never computed at once. This proxy class is used to save computational cost and memory allocations.
  */
 struct ScaledMatrix
@@ -336,8 +336,8 @@ struct ScaledMatrix
    * @param scale The scale factor.
    * @param matrix A reference to the matrix to be scaled.
    */
-  ScaledMatrix(double, const Matrix& matrix);
-  double scale;
+  ScaledMatrix(float, const Matrix& matrix);
+  float scale;
   const Matrix* matrix;
 };
 

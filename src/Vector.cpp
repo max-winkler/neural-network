@@ -13,10 +13,10 @@ Vector::Vector(size_t n)
   : DataArray(n)
 {}
 
-Vector::Vector(size_t n, const double* x)
+Vector::Vector(size_t n, const float* x)
   : DataArray(n)
 {
-  memcpy(data, x, size*sizeof(double));  
+  memcpy(data, x, size*sizeof(float));  
 }
 
 Vector::Vector(const Vector& other)
@@ -24,7 +24,7 @@ Vector::Vector(const Vector& other)
 {
 }
 
-Vector::Vector(std::initializer_list<double> val) : DataArray(val.size())
+Vector::Vector(std::initializer_list<float> val) : DataArray(val.size())
 {
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
@@ -37,10 +37,10 @@ Vector& Vector::operator=(const Vector& other)
     {
       delete[] data;  
       size = other.size;
-      data = new double[size];
+      data = new float[size];
     }
   
-  memcpy(data, other.data, size*sizeof(double));
+  memcpy(data, other.data, size*sizeof(float));
   return *this;
 }
 
@@ -55,7 +55,7 @@ Vector& Vector::operator=(Vector&& other)
   return *this;
 }
 
-Vector& Vector::operator=(std::initializer_list<double> val)
+Vector& Vector::operator=(std::initializer_list<float> val)
 {
   size = val.size();
   // TODO: Check if array large big enough?
@@ -90,7 +90,7 @@ Vector Vector::operator+(const Vector& other) const
     }
 
   Vector c(size);
-  for(double *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
+  for(float *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
       data_ptr != data+size;
       ++data_ptr, ++data_ptr_other, ++data_ptr_c)
     {
@@ -109,10 +109,10 @@ Vector Vector::operator-(const Vector& other) const
     }
   
   Vector c(*this);
-  cblas_daxpy(size, -1., other.data, 1, c.data, 1);
+  cblas_saxpy(size, -1., other.data, 1, c.data, 1);
 
   /*
-  for(double *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
+  for(float *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
       data_ptr != data+size;
       ++data_ptr, ++data_ptr_other, ++data_ptr_c)
     {
@@ -149,17 +149,17 @@ Vector Vector::operator*(const Matrix& A) const
   Vector y(n);
 
   // TODO: As we transpose A, will nRows and nCols have to be changed?
-  // cblas_dgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1., A.data, A.nCols(), data, 1, 0., y.data, 1);
+  // cblas_sgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1., A.data, A.nCols(), data, 1, 0., y.data, 1);
 
   
-  double* A_col;
-  double* x_data;
+  float* A_col;
+  float* x_data;
 
-  const double* x_data_end = data+m;
+  const float* x_data_end = data+m;
   
   for(size_t i=0; i<n; ++i)
     {
-      double val=0;      
+      float val=0;      
       for(A_col = A.data + i, x_data = data; x_data != x_data_end; x_data++, A_col+=n)
         val += (*A_col)*(*x_data);
 
@@ -203,11 +203,11 @@ Vector& Vector::operator+=(const ScaledVector& B)
       std::cerr << "  (" << size << ") vs. (" << B.vector->size  << ")\n";
     }
 
-  cblas_daxpy(size, B.scale, B.vector->data, 1, data, 1);
+  cblas_saxpy(size, B.scale, B.vector->data, 1, data, 1);
 
   /*
-  double* data_ptr;
-  const double* B_data_ptr;
+  float* data_ptr;
+  const float* B_data_ptr;
   
   for(data_ptr = data, B_data_ptr = B.vector->data; data_ptr != data+size; ++data_ptr, ++B_data_ptr)
     *data_ptr += B.scale * (*B_data_ptr);
@@ -216,12 +216,12 @@ Vector& Vector::operator+=(const ScaledVector& B)
   return *this;
 }
 
-Vector& Vector::operator*=(double a)
+Vector& Vector::operator*=(float a)
 {
-  cblas_dscal(length(), a, data, 1);
+  cblas_sscal(length(), a, data, 1);
 
   /*
-    for(double* data_ptr = data; data_ptr != data + size; ++data_ptr)
+    for(float* data_ptr = data; data_ptr != data + size; ++data_ptr)
     (*data_ptr) *= a;
   */
   
@@ -231,7 +231,7 @@ Vector& Vector::operator*=(double a)
 size_t Vector::indMax() const
 {
   size_t ind = 0;
-  double max = data[0];
+  float max = data[0];
   for(size_t l=0; l<size; ++l)
     if(data[l] > max)
       {
@@ -264,17 +264,17 @@ Rank1Matrix outer(const Vector& x, const Vector& y)
   return Rank1Matrix(x, y);
 }
 
-double norm(const Vector& x, double p)
+float norm(const Vector& x, float p)
 {
   if(p!=2.)
     std::cerr << "Non-Euklidean vector norm not implemented. Use Euklidean norm instead\n";
 
-  return cblas_dnrm2(x.length(), x.data, 1);
+  return cblas_snrm2(x.length(), x.data, 1);
 }
 
-ScaledVector::ScaledVector(double scale, const Vector& vector) : scale(scale), vector(&vector) {}
+ScaledVector::ScaledVector(float scale, const Vector& vector) : scale(scale), vector(&vector) {}
 
-ScaledVector operator*(double scale, const Vector& vector)
+ScaledVector operator*(float scale, const Vector& vector)
 {
   return ScaledVector(scale, vector);
 }

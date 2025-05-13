@@ -17,11 +17,11 @@ class FullyConnectedLayer : public Layer
 					    const std::vector<DataArray*>&) const override;  
   
   
-  double dot(const Layer&) const override;
+  float dot(const Layer&) const override;
   
   void initialize() override;  
   
-  void update_increment(double, const Layer&, double) override;
+  void update_increment(float, const Layer&, float) override;
   void apply_increment(const Layer&) override;
   
   std::unique_ptr<Layer> clone() const override;

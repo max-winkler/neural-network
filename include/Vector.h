@@ -13,15 +13,15 @@ class Vector;
 struct ScaledVector;
 
 // Forward declaration of free functions
-ScaledVector operator*(double, const Vector&);
-double norm(const Vector&, double p=2.);
+ScaledVector operator*(float, const Vector&);
+float norm(const Vector&, float p=2.);
 Rank1Matrix outer(const Vector&, const Vector&);
 
 /**
  * Proxy class representing the result of a scalar multiplied to a vector. This class avoids direct computation
  * of the resulting matrix and instead stores the scale factor and a pointer to the matrix so that the elements
  * are computed at element access. An instance of this class is created by the function 
- * \r operator*(double, const Vector&).
+ * \r operator*(float, const Vector&).
  */
 struct ScaledVector
 {
@@ -31,12 +31,12 @@ struct ScaledVector
    * @param scale The scale factor.
    * @param x The vector to be scaled.
    */
-  ScaledVector(double, const Vector&);
+  ScaledVector(float, const Vector&);
 
   /**
    * The scale factor.
    */
-  double scale;
+  float scale;
   /**
    * Pointer to the vector to be multiplied with the scale factor.
    */
@@ -67,14 +67,14 @@ class Vector : public DataArray {
   /**
    * Constructor creating a vector with size \p size and initializing the values with the values
    * the pointer \p data is pointing to. It is assumed that \p data points to a consecutive block of 
-   * \p size double precision values.
+   * \p size single precision values.
    *
    * @brief Create vector and initialize with values from a data block.
    *
    * @param size The size of the vector.
-   * @param data A pointer to a block of doubles to be copied into the vector.
+   * @param data A pointer to a block of floats to be copied into the vector.
    */
-  Vector(size_t, const double*);
+  Vector(size_t, const float*);
 
   /**
    * Copy constructor creating a hard copy of another vector.
@@ -92,7 +92,7 @@ class Vector : public DataArray {
    *
    * @param list A list of values for the vector entries.
    */
-  Vector(std::initializer_list<double>);
+  Vector(std::initializer_list<float>);
 
   /**
    * Destructor used to free the internal memory.
@@ -127,7 +127,7 @@ class Vector : public DataArray {
    *
    * @param list The list storing the values to be copied to the vector.
    */
-  Vector& operator=(std::initializer_list<double>);
+  Vector& operator=(std::initializer_list<float>);
   
   /**
    * Summation of two vectors. Returns the resulting vector.
@@ -172,7 +172,7 @@ class Vector : public DataArray {
    *
    * @param a The scale factor.
    */
-  Vector& operator*=(double);
+  Vector& operator*=(float);
 
   /**
    * Returns the index where the vector attains its maximum value.
@@ -232,7 +232,7 @@ class Vector : public DataArray {
   // Vector operations operations
   friend Rank1Matrix outer(const Vector&, const Vector&);
   friend DiagonalMatrix diag(const Vector&);
-  friend double norm(const Vector&, double);
+  friend float norm(const Vector&, float);
 
 private:
   

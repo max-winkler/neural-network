@@ -11,7 +11,7 @@ class Random
 {
  public:
   
-  double operator()();
+  float operator()();
 
   std::mt19937 generator();
   
@@ -22,8 +22,8 @@ class Random
  private:
   // Random number generator
   std::mt19937 rnd_gen;
-  std::uniform_real_distribution<> random_uniform;
-  std::normal_distribution<> random_normal;
+  std::uniform_real_distribution<float> random_uniform;
+  std::normal_distribution<float> random_normal;
 
   int distribution;
 };

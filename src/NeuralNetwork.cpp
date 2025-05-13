@@ -174,7 +174,7 @@ Vector NeuralNetwork::eval(const DataArray& x) const
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method
-  const double momentum = 0.9;
+  const float momentum = 0.9;
   
   size_t n_data = data.size();
   
@@ -235,7 +235,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
   // Save increment for momentum method
   NeuralNetwork increment = NeuralNetwork::createLike(*this);
 
-  double grad_norm = 1.;  
+  float grad_norm = 1.;  
   size_t i=0;
   for(size_t epoch=0; epoch<options.epochs; ++epoch)
     {
@@ -256,7 +256,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	  std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
 					     data_idx.begin() + start_idx + options.batch_size);
 
-	  double f = evalFunctional(data, y, z, batch_data_idx, options);
+	  float f = evalFunctional(data, y, z, batch_data_idx, options);
       
 	  NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
 	
@@ -305,7 +305,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
       }
 }
 
-void NeuralNetwork::update_increment(double momentum, const NeuralNetwork& gradient, double step)
+void NeuralNetwork::update_increment(float momentum, const NeuralNetwork& gradient, float step)
 {
   auto layer = layers.begin();
   auto grad_layer = gradient.layers.begin();
@@ -323,7 +323,7 @@ void NeuralNetwork::apply_increment(const NeuralNetwork& increment)
     (*layer)->apply_increment(**inc_layer);    
 }
 
-double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
+float NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
 				     std::vector<std::vector<DataArray*>>& y,
 				     std::vector<std::vector<DataArray*>>& z,
 				     const std::vector<size_t>& data_indices,
@@ -361,7 +361,7 @@ double NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
     }
   
   // Evaluate objective functional
-  double f = 0.;
+  float f = 0.;
   for(size_t idx=0; idx<options.batch_size; ++idx)
     {
       // Get true data and prediction
@@ -476,7 +476,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
   NeuralNetwork zero_net = NeuralNetwork::createLike(*this);  
   direction.initialize(); // fills weights with random data
 
-  double deriv_exact = grad_net.dot(direction);
+  float deriv_exact = grad_net.dot(direction);
 
   size_t n_data = data.size();
   
@@ -516,10 +516,10 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
         }
     }
   
-  double f = evalFunctional(data, y, z, data_idx, options);
+  float f = evalFunctional(data, y, z, data_idx, options);
   std::cout << "Value in x0: " << f << std::endl; 
   
-  for(double s=1.; s>1.e-12; s*=0.5)
+  for(float s=1.; s>1.e-12; s*=0.5)
     {
       // NEW
       std::vector<std::vector<DataArray*>> z_s(layers.size());
@@ -564,10 +564,10 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
       NeuralNetwork net_s(*this);
       net_s.apply_increment(dir_s);
   
-      double f_s = net_s.evalFunctional(data, y_s, z_s, data_idx, options);
+      float f_s = net_s.evalFunctional(data, y_s, z_s, data_idx, options);
       std::cout << "Value in x+s*d: " << f_s << std::endl;
       
-      double deriv_fd = (f_s - f)/s;
+      float deriv_fd = (f_s - f)/s;
       
       std::cout << "  derivative by gradient: " << deriv_exact
 		<< " vs. by difference quotient: " << deriv_fd
@@ -583,9 +583,9 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
       }  
 }
 
-double NeuralNetwork::dot(const NeuralNetwork& rhs) const
+float NeuralNetwork::dot(const NeuralNetwork& rhs) const
 { 
-  double val = 0.;
+  float val = 0.0f;
   
   auto layer = layers.begin();
   auto layer_rhs = rhs.layers.begin();
@@ -596,7 +596,7 @@ double NeuralNetwork::dot(const NeuralNetwork& rhs) const
   return val;
 }
 
-double NeuralNetwork::norm() const
+float NeuralNetwork::norm() const
 {
   return sqrt(dot(*this));
 }

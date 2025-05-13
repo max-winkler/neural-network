@@ -111,11 +111,11 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
   return  std::unique_ptr<Layer>(output);
 }
 
-double ConvolutionalLayer::dot(const Layer& other) const
+float ConvolutionalLayer::dot(const Layer& other) const
 {
   const ConvolutionalLayer& o = dynamic_cast<const ConvolutionalLayer&>(other);
 
-  double s = 0;
+  float s = 0;
   for(auto e = K.begin(), f=o.K.begin();
       e != K.end(); ++e, ++f)
     s += (*e).inner(*f);
@@ -127,7 +127,7 @@ double ConvolutionalLayer::dot(const Layer& other) const
 
 void ConvolutionalLayer::initialize()
 {
-  double a = 0.6;
+  float a = 0.6f;
   
   Random gen = Random::create_uniform_random_generator();
   for(auto e = K.begin(); e != K.end(); ++e)
@@ -137,7 +137,7 @@ void ConvolutionalLayer::initialize()
 	(*e)(c,i,j) = -a+2.*a*gen();
 }
 
-void ConvolutionalLayer::update_increment(double momentum, const Layer& grad_layer_, double learning_rate)
+void ConvolutionalLayer::update_increment(float momentum, const Layer& grad_layer_, float learning_rate)
 {
   const ConvolutionalLayer& grad_layer = dynamic_cast<const ConvolutionalLayer&>(grad_layer_);
 

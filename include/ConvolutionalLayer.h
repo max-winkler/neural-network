@@ -69,7 +69,7 @@ class ConvolutionalLayer : public Layer
    *
    * @param other The second argument of the dot product.
    */
-  double dot(const Layer&) const override;
+  float dot(const Layer&) const override;
 
   /**
    * Initialize the layer and fill the parameters with random data.
@@ -81,7 +81,7 @@ class ConvolutionalLayer : public Layer
   /**
    * Update the increment for the optimization routine.
    */
-  void update_increment(double, const Layer&, double) override;
+  void update_increment(float, const Layer&, float) override;
 
   /**
    * Apply the increment \p inc_layer_ to the current one.
@@ -105,7 +105,7 @@ class ConvolutionalLayer : public Layer
  private:
   
   std::vector<Tensor> K;
-  std::vector<double> bias;
+  std::vector<float> bias;
   ActivationFunction act;
   
   size_t k;

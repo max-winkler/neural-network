@@ -44,9 +44,9 @@ std::unique_ptr<Layer> Layer::backward_propagate(std::vector<DataArray*>&,
 						 const std::vector<DataArray*>&) const {
   return std::unique_ptr<Layer>(new Layer(std::vector<size_t>(0), LayerType::UNKNOWN));
 }
-double Layer::dot(const Layer&) const { return 0.;}
+float Layer::dot(const Layer&) const { return 0.;}
 void Layer::initialize() {}  
-void Layer::update_increment(double, const Layer&, double) {}
+void Layer::update_increment(float, const Layer&, float) {}
 void Layer::apply_increment(const Layer&) {}
 std::unique_ptr<Layer> Layer::zeros_like() const
 {

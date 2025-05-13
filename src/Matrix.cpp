@@ -14,19 +14,19 @@ Matrix::Matrix(size_t m, size_t n) : DataArray(m*n), m(m)
 {
 }
 
-Matrix::Matrix(size_t m, size_t n, const double* x)
+Matrix::Matrix(size_t m, size_t n, const float* x)
   : DataArray(m*n), m(m)
 {
-  memcpy(data, x, size*sizeof(double));
+  memcpy(data, x, size*sizeof(float));
 }
 
 Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : DataArray(m*n), m(m)
 {
-  double* data_ptr;
+  float* data_ptr;
   const unsigned char* pixel_ptr;
   
   for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+m*n; ++data_ptr, ++pixel_ptr)
-    *data_ptr = double(*pixel_ptr) / 255.;
+    *data_ptr = float(*pixel_ptr) / 255.0f;
 }
 
 Matrix::Matrix(const Matrix& other) : DataArray(other), m(other.m)
@@ -39,10 +39,10 @@ Matrix& Matrix::operator=(const Matrix& other)
     {
       delete[] data;
       m = other.m; size = other.size;
-      data = new double[size];
+      data = new float[size];
     }
   
-  memcpy(data, other.data, size*sizeof(double));
+  memcpy(data, other.data, size*sizeof(float));
   return *this;
 }
 
@@ -62,7 +62,7 @@ Matrix& Matrix::operator=(Matrix&& other)
   return *this;
 }
 
-Matrix& Matrix::operator=(std::initializer_list<double> val)
+Matrix& Matrix::operator=(std::initializer_list<float> val)
 {
   if(val.size() != size)
     {
@@ -77,7 +77,7 @@ Matrix& Matrix::operator=(std::initializer_list<double> val)
   return *this;
 }
 
-MatrixRow::MatrixRow(double* data_ptr) : data_ptr(data_ptr)
+MatrixRow::MatrixRow(float* data_ptr) : data_ptr(data_ptr)
 {}
 
 size_t Matrix::nRows() const {return m;}
@@ -94,30 +94,30 @@ const MatrixRow Matrix::operator[](size_t i) const
   return MatrixRow(&(data[i*size/m]));
 }
 
-double& MatrixRow::operator[](size_t j)
+float& MatrixRow::operator[](size_t j)
 {
   return data_ptr[j];
 }
 
-double& Matrix::operator()(size_t i, size_t j)
+float& Matrix::operator()(size_t i, size_t j)
 {
   return data[i*size/m + j];
 }
 
-const double& Matrix::operator()(size_t i, size_t j) const
+const float& Matrix::operator()(size_t i, size_t j) const
 {
   return data[i*size/m + j];
 }
 
-Matrix& Matrix::operator*=(double a)
+Matrix& Matrix::operator*=(float a)
 {
-  for(double* data_ptr = data; data_ptr != data+size; ++data_ptr)
+  for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
     (*data_ptr) *= a;
   
   return *this;  
 }
   
-const double& MatrixRow::operator[](size_t j) const
+const float& MatrixRow::operator[](size_t j) const
 {
   return data_ptr[j];
 }
@@ -143,15 +143,15 @@ Vector Matrix::operator*(const Vector& b) const
 
   Vector c(m);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, nRows(), nCols(), 1., data, nCols(), b.data, 1, 0., c.data, 1);
+  cblas_sgemv(CblasRowMajor, CblasNoTrans, nRows(), nCols(), 1., data, nCols(), b.data, 1, 0., c.data, 1);
   
   /**
   for(int i=0; i<m; ++i)
     {
-      double val = 0.;
+      float val = 0.;
       
-      const double* data_row_end = &(data[(i+1)*n]);
-      for(double *data_row = &(data[i*n]), *data_vec = b.data;
+      const float* data_row_end = &(data[(i+1)*n]);
+      for(float *data_row = &(data[i*n]), *data_vec = b.data;
 	  data_row != data_row_end;
 	  ++data_row, ++data_vec)
 	{
@@ -163,9 +163,9 @@ Vector Matrix::operator*(const Vector& b) const
   return c;
 }
 
-Matrix& Matrix::operator+=(double a)
+Matrix& Matrix::operator+=(float a)
 {
-  for(double* data_ptr = data; data_ptr != data+size; ++data_ptr)
+  for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
     *data_ptr += a;
   
   return *this;
@@ -186,8 +186,8 @@ Matrix& Matrix::operator+=(const ScaledMatrix& B)
 		<< ") vs. (" << B.matrix->nRows() << ", " << B.matrix->nCols() << ")\n";
     }
   
-  double* data_ptr;
-  const double* B_data_ptr;
+  float* data_ptr;
+  const float* B_data_ptr;
 
   for(data_ptr = data, B_data_ptr = B.matrix->data;
       data_ptr != data+size;
@@ -207,17 +207,17 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
       std::cerr << "  (" << m << ", " << n << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
     }
   
-  cblas_dger(CblasRowMajor, nRows(), nCols(), 1., B.u->data, 1, B.v->data, 1, data, nCols());
+  cblas_sger(CblasRowMajor, nRows(), nCols(), 1., B.u->data, 1, B.v->data, 1, data, nCols());
   
   /*
-  double* data_ptr;
-  const double* u_data_ptr;
-  const double* v_data_ptr;  
+  float* data_ptr;
+  const float* u_data_ptr;
+  const float* v_data_ptr;  
 
   for(data_ptr = data, u_data_ptr = B.u->data;
       data_ptr != data+m*n; ++u_data_ptr)
     {
-      const double* v_data_end = B.v->data+n;
+      const float* v_data_end = B.v->data+n;
       for(v_data_ptr = B.v->data; v_data_ptr != v_data_end; ++data_ptr, ++v_data_ptr)
 	{
 	  *data_ptr += (*u_data_ptr)*(*v_data_ptr);
@@ -253,7 +253,7 @@ Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const
   for(size_t k=0; k<n1_new; ++k)
     for(size_t l=0; l<n2_new; ++l)
       {
-	double val = 0.;
+	float val = 0.;
 	for(size_t i=0; i<M; ++i)	
 	  for(size_t j=0; j<M; ++j)
 	    val += (*this)(i*J+k,j*J+l) * Y(i,j);
@@ -277,7 +277,7 @@ Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
   for(size_t i=0; i<n1; ++i)
     for(size_t j=0; j<n2; ++j)
       {
-	double scale = (*this)(i,j);
+	float scale = (*this)(i,j);
 	for(size_t k=0; k<m; ++k)
 	  for(size_t l=0; l<m; ++l)	    
 	    G(i*S+k,j*S+l) += scale * K(k,l);	    
@@ -289,10 +289,10 @@ Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
 void Matrix::write_pixels(unsigned char* pixels) const
 {
   unsigned char* pixel_ptr;
-  double* data_ptr;
+  float* data_ptr;
   size_t i=0; 
   for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+size; ++data_ptr, ++pixel_ptr, ++i)
-    *pixel_ptr = (unsigned char)(255.*std::max(0.,std::min(1.,(*data_ptr))));
+    *pixel_ptr = (unsigned char)(255.0f*std::max(0.0f, std::min(1.0f, (*data_ptr))));
 }
 
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
@@ -310,8 +310,8 @@ std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
   return os;
 }
 
-ScaledMatrix::ScaledMatrix(double scale, const Matrix& matrix) : scale(scale), matrix(&matrix) {}
-ScaledMatrix operator*(double scale, const Matrix& matrix)
+ScaledMatrix::ScaledMatrix(float scale, const Matrix& matrix) : scale(scale), matrix(&matrix) {}
+ScaledMatrix operator*(float scale, const Matrix& matrix)
 {
   return ScaledMatrix(scale, matrix);
 }

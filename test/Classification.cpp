@@ -32,19 +32,19 @@ int main()
   
   for(size_t i=0; i<sample_size; ++i)
     {
-      double x = double(rand())/RAND_MAX;
-      double y = double(rand())/RAND_MAX;
+      float x = float(rand())/RAND_MAX;
+      float y = float(rand())/RAND_MAX;
 
       size_t c;
-      if(y <= pow(1-x, 3.))
+      if(y <= pow(1.0f-x, 3.0f))
         c = 0;
-      else if(y >= 3*x-1)
+      else if(y >= 3.0f*x-1.0f)
         c = 1;
       else
         c = 2;
 
       Vector label = Vector(3);
-      label[c] = 1.;
+      label[c] = 1.0f;
       
       training_data.push_back(TrainingData(Vector({x, y}), label));
     }
@@ -89,8 +89,8 @@ int main()
       
       for(int j=0; j<width; ++j)
         {
-	double x = double(j)/(width-1);
-	double y = double(i)/(height-1);
+	float x = float(j)/(width-1);
+	float y = float(i)/(height-1);
 	
 	Vector c = net.eval(Vector({x, y}));        
 	
@@ -113,7 +113,7 @@ int main()
   
   while(true)
     {
-      double x, y;
+      float x, y;
       std::cout << "Evaluate classifier:\n";
       std::cout << "x =";
       std::cin >> x;

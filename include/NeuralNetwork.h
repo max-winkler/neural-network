@@ -18,7 +18,7 @@ struct OptimizationOptions
   
   size_t max_iter;
   size_t batch_size;
-  double learning_rate;
+  float learning_rate;
   size_t output_every;
   size_t epochs;
   
@@ -158,7 +158,7 @@ class NeuralNetwork
    * evaluate the neural network.
    * @param options Collection of parameters for fine tuning of the optimization algorithm.
    */
-  double evalFunctional(const std::vector<TrainingData>& data,
+  float evalFunctional(const std::vector<TrainingData>& data,
 		    std::vector<std::vector<DataArray*>>& y,
 		    std::vector<std::vector<DataArray*>>& z,
 		    const std::vector<size_t>& batch_idx,
@@ -186,13 +186,13 @@ class NeuralNetwork
    *
    * @param Right argument of the scalar product.
    */
-  double dot(const NeuralNetwork& other) const;
+  float dot(const NeuralNetwork& other) const;
 
   /**
    * Returns the norm of a neural network which is the square root of the scalar product of the neural network 
    * with itself.
    */
-  double norm() const;  
+  float norm() const;  
 
   // Console output
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
@@ -210,7 +210,7 @@ class NeuralNetwork
   bool initialized;
   
   // Update step with gradient method
-  void update_increment(double momentum, const NeuralNetwork& gradient, double learning_rate);
+  void update_increment(float momentum, const NeuralNetwork& gradient, float learning_rate);
   void apply_increment(const NeuralNetwork& increment);
   
   // Gradient test (for debugging and testing)

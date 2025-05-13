@@ -69,7 +69,7 @@ std::unique_ptr<Layer> FullyConnectedLayer::backward_propagate(std::vector<DataA
   return std::unique_ptr<Layer>(output);
 }
 
-double FullyConnectedLayer::dot(const Layer& other) const
+float FullyConnectedLayer::dot(const Layer& other) const
 {
   const FullyConnectedLayer& b = dynamic_cast<const FullyConnectedLayer&>(other);
   
@@ -78,7 +78,7 @@ double FullyConnectedLayer::dot(const Layer& other) const
 
 void FullyConnectedLayer::initialize()
 {
-  double a = 2.;
+  float a = 2.;
   
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<weight.nRows(); ++i)
@@ -88,7 +88,7 @@ void FullyConnectedLayer::initialize()
   // std::cout << "Initial weight: \n" << weight << std::endl;
 }
 
-void FullyConnectedLayer::update_increment(double momentum, const Layer& grad_layer_, double learning_rate)
+void FullyConnectedLayer::update_increment(float momentum, const Layer& grad_layer_, float learning_rate)
 {
   const FullyConnectedLayer& grad_layer = dynamic_cast<const FullyConnectedLayer&>(grad_layer_);
   

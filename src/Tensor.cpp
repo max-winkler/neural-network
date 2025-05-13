@@ -3,9 +3,9 @@
 #include "Tensor.h"
 #include "Vector.h"
 
-TensorSlice::TensorSlice(size_t m, size_t n, double* data) : m(m), n(n), data(data) {}
+TensorSlice::TensorSlice(size_t m, size_t n, float* data) : m(m), n(n), data(data) {}
 
-double& TensorSlice::operator()(size_t i, size_t j)
+float& TensorSlice::operator()(size_t i, size_t j)
 {  
   return data[i*n + j];
 }
@@ -26,7 +26,7 @@ TensorSlice& TensorSlice::operator=(const Matrix& A)
   return *this;
 }
 
-TensorSlice& TensorSlice::operator+=(double a)
+TensorSlice& TensorSlice::operator+=(float a)
 {
   for(size_t i = 0; i < m*n; ++i)
     data[i] += a;
@@ -45,9 +45,9 @@ TensorSlice& TensorSlice::operator+=(const Matrix& A)
 
 Tensor::Tensor() : DataArray(1), d(1), m(1) {}
 Tensor::Tensor(size_t d, size_t m, size_t n) : DataArray(d*m*n), d(d), m(m) {}
-Tensor::Tensor(size_t d, size_t m, size_t n, const double* x) : DataArray(d*m*n), d(d), m(m)
+Tensor::Tensor(size_t d, size_t m, size_t n, const float* x) : DataArray(d*m*n), d(d), m(m)
 {
-  memcpy(data, x, size*sizeof(double));
+  memcpy(data, x, size*sizeof(float));
 }
 
 Tensor::Tensor(const Tensor& T)
@@ -70,10 +70,10 @@ Tensor& Tensor::operator=(const Tensor& other)
       m = other.m;
       size = other.size;
       
-      data = new double[size];
+      data = new float[size];
     }
   
-  memcpy(data, other.data, size*sizeof(double));
+  memcpy(data, other.data, size*sizeof(float));
   return *this;
 }
 
@@ -98,7 +98,7 @@ size_t Tensor::nChannels() const {return d; }
 size_t Tensor::nRows() const {return m; }
 size_t Tensor::nCols() const {return size/m/d;}
 
-double& Tensor::operator()(size_t c, size_t i, size_t j)
+float& Tensor::operator()(size_t c, size_t i, size_t j)
 {
   // n = size/d/m
   // m = m
@@ -110,14 +110,14 @@ double& Tensor::operator()(size_t c, size_t i, size_t j)
   return data[c*size/d + i*size/(d*m) + j];
 }
 
-const double& Tensor::operator()(size_t c, size_t i, size_t j) const
+const float& Tensor::operator()(size_t c, size_t i, size_t j) const
 {
   return data[c*size/d + i*size/(d*m) + j];
 }
 
-Tensor& Tensor::operator*=(double a)
+Tensor& Tensor::operator*=(float a)
 {
-  for(double* data_ptr = data; data_ptr != data+size; ++data_ptr)
+  for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
     (*data_ptr) *= a;
 
   return *this;
@@ -125,8 +125,8 @@ Tensor& Tensor::operator*=(double a)
 
 Tensor& Tensor::operator+=(const Tensor& T)
 {
-  const double* data_ptr_T;
-  double* data_ptr;
+  const float* data_ptr_T;
+  float* data_ptr;
     
   for(data_ptr = data, data_ptr_T = T.data;
       data_ptr != data+size;
@@ -138,9 +138,9 @@ Tensor& Tensor::operator+=(const Tensor& T)
 
 Tensor& Tensor::operator+=(const ScaledTensor& S)
 {
-  const double* data_ptr_T;
-  double* data_ptr;
-  double s = S.scale;
+  const float* data_ptr_T;
+  float* data_ptr;
+  float s = S.scale;
   
   for(data_ptr = data, data_ptr_T = S.tensor->data;
       data_ptr != data+size;
@@ -152,8 +152,8 @@ Tensor& Tensor::operator+=(const ScaledTensor& S)
 
 Tensor& Tensor::operator-=(const Tensor& T)
 {
-  const double* data_ptr_T;
-  double* data_ptr;
+  const float* data_ptr_T;
+  float* data_ptr;
     
   for(data_ptr = data, data_ptr_T = T.data;
       data_ptr != data+size;
@@ -194,9 +194,9 @@ TensorSlice Tensor::operator[](size_t c) const
   return TensorSlice(m, size/m/d, data + c*m*n);
 }
 
-ScaledTensor::ScaledTensor(double scale, const Tensor& tensor) : scale(scale), tensor(&tensor) {}
+ScaledTensor::ScaledTensor(float scale, const Tensor& tensor) : scale(scale), tensor(&tensor) {}
 
-ScaledTensor operator*(double scale, const Tensor& tensor)
+ScaledTensor operator*(float scale, const Tensor& tensor)
 {
   return ScaledTensor(scale, tensor);
 }

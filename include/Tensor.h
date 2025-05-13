@@ -12,7 +12,7 @@ class Tensor;
 class ScaledTensor;
 
 // forward declaration of free functions
-ScaledTensor operator*(double, const Tensor&);
+ScaledTensor operator*(float, const Tensor&);
 
 struct ScaledTensor
 {
@@ -23,12 +23,12 @@ struct ScaledTensor
    * @param scale The scale factor.
    * @param x The tensor to be scaled.
    */
-  ScaledTensor(double, const Tensor&);
+  ScaledTensor(float, const Tensor&);
 
   /**
    * The scale factor.
    */
-  double scale;
+  float scale;
   /**
    * Pointer to the vector to be multiplied with the scale factor.
    */
@@ -55,7 +55,7 @@ public:
    *
    * @param a The number to be added to the tensor slice.
    */
-  TensorSlice& operator+=(double);
+  TensorSlice& operator+=(float);
   
   /**
    * Add a matrix to the tensor slice.
@@ -85,7 +85,7 @@ private:
    * @param n The number of columns of the tensor slice
    * @param data The pointer to the data of the tensor slice
    */
-  TensorSlice(size_t, size_t, double*);
+  TensorSlice(size_t, size_t, float*);
 
   /**
    * Access the elements of a matrix slice
@@ -93,7 +93,7 @@ private:
    * @param i The row index of the element to access.
    * @param j The columns index of the element to access.
    */
-  double& operator()(size_t, size_t);
+  float& operator()(size_t, size_t);
 
   /**
    * Number of rows of the tensor slice.
@@ -108,7 +108,7 @@ private:
   /**
    * Pointer to the data of the tensor slice (stored row-wise)
    */
-  double* data;
+  float* data;
 };
 
 /**
@@ -146,7 +146,7 @@ class Tensor : public DataArray
    * @param n Number of columns of the tensor.
    * @param x Pointer to the data.
    */
-  Tensor(size_t, size_t, size_t, const double*);
+  Tensor(size_t, size_t, size_t, const float*);
   
   /**
    * Copy constructor creating a hard copy of another tensor.
@@ -215,7 +215,7 @@ class Tensor : public DataArray
    * @param i The index of the row.
    * @param j The index of the column.
    */
-  double& operator()(size_t, size_t, size_t);
+  float& operator()(size_t, size_t, size_t);
 
   /**
    * Access a single element using the notation T(c,i,j) for constant T (read only).
@@ -226,7 +226,7 @@ class Tensor : public DataArray
    * @param i The index of the row.
    * @param j The index of the column.   
    */
-  const double& operator()(size_t, size_t, size_t) const;
+  const float& operator()(size_t, size_t, size_t) const;
 
   /**
    * Multiply a tensor with a scalar.
@@ -235,7 +235,7 @@ class Tensor : public DataArray
    *
    * @param a The value to multiply to each tensor entry.
    */
-  Tensor& operator*=(double);
+  Tensor& operator*=(float);
 
   /**
    * Adds another tensor to the current one. Tensors are assumed to have the same shape, otherwise
@@ -253,7 +253,7 @@ class Tensor : public DataArray
    *
    * @brief Add multiple of a tensor to (*this).
    *
-   * @param S The scaled tensor, usually created by operator*(double, const Tensor&).
+   * @param S The scaled tensor, usually created by operator*(float, const Tensor&).
    */
   Tensor& operator+=(const ScaledTensor&);
   

@@ -36,14 +36,14 @@ class DataArray
    *
    * @param i Index of component to be accessed.
    */
-  double& operator[](size_t);
+  float& operator[](size_t);
 
   /**
    * Element access by const reference. Can be used to read single components of the array.
    *
    * @param i Index of component to be accessed.
    */
-  const double& operator[](size_t) const;
+  const float& operator[](size_t) const;
 
   /**
    * Standard inner product for two DataArrays with matching dimension. For vectors this 
@@ -52,14 +52,14 @@ class DataArray
    *
    * @param other The data array to be multiplied with (*this)
    */ 
-  double inner(const DataArray&) const;
+  float inner(const DataArray&) const;
 
   /**
    * Computes the sum of all entries of the data array.
    *
    * @param A Data array to be summed up.
    */
-  friend double sum(const DataArray&);
+  friend float sum(const DataArray&);
 
   /**
    * Getter method returning the number of components of the DataArray.
@@ -72,7 +72,7 @@ class DataArray
   /**
    * Pointer to the memory where the entries of the DataArray are stored
    */
-  double* data;
+  float* data;
   /**
    * Integer storing the size of the DataArray (n1*n2*...*nd for tensors of stage d).
    */

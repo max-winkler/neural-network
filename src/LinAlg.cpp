@@ -15,9 +15,9 @@ namespace linalg
 
     Matrix C(m,n);
 
-    double* data_ptr;
-    const double* A_data_ptr;
-    const double* B_data_ptr;
+    float* data_ptr;
+    const float* A_data_ptr;
+    const float* B_data_ptr;
 
     for(size_t i=0; i<m; ++i)
       for(size_t j=0; j<n; ++j)
@@ -26,7 +26,7 @@ namespace linalg
     return C; 
   }
 
-  double dot(const MatrixView& A, const MatrixView& B)
+  float dot(const MatrixView& A, const MatrixView& B)
   {
     size_t m = A.nRows(), n = A.nCols();
 
@@ -37,9 +37,9 @@ namespace linalg
         return 0;
       }
 
-    double val = 0.;
-    const double* A_data_ptr;
-    const double* B_data_ptr;
+    float val = 0.;
+    const float* A_data_ptr;
+    const float* B_data_ptr;
 
     for(A_data_ptr = A.data, B_data_ptr = B.data;
         A_data_ptr != A.data+m*n; ++A_data_ptr, ++B_data_ptr)
@@ -71,7 +71,7 @@ namespace linalg
     for(size_t i=0; i<n1_new; ++i)
       for(size_t j=0; j<n2_new; ++j)
         {        
-	double val = 0.;
+	float val = 0.;
 	for(size_t k=0; k<m; ++k)
 	  for(size_t l=0; l<m; ++l)	  
 	    {
@@ -127,7 +127,7 @@ namespace linalg
     for(size_t i=0; i<n1_new; ++i)
       for(size_t j=0; j<n2_new; ++j)
         {
-	double val = 0.;
+	float val = 0.;
 	for(size_t c=0; c<d; ++c)
 	  for(size_t k=0; k<m; ++k)
 	    for(size_t l=0; l<m; ++l)
@@ -175,7 +175,7 @@ namespace linalg
       for(size_t i=0; i<n1_new; ++i)
         for(size_t j=0; j<n2_new; ++j)
 	{
-	  double val = 0;
+	  float val = 0;
 	
 	  for(size_t k=0; k<m; ++k)
 	    for(size_t l=0; l<m; ++l)
@@ -210,7 +210,7 @@ namespace linalg
 	  {
 	  case POOLING_MAX:
 	    {
-	      double max_val = 0.;
+	      float max_val = 0.;
 	      
 	      // Find maxiumum within the patch
 	      for(int k=0; k<S; ++k)		  
@@ -222,7 +222,7 @@ namespace linalg
 		  if(i2 < 0 || i2 >= n1 || j2 < 0 || j2 >= n2)
 		    continue;
 		      
-		  double cur_val = A(i2,j2);
+		  float cur_val = A(i2,j2);
 		  if(cur_val > max_val)
 		    max_val = cur_val;		    
 		}
@@ -260,7 +260,7 @@ namespace linalg
 
 	      // Determine index for maximum
 	      int i_max = 0, j_max = 0;
-	      double val_max = B(S*k,S*l);
+	      float val_max = B(S*k,S*l);
 	    
 	      for(int i=0; i<S; ++i)
 	        for(int j=0; j<S; ++j)
@@ -285,11 +285,11 @@ namespace linalg
 } // end of namespace linalg
 
 
-MatrixView::MatrixView(const double* data, size_t m, size_t n) : data(data), m(m), n(n) {}
+MatrixView::MatrixView(const float* data, size_t m, size_t n) : data(data), m(m), n(n) {}
 MatrixView::MatrixView(const Matrix& A) : data(A.data), m(A.m), n(A.size/A.m) {}
 MatrixView::MatrixView(const TensorSlice& T) : data(T.data), m(T.m), n(T.n) {}
 
-double MatrixView::operator()(size_t i, size_t j) const{
+float MatrixView::operator()(size_t i, size_t j) const{
   return data[i*n + j];
 }
 
