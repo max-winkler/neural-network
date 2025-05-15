@@ -18,8 +18,8 @@ int main()
     0.8, 1.6, 1.7, 0.8, 0.8, 1.8
   };
 
-  Matrix B = pool(A);
-  Matrix C = unpool(B, A);
+  Matrix B = pool(A, 3);
+  Matrix C = unpool(B, A, 3);
   
   std::cout << "Original matrix:\n";
   std::cout << A;

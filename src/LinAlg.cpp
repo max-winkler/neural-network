@@ -1,5 +1,7 @@
 #include "LinAlg.h"
 
+#include <cstdlib>
+
 namespace linalg
 {
   Matrix multiply(const MatrixView& A, const MatrixView& B)
@@ -187,7 +189,7 @@ namespace linalg
     return U;
   }
 
-  Matrix pool(const MatrixView& A, int type, size_t k, size_t S, size_t P)
+  Matrix pool(const MatrixView& A, size_t k, int type, size_t S, size_t P)
   {
     if(S==0) S = k;
     
@@ -213,19 +215,22 @@ namespace linalg
 	  case POOLING_MAX:
 	    {
 	      float max_val = 0.;
-
-          // FIXME: Old version, replace S by k...
-          
+	      
 	      // Find maxiumum within the patch
-	      for(int k=0; k<S; ++k)		  
-	        for(int l=0; l<S; ++l)
+	      for(int m=0; m<k; ++m)		  
+	        for(int n=0; n<k; ++n)
 		{
-		  size_t i2 = i*S-P+k;
-		  size_t j2 = j*S-P+l;
-		      
+		  size_t i2 = i*S+m;
+		  size_t j2 = j*S+n;
+
+		  // Bound check (should never be necessary, remove when tested)
 		  if(i2 < 0 || i2 >= n1 || j2 < 0 || j2 >= n2)
-		    continue;
-		      
+		    {
+		      std::cerr << "ERROR: Invalid matrix index used in pooling operation.\n";
+		      continue;
+		    }
+
+		  // Udate maximum value
 		  float cur_val = A(i2,j2);
 		  if(cur_val > max_val)
 		    max_val = cur_val;		    
@@ -242,19 +247,28 @@ namespace linalg
     return B;
   }
 
-  Matrix unpool(const MatrixView& A, const MatrixView& B, int type, size_t S, size_t P)
+  Matrix unpool(const MatrixView& A, const MatrixView& B, size_t k, int type, size_t S, size_t P)
   {
-    const size_t n1 = A.nRows();
-    const size_t n2 = A.nCols();
+    if(S==0) S = k;
+    
+    const size_t n1_new = A.nRows();
+    const size_t n2_new = A.nCols();
 
-    const size_t n1_new = B.nRows();
-    const size_t n2_new = B.nCols();
-  
-    Matrix D(n1_new, n2_new);
+    const size_t n1 = B.nRows();
+    const size_t n2 = B.nCols();
+
+    if((n1-k) % S != 0 || (n2-k) % S != 0 || n1_new != (n1-k)/S+1 || n2_new != (n2-k)/S+1)
+      {
+        std::cerr << "ERRORS: Dimensions and parameters not correct for unpooling.\n";
+        std::cerr << "        Debug linalg::unpool to find the mistake.\n";
+        std::exit(EXIT_FAILURE);
+      }
+    
+    Matrix D(n1, n2);
   
     // Iterate over
-    for(size_t k=0; k<n1; ++k)
-      for(size_t l=0; l<n2; ++l)
+    for(size_t m=0; m<n1_new; ++m)
+      for(size_t n=0; n<n2_new; ++n)
         {
 	switch(type)
 	  {
@@ -264,19 +278,19 @@ namespace linalg
 
 	      // Determine index for maximum
 	      int i_max = 0, j_max = 0;
-	      float val_max = B(S*k,S*l);
+	      float val_max = B(S*m,S*n);
 	    
-	      for(int i=0; i<S; ++i)
-	        for(int j=0; j<S; ++j)
+	      for(int i=0; i<k; ++i)
+	        for(int j=0; j<k; ++j)
 		{
-		  if(B(S*k+i,S*l+j) > val_max)
+		  if(B(S*m+i,S*n+j) > val_max)
 		    {
 		      i_max = i; j_max = j;
-		      val_max = B(S*k+i,S*l+j);
+		      val_max = B(S*m+i,S*n+j);
 		    }
 		}
 
-	      D(k*S+i_max,l*S+j_max) = A(k,l);
+	      D(S*m+i_max,S*n+j_max) += A(m,n);
 	    }
 	    break;
 	  default:

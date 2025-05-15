@@ -68,7 +68,7 @@ namespace linalg{
    * @param S The stride parameter for the pooling operation (default is 2).
    * @param P The padding to be added to the original matrix before pooling.
    */
-  Matrix pool(const MatrixView&, int type=POOLING_MAX, size_t k, size_t S=0, size_t P=0);
+  Matrix pool(const MatrixView&, size_t k, int type=POOLING_MAX, size_t S=0, size_t P=0);
 
   /**
    * Operation that returns the gradient of the pooling operation with respect to the input matrix.
@@ -81,7 +81,7 @@ namespace linalg{
    * @param S The stride parameter used for the pooling operation.
    * @param P The padding that was added to the original matrix before pooling.
    */
-  Matrix unpool(const MatrixView&, const MatrixView&, int type=POOLING_MAX, size_t S=2, size_t P=0);
+  Matrix unpool(const MatrixView&, const MatrixView&, size_t k, int type=POOLING_MAX, size_t S=2, size_t P=0);
 }
 
 /**

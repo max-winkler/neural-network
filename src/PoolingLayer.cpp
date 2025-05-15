@@ -10,7 +10,9 @@ PoolingLayer::PoolingLayer(std::vector<size_t> in_dim,
   : Layer(std::vector<size_t>(3, 0), LayerType::POOLING),
     in_dim(in_dim), k(k), S(S==0 ? k : S), P(P), type(POOLING_MAX)
 {
-  // Determine output dimension
+  S = this->S;
+  
+  // Check validity of parameters
   if((in_dim[1] - k) % S != 0 || (in_dim[2] - k) % S != 0)
   {
     std::cerr << "ERROR: Invalid parameters for pooling layer. Please choose kernel size and \n"
@@ -36,7 +38,7 @@ void PoolingLayer::eval(DataArray*& x_) const
   for(size_t c=0; c<d; ++c)
     {
       // TODO: Unnecessary copy operation here. The rvalue is copied. This can be more efficient.
-      y[c] = linalg::pool(x[c], type, S, P);
+      y[c] = linalg::pool(x[c], k, type, S, P);
     }
 
   delete x_;
@@ -51,7 +53,7 @@ void PoolingLayer::forward_propagate(const DataArray& x_, DataArray& z_, DataArr
   size_t d = x.nChannels();
   
   for(size_t c=0; c<d; ++c)
-    y[c] = linalg::pool(x[c], type, S, P);
+    y[c] = linalg::pool(x[c], k, type, S, P);
 }
 
 
@@ -75,7 +77,7 @@ std::unique_ptr<Layer> PoolingLayer::backward_propagate(std::vector<DataArray*>&
       size_t d = Dy.nChannels();
 
       for(size_t c=0; c<d; ++c)
-        Dx[c] = linalg::unpool(Dy[c], y[c], type, S, P);
+        Dx[c] = linalg::unpool(Dy[c], y[c], k, type, S, P);
 
       delete *Dy_it;
       *Dy_it = new Tensor(std::move(Dx));
