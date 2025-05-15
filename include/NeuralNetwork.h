@@ -84,7 +84,7 @@ class NeuralNetwork
    *
    * @param batch The number of rows/columns of the batched for the pooling operation.
    */
-  void addPoolingLayer(size_t batch);
+  void addPoolingLayer(size_t batch, size_t S=0);
 
   /**
    * Adds a flattening layer to the neural network. Works only when the previous layer outputs matrix-valued data.

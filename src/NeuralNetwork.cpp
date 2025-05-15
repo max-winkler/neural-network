@@ -59,7 +59,7 @@ void NeuralNetwork::addInputLayer(size_t i, size_t j)
     layers.emplace_back(std::make_unique<MatrixInputLayer>(i, j));
 }
 
-void NeuralNetwork::addPoolingLayer(size_t batch)
+void NeuralNetwork::addPoolingLayer(size_t batch, size_t S)
 {
   const Layer& prev_layer = *layers.back();
   
@@ -76,7 +76,7 @@ void NeuralNetwork::addPoolingLayer(size_t batch)
       return;
     }
 
-  layers.emplace_back(std::make_unique<PoolingLayer>(prev_layer.dim, batch, batch, 0));
+  layers.emplace_back(std::make_unique<PoolingLayer>(prev_layer.dim, batch, S, 0));
 }
 
 void NeuralNetwork::addFlatteningLayer()

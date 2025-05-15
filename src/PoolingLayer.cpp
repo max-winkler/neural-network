@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <cstdlib>
 
 #include "PoolingLayer.h"
 
@@ -9,13 +10,20 @@ PoolingLayer::PoolingLayer(std::vector<size_t> in_dim,
   : Layer(std::vector<size_t>(3, 0), LayerType::POOLING),
     in_dim(in_dim), k(k), S(S==0 ? k : S), P(P), type(POOLING_MAX)
 {
-  // Apply simple pooling to get the output dimension of the layer
-  Matrix A(in_dim[1], in_dim[2]);
-  Matrix B = linalg::pool(A, type, S, P);
+  // Determine output dimension
+  if((in_dim[1] - k) % S != 0 || (in_dim[2] - k) % S != 0)
+  {
+    std::cerr << "ERROR: Invalid parameters for pooling layer. Please choose kernel size and \n"
+              << "       stride such that (n_in - k)/S is an integer. You choosed \n"
+              << "       n_in = " << in_dim[1] << ", m_in = " << in_dim[2]
+              << ", k = " << k << ", S = " << S << ".\n";
+    std::exit(EXIT_FAILURE);
+  }
 
+  // Compute output dimension
   dim[0] = in_dim[0];
-  dim[1] = B.nRows();
-  dim[2] = B.nCols();
+  dim[1] = (in_dim[1]-k)/S + 1;
+  dim[2] = (in_dim[2]-k)/S + 1;
 }
 
 void PoolingLayer::eval(DataArray*& x_) const

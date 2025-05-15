@@ -187,13 +187,15 @@ namespace linalg
     return U;
   }
 
-  Matrix pool(const MatrixView& A, int type, size_t S, size_t P)
-  {    
+  Matrix pool(const MatrixView& A, int type, size_t k, size_t S, size_t P)
+  {
+    if(S==0) S = k;
+    
     const size_t n1 = A.nRows();
     const size_t n2 = A.nCols();
 
-    const size_t n1_new = (n1 + -1 + 2*P)/S + 1;
-    const size_t n2_new = (n2 + -1 + 2*P)/S + 1;  
+    const size_t n1_new = (n1 - k)/S + 1;
+    const size_t n2_new = (n2 - k)/S + 1;  
   
     Matrix B(n1_new, n2_new);
 
@@ -211,7 +213,9 @@ namespace linalg
 	  case POOLING_MAX:
 	    {
 	      float max_val = 0.;
-	      
+
+          // FIXME: Old version, replace S by k...
+          
 	      // Find maxiumum within the patch
 	      for(int k=0; k<S; ++k)		  
 	        for(int l=0; l<S; ++l)

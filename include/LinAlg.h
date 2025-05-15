@@ -56,7 +56,9 @@ namespace linalg{
 
   /**
    * Pooling operation for an input matrix. Produces a smaller matrix summarizing a batch
-   * of picels of the original matrix. Implemented is max pooling only.
+   * of pixels of the original matrix. Implemented is max pooling only. It is assumed that 
+   * the parameters are chosen such that (n_w - k)/S and (n_h - k)/S are integers. 
+   * n_w and n_h are width and height of the input matrix.
    *
    * @brief Pooling of a matrix view
    *
@@ -66,7 +68,7 @@ namespace linalg{
    * @param S The stride parameter for the pooling operation (default is 2).
    * @param P The padding to be added to the original matrix before pooling.
    */
-  Matrix pool(const MatrixView&, int type=POOLING_MAX, size_t S=2, size_t P=0);
+  Matrix pool(const MatrixView&, int type=POOLING_MAX, size_t k, size_t S=0, size_t P=0);
 
   /**
    * Operation that returns the gradient of the pooling operation with respect to the input matrix.
