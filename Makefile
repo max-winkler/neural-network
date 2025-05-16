@@ -13,7 +13,8 @@ OBJ = 	src/DataArray.o \
 	src/PoolingLayer.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
-	src/TrainingData.o
+	src/TrainingData.o \
+	src/Image.o
 
 TESTS = test/LinAlg.o \
 	test/DigitRecognition.o \
@@ -25,7 +26,13 @@ TESTS = test/LinAlg.o \
 CPP_INCLUDE = -Iinclude
 # CPP_FLAGS = -g -O0
 CPP_FLAGS = -O3
-LIBS = -lpng -lblas -lcblas
+LIBS = -lpng -lblas
+
+CBLAS_CHECK := $(shell echo 'int main(){}' | $(CXX) -x c++ - -lcblas -lblas -o /dev/null 2>/dev/null && echo yes || echo no)
+ifeq ($(CBLAS_CHECK),yes)
+  LIBS += -lcblas
+endif
+
 
 MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
 	http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz \

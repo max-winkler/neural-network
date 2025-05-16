@@ -1,9 +1,8 @@
 #include <iostream>
-#include <png.h>
-#include <cstring>
 
 #include "Matrix.h"
 #include "LinAlg.h"
+#include "Image.h"
 
 png_bytep* read_image_pixels(const std::string& filename, int& width, int& height, int& color_type, int& bit_depth)
 {
@@ -59,37 +58,6 @@ png_bytep* read_image_pixels(const std::string& filename, int& width, int& heigh
   return row_pointers;
 }
 
-void write_image(const std::string& filename, int width, int height, png_bytep* row_pointers)
-{
-  // Write image file
-  FILE *fp = fopen(filename.c_str(), "wb");
-  if(!fp)
-    {
-      std::cerr << "Error: Could not open image file\n";
-      return;      
-    }
-  
-  png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  png_infop info = png_create_info_struct(png);
-  
-  png_init_io(png, fp);
-
-  png_set_IHDR(png, info, width, height, 8,
-	       PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
-	       PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT
-	       );
-
-  png_write_info(png, info);
-    
-  png_write_image(png, row_pointers);
-  png_write_end(png, NULL);
-
-  if (png && info)
-    png_destroy_write_struct(&png, &info);
-
-}
-
-
 int main()
 {
   int width, height, color_type, bit_depth;
@@ -113,11 +81,15 @@ int main()
       
   // manipulate image with filters
   Matrix K(3,3);
-  K = {0, 0, 0, -1, 0, 1, 0, 0, 0};
+  K = {0, 1, 0,
+    1, 4, 1,
+    0, 1, 0};
   K *= (1./8);
   
   image = linalg::convolve(image, K, 1, 0, false);
-  // image = image.pool(POOLING_MAX, 2);
+  image = linalg::pool(image, 2, POOLING_MAX);
+  image = linalg::convolve(image, K, 1, 0, false);
+  image = linalg::pool(image, 2, POOLING_MAX);
   
   int width_new = image.nCols();
   int height_new = image.nRows();
@@ -136,7 +108,7 @@ int main()
   image.write_pixels(image_data);
   
   // Write image  
-  write_image("cat_bw.png", width_new, height_new, row_pointers);
+  Image::write("cat_bw.png", width_new, height_new, row_pointers);
   
   return 0;
 }
