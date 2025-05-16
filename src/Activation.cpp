@@ -105,11 +105,15 @@ Matrix DactivateCoupled(const Vector& x, ActivationFunction act)
   size_t n = x.nEntries();
   Matrix J(n, n);
 
-  // TODO: Assemble the fucking matrix here
   float e_sum = 0.;
   for(size_t i=0; i<n; ++i)
     e_sum += exp(x[i]);
 
+  if(e_sum < 1.e-6f)
+    {
+      std::cerr << "WARNING: Division by zero in Jacobi matrix of SOFTMAX activation function.\n";
+    }
+  
   for(size_t i=0; i<n; ++i)
     for(size_t j=0; j<n; ++j)
       J[i][j] = (exp(x[i]) / e_sum) * ((i==j ? 1.0f : 0.0f) - (exp(x[j]) / e_sum));

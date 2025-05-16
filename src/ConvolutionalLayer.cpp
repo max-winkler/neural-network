@@ -127,7 +127,7 @@ float ConvolutionalLayer::dot(const Layer& other) const
 
 void ConvolutionalLayer::initialize()
 {
-  float a = 0.6f;
+  float a = sqrt(6.0f / (in_dim[0] * k * k + K.size()));
   
   Random gen = Random::create_uniform_random_generator();
   for(auto e = K.begin(); e != K.end(); ++e)
