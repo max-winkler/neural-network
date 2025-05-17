@@ -4,81 +4,15 @@
 #include "LinAlg.h"
 #include "Image.h"
 
-png_bytep* read_image_pixels(const std::string& filename, int& width, int& height, int& color_type, int& bit_depth)
-{
-  FILE *fp = fopen(filename.c_str(), "rb");
-  
-  png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  png_infop info = png_create_info_struct(png);
-  
-  png_init_io(png, fp);
-  png_read_info(png, info);
-
-  width      = png_get_image_width(png, info);
-  height     = png_get_image_height(png, info);
-  color_type = png_get_color_type(png, info);
-  bit_depth  = png_get_bit_depth(png, info);
-  
-  if(bit_depth == 16)
-    png_set_strip_16(png);
-
-  if(color_type == PNG_COLOR_TYPE_PALETTE)
-    png_set_palette_to_rgb(png);
-
-  // PNG_COLOR_TYPE_GRAY_ALPHA is always 8 or 16bit depth.
-  if(color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-    png_set_expand_gray_1_2_4_to_8(png);
-
-  if(png_get_valid(png, info, PNG_INFO_tRNS))
-    png_set_tRNS_to_alpha(png);
-
-  // These color_type don't have an alpha channel then fill it with 0xff.
-  if(color_type == PNG_COLOR_TYPE_RGB ||
-     color_type == PNG_COLOR_TYPE_GRAY ||
-     color_type == PNG_COLOR_TYPE_PALETTE)
-    png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
-
-  if(color_type == PNG_COLOR_TYPE_GRAY ||
-     color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-    png_set_gray_to_rgb(png);
-
-  png_read_update_info(png, info);
-
-  png_bytep* row_pointers = new png_bytep[height];
-  for(int y = 0; y < height; y++) {
-    row_pointers[y] = new png_byte[png_get_rowbytes(png,info)];
-  }
-
-  png_read_image(png, row_pointers);
-
-  fclose(fp);
-
-  png_destroy_read_struct(&png, &info, NULL);
-
-  return row_pointers;
-}
-
 int main()
-{
-  int width, height, color_type, bit_depth;
+{ 
+  Image img = Image::read("cat.png");
+  
+  Matrix A = img.to_matrix();
 
-  // Read image file
-  png_bytep* row_pointers_in = read_image_pixels("cat.png", width, height, color_type, bit_depth);
+  int width = A.nCols();
+  int height = A.nRows();
 
-  // Convert to black/white picture
-  png_byte* image_data = new png_byte[height*width];
-  png_bytep* row_pointers = new png_bytep[height];    
-  for(int i=0; i<height; ++i)
-    {
-      row_pointers[i] = &(image_data[i*width]);
-      
-      for(int j=0; j<width; ++j)
-	row_pointers[i][j] = (row_pointers_in[i][4*j] + row_pointers_in[i][4*j+1] + row_pointers_in[i][4*j+2])/3;
-    }  
-
-  // Store image as matrix
-  Matrix image(height, width, image_data);
-      
   // manipulate image with filters
   Matrix K(3,3);
   K = {0, 1, 0,
@@ -86,29 +20,19 @@ int main()
     0, 1, 0};
   K *= (1./8);
   
-  image = linalg::convolve(image, K, 1, 0, false);
-  image = linalg::pool(image, 2, POOLING_MAX);
-  image = linalg::convolve(image, K, 1, 0, false);
-  image = linalg::pool(image, 2, POOLING_MAX);
-  
-  int width_new = image.nCols();
-  int height_new = image.nRows();
-  
-  std::cout << "Image size before convolution: " << width << " x " << height << std::endl;
-  std::cout << "Image size after convolution : " << width_new << " x " << height_new << std::endl;
-  
-  delete[] image_data;
-  image_data = new png_byte[height_new*width_new];
+  A = linalg::convolve(A, K, 1, 0, false);
+  A = linalg::pool(A, 2, POOLING_MAX);
+  A = linalg::convolve(A, K, 1, 0, false);
+  A = linalg::pool(A, 2, POOLING_MAX);
 
-  delete[] row_pointers;
-  row_pointers = new png_bytep[height_new];
-  for(int i=0; i<height_new; ++i)    
-    row_pointers[i] = &(image_data[i*width_new]);
-    
-  image.write_pixels(image_data);
+  int width_new = A.nCols();
+  int height_new = A.nRows();
   
-  // Write image  
-  Image::write("cat_bw.png", width_new, height_new, row_pointers);
-  
+  std::cout << "A size before convolution: " << width << " x " << height << std::endl;
+  std::cout << "A size after convolution : " << width_new << " x " << height_new << std::endl;
+
+  Image output = Image::from_matrix(A);
+  output.write("cat_bw.png");
+       
   return 0;
 }

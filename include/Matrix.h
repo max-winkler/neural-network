@@ -109,7 +109,8 @@ class Matrix : public DataArray
    * @param m The number of rows of the matrix.
    * @param n The number of columns of the matrix.
    * @param ptr A contiguous block of \p m x \p n unsigned chars representing image data.
-   */ 
+   */
+  // TODO: This is not necessary and more. Use instead Image::to_matrix().
   Matrix(size_t, size_t, const unsigned char*);
 
   /**

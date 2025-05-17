@@ -5,17 +5,29 @@
 #include <string>
 #include <vector>
 
+#include "Matrix.h"
+
+enum COLOR_TYPE {BW};
+
 class Image
 {
  public:
-  static void write(const std::string& filename, int width, int height, unsigned char** row_pointers);
+
   static Image read(const std::string& filename);
+  static Image from_matrix(const Matrix&);
+  
+  void write(const std::string& filename);
+
+  Matrix to_matrix() const;
+  
  private:
-  std::vector<unsigned char> pixels;
+
+  Image() = delete;
+  Image(int width, int height, std::vector<unsigned char>&& data);
+  
+  std::vector<unsigned char> data;
   size_t width;
   size_t height;
-  int color_type;
-  int bit_depth;
 };
 
 #endif

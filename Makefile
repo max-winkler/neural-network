@@ -24,8 +24,8 @@ TESTS = test/LinAlg.o \
 	test/Pooling.o
 
 CPP_INCLUDE = -Iinclude
-# CPP_FLAGS = -g -O0
-CPP_FLAGS = -O3
+CPP_FLAGS = -g -O0
+# CPP_FLAGS = -O3
 LIBS = -lpng -lblas
 
 CBLAS_CHECK := $(shell echo 'int main(){}' | $(CXX) -x c++ - -lcblas -lblas -o /dev/null 2>/dev/null && echo yes || echo no)
