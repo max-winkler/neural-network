@@ -181,16 +181,16 @@ class NeuralNetwork
 			      OptimizationOptions options) const;
 
   /**
-   * Returns the scalar product of two neural networks. This is basically the sum of the inner products of all 
-   * weight and kernel matrices and bias vectors in the neural nerwork.
+   * Returns the scalar product of two neural networks. This is basically the sum of the 
+   * inner products of all weight and kernel matrices and bias vectors in the neural nerwork.
    *
-   * @param Right argument of the scalar product.
+   * @param other Right argument of the scalar product.
    */
   float dot(const NeuralNetwork& other) const;
 
   /**
-   * Returns the norm of a neural network which is the square root of the scalar product of the neural network 
-   * with itself.
+   * Returns the norm of a neural network which is the square root of the scalar product 
+   * of the neural network with itself.
    */
   float norm() const;  
 
@@ -198,9 +198,11 @@ class NeuralNetwork
   friend std::ostream& operator<<(std::ostream&, const NeuralNetwork&);
 
   /**
-   * Stores the neural network arcitecture and all the weight and kernel matrices and bias vectors in a file.
+   * Stores the neural network arcitecture and all the weight and kernel matrices and
+   * bias vectors in a file.
    */
   void save(const std::string&) const;
+  void save(std::ostream&) const;
   
  private:
   // Layer list of neural network

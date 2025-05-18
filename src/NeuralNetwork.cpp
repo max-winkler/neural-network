@@ -459,11 +459,14 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetwork& net)
 void NeuralNetwork::save(const std::string& filename) const
 {
   std::ofstream os(filename);
+  save(os);
+  os.close();
+}
 
+void NeuralNetwork::save(std::ostream& os) const
+{
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
     (*layer)->save(os);
-  
-  os.close();
 }
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
