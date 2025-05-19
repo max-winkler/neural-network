@@ -15,6 +15,7 @@
 #include <numeric>
 #include <chrono>
 #include <iomanip>
+#include <pugixml.hpp>
 
 NeuralNetwork::NeuralNetwork()
   : initialized(false), layers()
@@ -464,9 +465,26 @@ void NeuralNetwork::save(const std::string& filename) const
 }
 
 void NeuralNetwork::save(std::ostream& os) const
-{
+{ 
+  pugi::xml_document doc;
+
+  pugi::xml_node el_network = doc.append_child("network");
+      
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
-    (*layer)->save(os);
+    {
+      pugi::xml_node el_layer = el_network.append_child("layer");
+      el_layer.append_attribute("type").set_value((*layer)->layer_type);
+
+      pugi::xml_node el_parameters = el_layer.append_child("parameters");
+      // Get layer parameters
+      
+      pugi::xml_node el_weights = el_layer.append_child("weights");
+      // Get layer weights
+      
+      // (*layer)->save(os);
+    }
+  
+  doc.save(std::cout);
 }
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,

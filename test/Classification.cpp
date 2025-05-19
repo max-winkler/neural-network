@@ -57,7 +57,8 @@ int main()
   options.epochs        = 10;
   
   net.train(training_data, options);
-
+  net.save("test.xml");
+  
   // Write classification to PNG file
   FILE *fp = fopen("classification.png", "wb");
   if(!fp)
