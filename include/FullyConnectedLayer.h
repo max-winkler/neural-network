@@ -28,7 +28,9 @@ class FullyConnectedLayer : public Layer
   std::unique_ptr<Layer> zeros_like() const override;
 
   void save(std::ostream&) const override;
- private:
+
+  std::unordered_map<std::string, std::string> get_parameters() const override;
+private:
   
   // Layer-specific parameters
   Matrix weight;

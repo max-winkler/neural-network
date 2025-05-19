@@ -102,7 +102,10 @@ class ConvolutionalLayer : public Layer
    * Save the layer to text written in the output stream.
    */
   void save(std::ostream&) const override;
- private:
+
+  std::unordered_map<std::string, std::string> get_parameters() const override;
+  
+private:
   
   std::vector<Tensor> K;
   std::vector<float> bias;

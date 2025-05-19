@@ -203,3 +203,10 @@ void ConvolutionalLayer::save(std::ostream& os) const
   os << std::setw(16) << " stride : " << S << '\n';
   os << std::setw(16) << " padding : " << P << '\n';
 }
+
+std::unordered_map<std::string, std::string> ConvolutionalLayer::get_parameters() const
+{
+  return {
+    {"activation", "relu"}
+  };
+}

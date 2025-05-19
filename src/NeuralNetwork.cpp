@@ -71,9 +71,10 @@ void NeuralNetwork::addPoolingLayer(size_t batch, size_t S)
     case LayerType::POOLING:
       break;
     default:
-      std::cerr << "ERROR: A pooling layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
-	      << ", " << Layer::LayerName[LayerType::CONVOLUTION]
-	      << " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      std::cerr << "ERROR: A pooling layer can only follow a "
+	      << Layer::LayerName.at(LayerType::MATRIX_INPUT)
+	      << ", " << Layer::LayerName.at(LayerType::CONVOLUTION)
+	      << " or " << Layer::LayerName.at(LayerType::POOLING) << std::endl;
       return;
     }
 
@@ -92,9 +93,10 @@ void NeuralNetwork::addFlatteningLayer()
     case LayerType::POOLING:
       break;
     default:
-      std::cerr << "ERROR: A flattening layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
-		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
-		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      std::cerr << "ERROR: A flattening layer can only follow a "
+	      << Layer::LayerName.at(LayerType::MATRIX_INPUT)
+	      << ", " << Layer::LayerName.at(LayerType::CONVOLUTION)
+	      << " or " << Layer::LayerName.at(LayerType::POOLING) << std::endl;
       return;
     }
   
@@ -113,9 +115,10 @@ void NeuralNetwork::addConvolutionLayer(size_t F, size_t batch, ActivationFuncti
     case LayerType::POOLING:
       break;
     default:
-      std::cerr << "ERROR: A convolution layer can only follow a " << Layer::LayerName[LayerType::MATRIX_INPUT]
-		<< ", " << Layer::LayerName[LayerType::CONVOLUTION]
-		<< " or " << Layer::LayerName[LayerType::POOLING] << std::endl;
+      std::cerr << "ERROR: A convolution layer can only follow a "
+	      << Layer::LayerName.at(LayerType::MATRIX_INPUT)
+	      << ", " << Layer::LayerName.at(LayerType::CONVOLUTION)
+	      << " or " << Layer::LayerName.at(LayerType::POOLING) << std::endl;
       return;
     }  
   
@@ -217,7 +220,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	      
 	    default:
 	      std::cerr << "ERROR: Allocation of memory not implemented for "
-			<< Layer::LayerName[layers[l]->layer_type] << " yet.\n";
+		      << Layer::LayerName.at(layers[l]->layer_type) << " yet.\n";
 	    }
 	}
     }
@@ -473,9 +476,10 @@ void NeuralNetwork::save(std::ostream& os) const
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
     {
       pugi::xml_node el_layer = el_network.append_child("layer");
-      el_layer.append_attribute("type").set_value((*layer)->layer_type);
+      el_layer.append_attribute("type").set_value(Layer::LayerShortName.at((*layer)->layer_type));
 
       pugi::xml_node el_parameters = el_layer.append_child("parameters");
+      
       // Get layer parameters
       
       pugi::xml_node el_weights = el_layer.append_child("weights");
@@ -532,7 +536,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	      
 	  default:
 	    std::cerr << "ERROR: Allocation of memory not implemented for "
-		    << Layer::LayerName[layers[l]->layer_type] << " yet.\n";
+		    << Layer::LayerName.at(layers[l]->layer_type) << " yet.\n";
 	  }
         }
     }
@@ -574,7 +578,7 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	      
 	      default:
 	        std::cerr << "ERROR: Allocation of memory not implemented for "
-		        << Layer::LayerName[layers[l]->layer_type] << " yet.\n";
+		        << Layer::LayerName.at(layers[l]->layer_type) << " yet.\n";
 	      }
 	  }
         }

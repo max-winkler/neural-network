@@ -136,3 +136,11 @@ void FullyConnectedLayer::save(std::ostream& os) const
 
   os << std::setw(16) << " activation : " << act << '\n';  
 }
+
+std::unordered_map<std::string, std::string> FullyConnectedLayer::get_parameters() const
+{
+  return {
+    {"activation", "tdb"},
+    {"dim", "1"}
+  };
+}
