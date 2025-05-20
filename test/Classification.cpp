@@ -49,8 +49,9 @@ int main()
       training_data.push_back(TrainingData(Vector({x, y}), label));
     }
 
-  NeuralNetwork::load("test.xml");
-
+  net = NeuralNetwork::load("test.xml");
+  std::cout << net;
+  
   return 0;
   // Train neural network
   OptimizationOptions options;

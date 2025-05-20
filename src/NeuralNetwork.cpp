@@ -42,6 +42,16 @@ NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
   : initialized(true), layers(std::move(other.layers))
 {}
 
+NeuralNetwork& NeuralNetwork::operator=(NeuralNetwork&& other)
+{
+  if (this != &other) {
+    initialized = true;
+    layers = std::move(other.layers);
+  }
+  return *this;
+}
+
+
 NeuralNetwork NeuralNetwork::createLike(const NeuralNetwork& net)
 {
   NeuralNetwork other;
@@ -536,6 +546,8 @@ void NeuralNetwork::save(std::ostream& os) const
 
 NeuralNetwork NeuralNetwork::load(const std::string& filename)
 {
+  NeuralNetwork network;
+  
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(filename.c_str());
 
@@ -546,7 +558,8 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
     }
 
   pugi::xml_node root = doc.child("network");
-
+  std::vector<size_t> prev_dim;
+  
   for (pugi::xml_node el_layer : root.children("layer"))
     {      
       // Determine layer type
@@ -567,23 +580,55 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
       std::map<std::string, std::string> parameters;
       for (pugi::xml_node el_param : el_parameters.children())
         {
-          parameters["el_param.name"] = el_param.child_value();
+          parameters[el_param.name()] = el_param.child_value();
           std::cout << "  Parameter: " << el_param.name()
                     << " = " << el_param.child_value() << "\n";
         }
 
       // Create weight list
-      pugi::xml_node weights = el_layer.child("weights");
-      for (pugi::xml_node weight : weights.children()) {
-        std::cout << "  Gewicht: " << weight.name()
-                  << ", Dimension: " << weight.attribute("dimension").value() << "\n";
+      pugi::xml_node el_weights = el_layer.child("weights");
+      std::map<std::string, std::pair<const float*, std::vector<size_t>>> weights;
+        
+      for (pugi::xml_node el_weight : el_weights.children()) {
+
+        std::stringstream ss(el_weight.attribute("dimension").value());
+        std::string token;
+        std::vector<size_t> weight_dim;
+        while (std::getline(ss, token, ','))
+	weight_dim.push_back(static_cast<size_t>(std::stoul(token)));        
+        
+        std::string weight_name = el_weight.name();
+
+        std::string weight_value;
+        std::stringstream ss2(el_weight.child_value());
+        std::vector<float> weight_data;
+        
+        while(ss2 >> weight_value)
+	weight_data.push_back(std::stof(weight_value));      
+
+        weights[weight_name] = std::make_pair(weight_data.data(), weight_dim);                
       }
 
+      switch(layer_type)
+        {
+        case VECTOR_INPUT:
+	std::cout << "Vector Input\n";
+	break;
+        case FULLY_CONNECTED:
+	network.layers.emplace_back(FullyConnectedLayer::create_from_parameters(dim, prev_dim, parameters, weights));
+	std::cout << "Fully Connected\n";
+	break;
+        default:
+	std::cout << "Somethind else\n";
+	break;
+        }
+
+      prev_dim = std::move(dim);
       std::cout << "\n";
     }
  
   
-  return NeuralNetwork();
+  return network;
 }
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
