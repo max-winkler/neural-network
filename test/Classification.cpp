@@ -50,9 +50,8 @@ int main()
     }
 
   net = NeuralNetwork::load("test.xml");
-  std::cout << net;
+  std::cout << net; 
   
-  return 0;
   // Train neural network
   OptimizationOptions options;
   options.loss_function = OptimizationOptions::LossFunction::MSE;
@@ -60,7 +59,7 @@ int main()
   options.max_iter      = 1e5;
   options.epochs        = 10;
   
-  net.train(training_data, options);
+  //net.train(training_data, options);
   net.save("test.xml");
   
   // Write classification to PNG file

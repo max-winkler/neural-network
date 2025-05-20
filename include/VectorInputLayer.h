@@ -19,7 +19,10 @@ class VectorInputLayer : public Layer
 
   void save(std::ostream&) const override;
 
-  // std::unordered_map<std::string, std::string> get_parameters() const override;
+  static std::unique_ptr<Layer> create_from_parameters(const std::vector<size_t>&,
+					     const std::vector<size_t>&,
+					     const std::map<std::string, std::string>&,
+					     const std::map<std::string, std::pair<const float*, std::vector<size_t>>>&);
  private:
 };
 

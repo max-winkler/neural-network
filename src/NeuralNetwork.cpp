@@ -612,11 +612,10 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
       switch(layer_type)
         {
         case VECTOR_INPUT:
-	std::cout << "Vector Input\n";
+	network.layers.emplace_back(VectorInputLayer::create_from_parameters(dim, prev_dim, parameters, weights));
 	break;
         case FULLY_CONNECTED:
 	network.layers.emplace_back(FullyConnectedLayer::create_from_parameters(dim, prev_dim, parameters, weights));
-	std::cout << "Fully Connected\n";
 	break;
         default:
 	std::cout << "Somethind else\n";
