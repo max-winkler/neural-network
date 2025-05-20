@@ -55,6 +55,7 @@ public:
   virtual void save(std::ostream&) const; 
 
   virtual std::unordered_map<std::string, std::string> get_parameters() const;
+  virtual std::unordered_map<std::string, std::pair<const float*, size_t>> get_weights() const;
   
 protected:
   

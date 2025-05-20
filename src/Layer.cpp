@@ -74,5 +74,10 @@ void Layer::save(std::ostream&) const {}
 
 std::unordered_map<std::string, std::string> Layer::get_parameters() const
 {
-  return std::unordered_map<std::string, std::string>();
+  return {};
+}
+
+std::unordered_map<std::string, std::pair<const float*, size_t>> Layer::get_weights() const
+{
+  return {};
 }

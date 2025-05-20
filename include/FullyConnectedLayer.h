@@ -30,6 +30,7 @@ class FullyConnectedLayer : public Layer
   void save(std::ostream&) const override;
 
   std::unordered_map<std::string, std::string> get_parameters() const override;
+  std::unordered_map<std::string, std::pair<const float*, size_t>> get_weights() const override;
 private:
   
   // Layer-specific parameters

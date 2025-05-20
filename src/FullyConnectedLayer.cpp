@@ -140,7 +140,15 @@ void FullyConnectedLayer::save(std::ostream& os) const
 std::unordered_map<std::string, std::string> FullyConnectedLayer::get_parameters() const
 {
   return {
-    {"activation", "tdb"},
-    {"dim", "1"}
+    {"activation", ActivationFunctionName.at(act)}
   };
+}
+
+std::unordered_map<std::string, std::pair<const float*, size_t>> FullyConnectedLayer::get_weights() const
+{
+  std::unordered_map<std::string, std::pair<const float*, size_t>> weights;
+  weights["weight"] =  std::make_pair(&weight[0][0], weight.nEntries());
+  weights["bias"]   =  std::make_pair(&bias[0], bias.nEntries());
+
+  return weights;
 }

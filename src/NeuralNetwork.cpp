@@ -15,6 +15,7 @@
 #include <numeric>
 #include <chrono>
 #include <iomanip>
+#include <sstream>
 #include <pugixml.hpp>
 
 NeuralNetwork::NeuralNetwork()
@@ -476,14 +477,37 @@ void NeuralNetwork::save(std::ostream& os) const
   for(auto layer = layers.begin(); layer!=layers.end(); ++layer)
     {
       pugi::xml_node el_layer = el_network.append_child("layer");
-      el_layer.append_attribute("type").set_value(Layer::LayerShortName.at((*layer)->layer_type));
 
+      // Dimensions string (comma-separated)
+      std::ostringstream ss;
+      for(int i=0; i<(*layer)->dim.size()-1; ++i)
+        ss << (*layer)->dim[i] << ", ";
+      ss << (*layer)->dim.back();
+
+      // Add attributes to layer
+      el_layer.append_attribute("dimension").set_value(ss.str());
+      el_layer.append_attribute("type").set_value(Layer::LayerShortName.at((*layer)->layer_type));
+      
+
+      // Add layer parameters
       pugi::xml_node el_parameters = el_layer.append_child("parameters");
-      
-      // Get layer parameters
-      
+      for(const auto& [param,value] : (*layer)->get_parameters())        
+        el_parameters.append_child(param).text().set(value);        
+
+      // Add layer weights
       pugi::xml_node el_weights = el_layer.append_child("weights");
-      // Get layer weights
+      for(const auto& [weight, value] : (*layer)->get_weights())
+        {
+	pugi::xml_node el_weight = el_weights.append_child(weight);
+	std::ostringstream ss;
+	
+	const float* data = value.first;
+	size_t size = value.second;
+	
+	for(size_t i=0; i<size; ++i)
+	  ss << " " << data[i];
+	el_weight.text().set(ss.str());	
+        }
       
       // (*layer)->save(os);
     }

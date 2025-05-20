@@ -12,14 +12,8 @@ enum ActivationFunction
     NONE, SIGMOID, TANH, RELU, SOFTMAX
   };
 
-const static std::unordered_map<ActivationFunction, std::string> act_to_str = {
-  {NONE, "none"},
-  {SIGMOID, "sigmoid"},
-  {TANH, "tanh"},
-  {RELU, "relu"},
-  {SOFTMAX, "softmax"},
-};
-
+extern const std::unordered_map<ActivationFunction, std::string> ActivationFunctionName;
+  
 float activate(float, ActivationFunction);
 Vector activate(const Vector&, ActivationFunction);
 Matrix activate(const Matrix&, ActivationFunction);

@@ -2,6 +2,14 @@
 
 #include <algorithm>
 
+const std::unordered_map<ActivationFunction, std::string> ActivationFunctionName = {
+  {NONE, "none"},
+  {SIGMOID, "sigmoid"},
+  {TANH, "tanh"},
+  {RELU, "relu"},
+  {SOFTMAX, "softmax"},
+};
+
 float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)
