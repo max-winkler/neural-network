@@ -4,25 +4,36 @@
 
 const std::unordered_map<LayerType, std::string> Layer::LayerName =
   {
-    {VECTOR_INPUT, "Vector Input Layer"},
-    {MATRIX_INPUT, "Matrix Input Layer"},
+    {VECTOR_INPUT,    "Vector Input Layer"},
+    {MATRIX_INPUT,    "Matrix Input Layer"},
     {FULLY_CONNECTED, "Fully connected Layer"},
-    {CLASSIFICATION, "Classification Layer"},
-    {CONVOLUTION, "Convolution Layer"},
-    {POOLING, "Pooling Layer"},
-    {FLATTENING, "Flattening Layer"},
-    {UNKNOWN, "Unknown Layer Type"}
+    {CLASSIFICATION,  "Classification Layer"},
+    {CONVOLUTION,     "Convolution Layer"},
+    {POOLING,         "Pooling Layer"},
+    {FLATTENING,      "Flattening Layer"},
+    {UNKNOWN,         "Unknown Layer Type"}
   };
 
 const std::unordered_map<LayerType, std::string> Layer::LayerShortName = {
-  {VECTOR_INPUT, "vectorinput"},
-  {MATRIX_INPUT, "matrixinput"},
-  {FULLY_CONNECTED, "fullyconnected"},
-  {CLASSIFICATION, "classification"},
-  {CONVOLUTION, "convolution"},
-  {POOLING, "pooling"},
-  {FLATTENING, "flattening"},
-  {UNKNOWN, "unknown"}
+  {VECTOR_INPUT,      "vectorinput"},
+  {MATRIX_INPUT,      "matrixinput"},
+  {FULLY_CONNECTED,   "fullyconnected"},
+  {CLASSIFICATION,    "classification"},
+  {CONVOLUTION,       "convolution"},
+  {POOLING,           "pooling"},
+  {FLATTENING,        "flattening"},
+  {UNKNOWN,           "unknown"}
+};
+
+const std::unordered_map<std::string, LayerType> Layer::LayerTypeFromShortName = {
+  {"vectorinput",     VECTOR_INPUT},
+  {"matrixinput",     MATRIX_INPUT},
+  {"fullyconnected",  FULLY_CONNECTED},
+  {"classification",  CLASSIFICATION},
+  {"convolution",     CONVOLUTION},
+  {"pooling",         POOLING},
+  {"flattening",      FLATTENING},
+  {"unknown",         UNKNOWN}
 };
 
 Layer::Layer(std::vector<size_t> dim, LayerType layer_type)
@@ -72,12 +83,12 @@ void Layer::apply_increment(const Layer&) {}
 
 void Layer::save(std::ostream&) const {}
 
-std::unordered_map<std::string, std::string> Layer::get_parameters() const
+std::map<std::string, std::string> Layer::get_parameters() const
 {
   return {};
 }
 
-std::unordered_map<std::string, std::pair<const float*, size_t>> Layer::get_weights() const
+std::map<std::string, std::pair<const float*, std::vector<size_t>>> Layer::get_weights() const
 {
   return {};
 }

@@ -204,9 +204,33 @@ void ConvolutionalLayer::save(std::ostream& os) const
   os << std::setw(16) << " padding : " << P << '\n';
 }
 
-std::unordered_map<std::string, std::string> ConvolutionalLayer::get_parameters() const
+std::map<std::string, std::string> ConvolutionalLayer::get_parameters() const
 {
   return {
-    {"activation", "relu"}
+    {"activation", ActivationFunctionName.at(act)},
+    {"stride",     std::to_string(S)},
+    {"padding",    std::to_string(P)},
+    {"features",   std::to_string(K.size())}
   };
+}
+
+std::map<std::string, std::pair<const float*, std::vector<size_t>>> ConvolutionalLayer::get_weights() const
+{
+  std::map<std::string, std::pair<const float*, std::vector<size_t>>> weights;
+
+  size_t c = K[0].nChannels();
+  size_t m = K[0].nRows();
+  size_t n = K[0].nCols();
+  
+  for(size_t i=0; i<K.size(); ++i)
+    {
+      std::ostringstream ss;
+      ss << "kernel_" << std::setw(2) << std::setfill('0') << i;
+
+      weights[ss.str()] = std::make_pair(&K[i](0,0,0), std::vector<size_t>{c,m,n});
+    }
+
+  weights["bias"]   =  std::make_pair(bias.data(), std::vector<size_t>{bias.size()});
+
+  return weights;
 }

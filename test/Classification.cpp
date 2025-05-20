@@ -49,6 +49,9 @@ int main()
       training_data.push_back(TrainingData(Vector({x, y}), label));
     }
 
+  NeuralNetwork::load("test.xml");
+
+  return 0;
   // Train neural network
   OptimizationOptions options;
   options.loss_function = OptimizationOptions::LossFunction::MSE;

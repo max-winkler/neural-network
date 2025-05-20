@@ -203,6 +203,9 @@ int main()
   
   net.initialize();
 
+  net.save("test.xml");
+  return 0;
+  
   // Output neural network structure
   std::cout << net;
 

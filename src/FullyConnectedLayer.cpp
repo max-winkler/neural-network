@@ -137,18 +137,46 @@ void FullyConnectedLayer::save(std::ostream& os) const
   os << std::setw(16) << " activation : " << act << '\n';  
 }
 
-std::unordered_map<std::string, std::string> FullyConnectedLayer::get_parameters() const
+std::map<std::string, std::string> FullyConnectedLayer::get_parameters() const
 {
   return {
     {"activation", ActivationFunctionName.at(act)}
   };
 }
 
-std::unordered_map<std::string, std::pair<const float*, size_t>> FullyConnectedLayer::get_weights() const
+std::map<std::string, std::pair<const float*, std::vector<size_t>>> FullyConnectedLayer::get_weights() const
 {
-  std::unordered_map<std::string, std::pair<const float*, size_t>> weights;
-  weights["weight"] =  std::make_pair(&weight[0][0], weight.nEntries());
-  weights["bias"]   =  std::make_pair(&bias[0], bias.nEntries());
+  std::map<std::string, std::pair<const float*, std::vector<size_t>>> weights;
+  weights["weight"] =  std::make_pair(&weight[0][0], std::vector<size_t>{weight.nRows(), weight.nCols()});
+  weights["bias"]   =  std::make_pair(&bias[0],      std::vector<size_t>{bias.nEntries()});
 
   return weights;
+}
+
+std::unique_ptr<Layer> FullyConnectedLayer::create_from_parameters(const std::vector<size_t>& dim,
+                                                                   const std::vector<size_t>& in_dim,
+                                                                   const std::map<std::string, std::string>& parameters,
+                                                                   const std::map<std::string, std::pair<const float*, std::vector<size_t>>>& weights)
+{
+  // Create layer
+  auto* layer = new FullyConnectedLayer(dim[0], in_dim[0], ActivationFunctionFromName.at(parameters.at("activation")));
+
+  // Check dimensions
+  if(dim[0] != weights.at("weight").second[0] || in_dim[0] != weights.at("weight").second[1])
+    {
+      std::cerr << "ERROR: Inconsistent matrix dimension in fully connected layer.\n";
+      std::exit(EXIT_FAILURE);      
+    }
+
+  if(dim[0] != weights.at("bias").second[0])
+    {
+      std::cerr << "ERROR: Inconsistent vector dimension in fully connected layer.\n";
+      std::exit(EXIT_FAILURE);
+    }
+
+  // Set weights
+  layer->weight = Matrix(dim[0], in_dim[0], weights.at("weight").first);
+  layer->bias = Vector(dim[0], weights.at("bias").first);
+
+  return std::unique_ptr<Layer>(layer);
 }

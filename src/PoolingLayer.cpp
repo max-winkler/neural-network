@@ -107,9 +107,11 @@ void PoolingLayer::save(std::ostream& os) const
   os << std::setw(16) << " pooling type : " << type << '\n';
 }
 
-std::unordered_map<std::string, std::string> PoolingLayer::get_parameters() const
+std::map<std::string, std::string> PoolingLayer::get_parameters() const
 {
   return {
-    {"dim", "1"}
+    {"stride",  std::to_string(S)},
+    {"padding", std::to_string(P)},
+    {"kernelsize", std::to_string(k)}
   };
 }

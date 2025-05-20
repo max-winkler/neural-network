@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <cstring>
 #include <memory>
@@ -48,15 +49,16 @@ public:
   
   static const std::unordered_map<LayerType, std::string> LayerName;
   static const std::unordered_map<LayerType, std::string> LayerShortName;
+  static const std::unordered_map<std::string, LayerType> LayerTypeFromShortName;
   
   std::string get_name() const;
 
   /// deprecated
   virtual void save(std::ostream&) const; 
 
-  virtual std::unordered_map<std::string, std::string> get_parameters() const;
-  virtual std::unordered_map<std::string, std::pair<const float*, size_t>> get_weights() const;
-  
+  virtual std::map<std::string, std::string> get_parameters() const;
+  virtual std::map<std::string, std::pair<const float*, std::vector<size_t>>> get_weights() const;
+
 protected:
   
   Layer(std::vector<size_t>, LayerType);

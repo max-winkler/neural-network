@@ -13,6 +13,7 @@ enum ActivationFunction
   };
 
 extern const std::unordered_map<ActivationFunction, std::string> ActivationFunctionName;
+extern const std::unordered_map<std::string, ActivationFunction> ActivationFunctionFromName;
   
 float activate(float, ActivationFunction);
 Vector activate(const Vector&, ActivationFunction);

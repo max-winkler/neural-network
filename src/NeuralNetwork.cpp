@@ -485,40 +485,111 @@ void NeuralNetwork::save(std::ostream& os) const
       ss << (*layer)->dim.back();
 
       // Add attributes to layer
-      el_layer.append_attribute("dimension").set_value(ss.str());
-      el_layer.append_attribute("type").set_value(Layer::LayerShortName.at((*layer)->layer_type));
+      el_layer.append_attribute("dimension").set_value(ss.str().c_str());
+      el_layer.append_attribute("type").set_value(Layer::LayerShortName.at((*layer)->layer_type).c_str());
       
 
       // Add layer parameters
       pugi::xml_node el_parameters = el_layer.append_child("parameters");
       for(const auto& [param,value] : (*layer)->get_parameters())        
-        el_parameters.append_child(param).text().set(value);        
+        el_parameters.append_child(param.c_str()).text().set(value.c_str());        
 
       // Add layer weights
       pugi::xml_node el_weights = el_layer.append_child("weights");
       for(const auto& [weight, value] : (*layer)->get_weights())
         {
-	pugi::xml_node el_weight = el_weights.append_child(weight);
-	std::ostringstream ss;
-	
-	const float* data = value.first;
-	size_t size = value.second;
-	
-	for(size_t i=0; i<size; ++i)
-	  ss << " " << data[i];
-	el_weight.text().set(ss.str());	
+          pugi::xml_node el_weight = el_weights.append_child(weight.c_str());
+          std::ostringstream ss, ss_dim;
+          
+          const float* data = value.first;
+          std::vector<size_t> dim = value.second;
+
+          size_t size=1;
+          for(size_t i=0; i<dim.size(); ++i)
+            {
+              size *= dim[i];
+              ss_dim << dim[i];
+              if(i < dim.size()-1)
+                ss_dim << ",";
+            }
+
+          // Write data
+          size_t line_length = 8;
+          for (size_t i = 0; i < size; ++i) {
+            /*
+              if (i % line_length == 0 && i != 0) {
+                ss << "\n    ";
+              }
+            */
+            ss << " " << data[i];
+          }
+          
+          el_weight.append_attribute("dimension").set_value(ss_dim.str().c_str());
+          el_weight.append_child(pugi::node_pcdata).set_value(ss.str().c_str());
         }
       
       // (*layer)->save(os);
     }
   
-  doc.save(std::cout);
+  doc.save(os);
+}
+
+NeuralNetwork NeuralNetwork::load(const std::string& filename)
+{
+  pugi::xml_document doc;
+  pugi::xml_parse_result result = doc.load_file(filename.c_str());
+
+  if(!result)
+    {
+      std::cerr << "ERROR: Can not read file " << filename << "\n";
+      std::exit(EXIT_FAILURE);
+    }
+
+  pugi::xml_node root = doc.child("network");
+
+  for (pugi::xml_node el_layer : root.children("layer"))
+    {      
+      // Determine layer type
+      LayerType layer_type = Layer::LayerTypeFromShortName.at(el_layer.attribute("type").value());
+      std::cout << "Layer-Typ: " << layer_type << "\n";
+
+      // Get output dimension
+      std::string dim_str = el_layer.attribute("dimension").value();
+      std::stringstream ss(dim_str);
+      std::string token;
+
+      std::vector<size_t> dim;
+      while (std::getline(ss, token, ','))
+        dim.push_back(static_cast<size_t>(std::stoul(token)));        
+    
+      // Create parameter list
+      pugi::xml_node el_parameters = el_layer.child("parameters");
+      std::map<std::string, std::string> parameters;
+      for (pugi::xml_node el_param : el_parameters.children())
+        {
+          parameters["el_param.name"] = el_param.child_value();
+          std::cout << "  Parameter: " << el_param.name()
+                    << " = " << el_param.child_value() << "\n";
+        }
+
+      // Create weight list
+      pugi::xml_node weights = el_layer.child("weights");
+      for (pugi::xml_node weight : weights.children()) {
+        std::cout << "  Gewicht: " << weight.name()
+                  << ", Dimension: " << weight.attribute("dimension").value() << "\n";
+      }
+
+      std::cout << "\n";
+    }
+ 
+  
+  return NeuralNetwork();
 }
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
-				 const std::vector<TrainingData>& data,
-				 const std::vector<size_t>& data_idx,
-				 OptimizationOptions options) const
+                                 const std::vector<TrainingData>& data,
+                                 const std::vector<size_t>& data_idx,
+                                 OptimizationOptions options) const
 {    
   // Initialize a direction
   NeuralNetwork direction = NeuralNetwork::createLike(*this);

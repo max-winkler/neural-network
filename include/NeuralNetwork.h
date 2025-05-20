@@ -203,6 +203,13 @@ class NeuralNetwork
    */
   void save(const std::string&) const;
   void save(std::ostream&) const;
+
+  /**
+   * Load a neural network from an XML file, obtained by \p NeuralNetwork::save(std::ostream&) const.
+   *
+   * @param filename Name of the XML file.
+   */
+  static NeuralNetwork load(const std::string&);
   
  private:
   // Layer list of neural network

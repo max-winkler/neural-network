@@ -71,7 +71,7 @@ class PoolingLayer : public Layer
    */
   void save(std::ostream&) const override;
   
-  std::unordered_map<std::string, std::string> get_parameters() const override;
+  std::map<std::string, std::string> get_parameters() const override;
 private:
   
   size_t k;

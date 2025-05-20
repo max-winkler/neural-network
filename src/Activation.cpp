@@ -10,6 +10,14 @@ const std::unordered_map<ActivationFunction, std::string> ActivationFunctionName
   {SOFTMAX, "softmax"},
 };
 
+const std::unordered_map<std::string, ActivationFunction> ActivationFunctionFromName = {
+  {"none", NONE},
+  {"sigmoid", SIGMOID},
+  {"tanh", TANH},
+  {"relu", RELU},
+  {"softmax", SOFTMAX},
+};
+
 float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)
