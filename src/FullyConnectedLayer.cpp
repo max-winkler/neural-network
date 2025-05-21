@@ -156,7 +156,7 @@ std::map<std::string, std::pair<const float*, std::vector<size_t>>> FullyConnect
 std::unique_ptr<Layer> FullyConnectedLayer::create_from_parameters(const std::vector<size_t>& dim,
                                                                    const std::vector<size_t>& in_dim,
                                                                    const std::map<std::string, std::string>& parameters,
-                                                                   const std::map<std::string, std::pair<const float*, std::vector<size_t>>>& weights)
+                                                                   const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
 {
   // Create layer
   auto* layer = new FullyConnectedLayer(dim[0], in_dim[0], ActivationFunctionFromName.at(parameters.at("activation")));
@@ -175,8 +175,8 @@ std::unique_ptr<Layer> FullyConnectedLayer::create_from_parameters(const std::ve
     }
 
   // Set weights
-  layer->weight = Matrix(dim[0], in_dim[0], weights.at("weight").first);
-  layer->bias = Vector(dim[0], weights.at("bias").first);
+  layer->weight = Matrix(dim[0], in_dim[0], weights.at("weight").first.data());
+  layer->bias = Vector(dim[0], weights.at("bias").first.data());
 
   return std::unique_ptr<Layer>(layer);
 }

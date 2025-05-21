@@ -5,7 +5,8 @@
 
 class FullyConnectedLayer : public Layer
 {  
- public:
+  friend NeuralNetwork;
+public:
   FullyConnectedLayer(size_t, size_t, ActivationFunction);
   
   void eval(DataArray*&) const override;
@@ -35,7 +36,7 @@ class FullyConnectedLayer : public Layer
   static std::unique_ptr<Layer> create_from_parameters(const std::vector<size_t>&,
                                                        const std::vector<size_t>&,
                                                        const std::map<std::string, std::string>&,
-                                                       const std::map<std::string, std::pair<const float*, std::vector<size_t>>>&);
+                                                       const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>&);
 private:
   
   // Layer-specific parameters

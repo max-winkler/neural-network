@@ -564,7 +564,6 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
     {      
       // Determine layer type
       LayerType layer_type = Layer::LayerTypeFromShortName.at(el_layer.attribute("type").value());
-      std::cout << "Layer-Typ: " << layer_type << "\n";
 
       // Get output dimension
       std::string dim_str = el_layer.attribute("dimension").value();
@@ -578,35 +577,39 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
       // Create parameter list
       pugi::xml_node el_parameters = el_layer.child("parameters");
       std::map<std::string, std::string> parameters;
-      for (pugi::xml_node el_param : el_parameters.children())
-        {
-          parameters[el_param.name()] = el_param.child_value();
-          std::cout << "  Parameter: " << el_param.name()
-                    << " = " << el_param.child_value() << "\n";
-        }
+      for (pugi::xml_node el_param : el_parameters.children())        
+        parameters[el_param.name()] = el_param.child_value();        
 
       // Create weight list
       pugi::xml_node el_weights = el_layer.child("weights");
-      std::map<std::string, std::pair<const float*, std::vector<size_t>>> weights;
+      std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>> weights;
         
       for (pugi::xml_node el_weight : el_weights.children()) {
 
+        // Get weight dimension
         std::stringstream ss(el_weight.attribute("dimension").value());
         std::string token;
         std::vector<size_t> weight_dim;
         while (std::getline(ss, token, ','))
 	weight_dim.push_back(static_cast<size_t>(std::stoul(token)));        
-        
-        std::string weight_name = el_weight.name();
 
+        // Create weight list
+        std::string weight_name = el_weight.name();
         std::string weight_value;
         std::stringstream ss2(el_weight.child_value());
         std::vector<float> weight_data;
-        
-        while(ss2 >> weight_value)
-	weight_data.push_back(std::stof(weight_value));      
 
-        weights[weight_name] = std::make_pair(weight_data.data(), weight_dim);                
+        while(ss2 >> weight_value)
+	{
+	  char* end;
+	  float val = std::strtof(weight_value.c_str(), &end);
+	  if (end == weight_value.c_str()) {
+	    std::cerr << "ERROR: Unable to parse the number " << weight_value << std::endl;
+	    val = 0.0f;
+	  }
+	  weight_data.push_back(val);      
+	}
+        weights[weight_name] = std::make_pair(weight_data, weight_dim);                
       }
 
       switch(layer_type)
@@ -618,12 +621,11 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
 	network.layers.emplace_back(FullyConnectedLayer::create_from_parameters(dim, prev_dim, parameters, weights));
 	break;
         default:
-	std::cout << "Somethind else\n";
+	std::cout << "WARNING: Layer creation from weight list not implemented yet for this type\n";
 	break;
         }
 
       prev_dim = std::move(dim);
-      std::cout << "\n";
     }
  
   

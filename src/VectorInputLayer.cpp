@@ -46,7 +46,7 @@ void VectorInputLayer::save(std::ostream& os) const
 std::unique_ptr<Layer> VectorInputLayer::create_from_parameters(const std::vector<size_t>& dim,
 						    const std::vector<size_t>& in_dim,
 						    const std::map<std::string, std::string>& parameters,
-						    const std::map<std::string, std::pair<const float*, std::vector<size_t>>>& weights)
+						    const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
 {
   return std::unique_ptr<Layer>(new VectorInputLayer(dim[0]));
 }
