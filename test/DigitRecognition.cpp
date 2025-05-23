@@ -202,9 +202,6 @@ int main()
   net.addClassificationLayer(n_classes); // output layer
   
   net.initialize();
-
-  net.save("test.xml");
-  return 0;
   
   // Output neural network structure
   std::cout << net;

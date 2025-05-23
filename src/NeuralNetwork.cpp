@@ -8,6 +8,7 @@
 #include "ConvolutionalLayer.h"
 #include "PoolingLayer.h"
 
+#include "LayerFactory.h"
 #include "Random.h"
 
 #include <fstream>
@@ -612,18 +613,8 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
         weights[weight_name] = std::make_pair(weight_data, weight_dim);                
       }
 
-      switch(layer_type)
-        {
-        case VECTOR_INPUT:
-	network.layers.emplace_back(VectorInputLayer::create_from_parameters(dim, prev_dim, parameters, weights));
-	break;
-        case FULLY_CONNECTED:
-	network.layers.emplace_back(FullyConnectedLayer::create_from_parameters(dim, prev_dim, parameters, weights));
-	break;
-        default:
-	std::cout << "WARNING: Layer creation from weight list not implemented yet for this type\n";
-	break;
-        }
+      network.layers.emplace_back(LayerFactory::create(layer_type, dim, prev_dim,
+					     parameters, weights));
 
       prev_dim = std::move(dim);
     }

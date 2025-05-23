@@ -58,7 +58,8 @@ public:
 
   virtual std::map<std::string, std::string> get_parameters() const;
   virtual std::map<std::string, std::pair<const float*, std::vector<size_t>>> get_weights() const;
-
+  virtual void set_weights(const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>&);
+  
 protected:
   
   Layer(std::vector<size_t>, LayerType);

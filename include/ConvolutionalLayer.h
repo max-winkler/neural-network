@@ -105,6 +105,8 @@ class ConvolutionalLayer : public Layer
 
   std::map<std::string, std::string> get_parameters() const override;
   std::map<std::string, std::pair<const float*, std::vector<size_t>>> get_weights() const override;
+
+  void set_weights(const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>&) override;
   
 private:
   

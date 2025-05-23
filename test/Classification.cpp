@@ -9,9 +9,8 @@
 #include "NeuralNetwork.h"
 
 int main()
-{
-  // Create neural network
-  
+{ 
+  // Create neural network  
   NeuralNetwork net;
   net.addInputLayer(2); // input layer
   net.addFullyConnectedLayer(4, ActivationFunction::TANH); // hidden layer
@@ -48,9 +47,6 @@ int main()
       
       training_data.push_back(TrainingData(Vector({x, y}), label));
     }
-
-  NeuralNetwork net2 = NeuralNetwork::load("test.xml");
-  std::cout << net2; 
   
   // Train neural network
   OptimizationOptions options;
@@ -59,7 +55,7 @@ int main()
   options.max_iter      = 1e5;
   options.epochs        = 10;
   
-  //net.train(training_data, options);
+  net.train(training_data, options);
   net.save("test.xml");
   
   // Write classification to PNG file

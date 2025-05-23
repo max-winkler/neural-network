@@ -42,3 +42,4 @@ void MatrixInputLayer::save(std::ostream& os) const
   os << "[ " << get_name() << " ]\n";
   os << std::setw(16) << "  dimension : " << dim[1] << ", " << dim[2] << '\n';  
 }
+

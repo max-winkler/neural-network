@@ -208,6 +208,7 @@ std::map<std::string, std::string> ConvolutionalLayer::get_parameters() const
 {
   return {
     {"activation", ActivationFunctionName.at(act)},
+    {"kernelsize",  std::to_string(k)},
     {"stride",     std::to_string(S)},
     {"padding",    std::to_string(P)},
     {"features",   std::to_string(K.size())}
@@ -233,4 +234,30 @@ std::map<std::string, std::pair<const float*, std::vector<size_t>>> Convolutiona
   weights["bias"]   =  std::make_pair(bias.data(), std::vector<size_t>{bias.size()});
 
   return weights;
+}
+
+void ConvolutionalLayer::set_weights(const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
+{
+  size_t out_dim = weights.at("weight").second[0];
+  size_t in_dim = weights.at("weight").second[1];
+  size_t F = K.size();
+  
+  // Set bias vector
+  bias = weights.at("bias").first;
+
+  for(size_t i=0; i<F; ++i)
+    {
+      // Retrieve kernel weight details
+      std::stringstream ss;
+      ss << "kernel_" << std::setw(2) << std::setfill('0') << i;
+
+      const std::pair<std::vector<float>, std::vector<size_t>>&
+        weight_details = weights.at(ss.str().c_str());
+      
+      // Set kernels
+      const std::vector<float>& weight_data = weight_details.first;
+      const std::vector<size_t>& weight_dim = weight_details.second;
+
+      K[i] = Tensor(weight_dim[0], weight_dim[1], weight_dim[2], weight_data.data());
+    }
 }

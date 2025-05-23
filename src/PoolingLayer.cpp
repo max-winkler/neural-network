@@ -115,3 +115,4 @@ std::map<std::string, std::string> PoolingLayer::get_parameters() const
     {"kernelsize", std::to_string(k)}
   };
 }
+

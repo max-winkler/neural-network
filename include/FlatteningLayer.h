@@ -18,9 +18,8 @@ class FlatteningLayer : public Layer
   std::unique_ptr<Layer> zeros_like() const override;
 
   void save(std::ostream&) const override;
-
-  // std::unordered_map<std::string, std::string> get_parameters() const override;
- private:
+  
+private:
   size_t in_dim1;
   size_t in_dim2;
   size_t in_dim3;

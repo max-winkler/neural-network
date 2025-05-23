@@ -48,7 +48,7 @@ std::ostream& operator<<(std::ostream& os, const Layer& layer)
   for(auto it = layer.dim.begin()+1; it != layer.dim.end(); ++it)
     os << "x" << *it;
 
-  os << " neurons)\n";
+  os << " neurons)";
   
   return os;
 }
@@ -91,4 +91,8 @@ std::map<std::string, std::string> Layer::get_parameters() const
 std::map<std::string, std::pair<const float*, std::vector<size_t>>> Layer::get_weights() const
 {
   return {};
+}
+
+void Layer::set_weights(const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
+{  
 }

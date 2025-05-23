@@ -60,3 +60,4 @@ void FlatteningLayer::save(std::ostream& os) const
   os << "[ " << get_name() << " ]\n";
   os << std::setw(16) << " dimension : " << dim[0] << '\n';
 }
+

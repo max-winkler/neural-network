@@ -11,12 +11,13 @@ OBJ = 	src/DataArray.o \
 	src/FlatteningLayer.o \
 	src/ConvolutionalLayer.o \
 	src/PoolingLayer.o \
+	src/LayerFactory.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
 	src/TrainingData.o \
 	src/Image.o
 
-TESTS = test/LinAlg.o \
+TESTS = 	test/LinAlg.o \
 	test/DigitRecognition.o \
 	test/Classification.o \
 	test/NeuralNetwork.o \
@@ -24,8 +25,8 @@ TESTS = test/LinAlg.o \
 	test/Pooling.o
 
 CPP_INCLUDE = -Iinclude
-# CPP_FLAGS = -g -O0
-CPP_FLAGS = -O3
+CPP_FLAGS = -g -O0
+# CPP_FLAGS = -O3
 LIBS = -lpng -lblas -lpugixml
 
 CBLAS_CHECK := $(shell echo 'int main(){}' | $(CXX) -x c++ - -lcblas -lblas -o /dev/null 2>/dev/null && echo yes || echo no)

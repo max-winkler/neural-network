@@ -153,30 +153,11 @@ std::map<std::string, std::pair<const float*, std::vector<size_t>>> FullyConnect
   return weights;
 }
 
-std::unique_ptr<Layer> FullyConnectedLayer::create_from_parameters(const std::vector<size_t>& dim,
-                                                                   const std::vector<size_t>& in_dim,
-                                                                   const std::map<std::string, std::string>& parameters,
-                                                                   const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
+void FullyConnectedLayer::set_weights(const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
 {
-  // Create layer
-  auto* layer = new FullyConnectedLayer(dim[0], in_dim[0], ActivationFunctionFromName.at(parameters.at("activation")));
-
-  // Check dimensions
-  if(dim[0] != weights.at("weight").second[0] || in_dim[0] != weights.at("weight").second[1])
-    {
-      std::cerr << "ERROR: Inconsistent matrix dimension in fully connected layer.\n";
-      std::exit(EXIT_FAILURE);      
-    }
-
-  if(dim[0] != weights.at("bias").second[0])
-    {
-      std::cerr << "ERROR: Inconsistent vector dimension in fully connected layer.\n";
-      std::exit(EXIT_FAILURE);
-    }
-
-  // Set weights
-  layer->weight = Matrix(dim[0], in_dim[0], weights.at("weight").first.data());
-  layer->bias = Vector(dim[0], weights.at("bias").first.data());
-
-  return std::unique_ptr<Layer>(layer);
+  size_t out_dim = weights.at("weight").second[0];
+  size_t in_dim = weights.at("weight").second[1];
+  
+  weight = Matrix(out_dim, in_dim, weights.at("weight").first.data());
+  bias = Vector(out_dim, weights.at("bias").first.data());  
 }
