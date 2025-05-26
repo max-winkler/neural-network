@@ -25,9 +25,14 @@ TESTS = 	test/LinAlg.o \
 	test/Pooling.o
 
 CPP_INCLUDE = -Iinclude
-CPP_FLAGS = -g -O0
-# CPP_FLAGS = -O3
+
+CPP_DEBUG_FLAGS = -g -O0
+CPP_RELEASE_FLAGS = -O3
+
+CPP_FLAGS = ${CPP_RELEASE_FLAGS}
+
 LIBS = -lpng -lblas -lpugixml
+
 
 CBLAS_CHECK := $(shell echo 'int main(){}' | $(CXX) -x c++ - -lcblas -lblas -o /dev/null 2>/dev/null && echo yes || echo no)
 ifeq ($(CBLAS_CHECK),yes)
@@ -35,10 +40,10 @@ ifeq ($(CBLAS_CHECK),yes)
 endif
 
 
-MNIST_FILES_URL := http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz \
-	http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz \
-	http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz \
-	http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+MNIST_FILES_URL := https://raw.githubusercontent.com/fgnt/mnist/master/train-images-idx3-ubyte.gz \
+	https://raw.githubusercontent.com/fgnt/mnist/master/train-labels-idx1-ubyte.gz \
+	https://raw.githubusercontent.com/fgnt/mnist/master/t10k-images-idx3-ubyte.gz \
+	https://raw.githubusercontent.com/fgnt/mnist/master/t10k-labels-idx1-ubyte.gz
 
 MNIST_FILE_DIR := mnist
 
@@ -78,6 +83,9 @@ $(MNIST_FILES): $(MNIST_FILES_GZ)
 ressources: $(MNIST_FILES)
 
 default: $(OBJ) test
+
+debug: CPP_FLAGS = $(CPP_DEBUG_FLAGS)
+debug: default
 
 clean:
 	rm -f src/*.o test/*.o mnist/*.gz
