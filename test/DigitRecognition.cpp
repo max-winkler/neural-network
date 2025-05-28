@@ -160,10 +160,6 @@ int main()
   if(read_training_data(training_data_file, training_label_file,
 			n_images, width, height, n_classes, training_data) != 0)    
     return -1;
-
-  // For testing only
-  while(training_data.size() > 1000)
-    training_data.pop_back();
     
   // Console output
   std::cout << "Data set:\n";
