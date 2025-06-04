@@ -15,7 +15,8 @@ OBJ = 	src/DataArray.o \
 	src/NeuralNetwork.o \
 	src/Activation.o \
 	src/TrainingData.o \
-	src/Image.o
+	src/Image.o \
+	src/MNIST.o
 
 TESTS = 	test/LinAlg.o \
 	test/DigitRecognition.o \
