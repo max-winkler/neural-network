@@ -134,8 +134,32 @@ Image Image::from_matrix(const Matrix& A)
       img_data[index + 0] = value;  // R
       img_data[index + 1] = value;  // G
       img_data[index + 2] = value;  // B
-      img_data[index + 3] = 255;    // A (voll sichtbar)
+      img_data[index + 3] = 255;    // A
     }
 
   return Image(width, height, std::move(img_data));
+}
+
+Image Image::from_tensor(const Tensor& T)
+{
+  size_t channels = T.nChannels();  
+  size_t height   = T.nRows();
+  size_t width    = T.nCols();
+
+  std::vector<unsigned char> img_data(4 * width * height * channels);
+  for(size_t c=0; c<channels; ++c)
+    for(size_t i=0; i<height; ++i)
+      for(size_t j=0; j<width; ++j)
+        {
+          float color = std::max(std::min(1.0f, T(c,i,j)), 0.0f);
+          unsigned char value = static_cast<unsigned char>(color * 255.0f);
+          
+          size_t index = (i*width*channels + c*width + j);
+
+          img_data[index + 0] = value; // R
+          img_data[index + 0] = value; // G          
+          img_data[index + 0] = value; // B
+          img_data[index + 0] = 255; // A          
+        }
+  return Image(width*channels, height, std::move(img_data));
 }

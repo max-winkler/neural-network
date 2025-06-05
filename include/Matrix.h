@@ -300,6 +300,9 @@ class Matrix : public DataArray
    * @param pixels Pointer to the pixel values that should be written.
    */
   void write_pixels(unsigned char*) const;
+
+  /// Create hard copy of the matrix.
+  std::unique_ptr<DataArray> clone() const override;
   
   /**
    * Output stream operator. Used to write the matrix to console or to a file.

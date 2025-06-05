@@ -210,7 +210,10 @@ class Vector : public DataArray {
    * @param n Number of columns of the resulting tensor.
    */
   Tensor reshape(size_t, size_t, size_t) const;
-    
+
+  /// Create hard copy of the vector.
+  std::unique_ptr<DataArray> clone() const override;
+  
   /**
    * Output stream operator. Used to write the vector to console or to a file.
    *

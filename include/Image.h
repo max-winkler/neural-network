@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Matrix.h"
+#include "Tensor.h"
 
 /**
  * Class used to store images that can be read from a PNG file and converted into a
@@ -33,6 +34,16 @@ class Image
    */
   static Image from_matrix(const Matrix&);
 
+  /**
+   * Create a gray-scale image from a tensor having entries between 0 (black) and 1 (white).
+   * The tensor slices are concatenated horizontally in the resulting image.
+   *
+   * @brief Create image from tensor.
+   *
+   * @param T The tensors whose slices represent the gray-scale images.
+   */
+  static Image from_tensor(const Tensor&);
+  
   /**
    * Write image into a file.
    *

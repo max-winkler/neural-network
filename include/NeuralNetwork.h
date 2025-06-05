@@ -138,6 +138,14 @@ class NeuralNetwork
   Vector eval(const DataArray& input) const;
 
   /**
+   * Evaluates the neural network for the given input and returns the output of all layers in a vector.
+   * Used for debugging purposes.
+   *
+   * @param input The input data array (Vector, Matrix or Tensor)
+   */
+  std::vector<std::unique_ptr<DataArray>> getLayerOutputs(const DataArray& input) const;
+
+  /**
    * Train the neural network for the given training data. This method implements a mini batch stochastic gradient
    * using a forward propagation implemented in evalFunctional() and for the gradient computation a backward
    * propagation implemented in evalGradient().
@@ -147,38 +155,6 @@ class NeuralNetwork
    * values will be used.
    */
   void train(const std::vector<TrainingData>& data, OptimizationOptions options=OptimizationOptions());
-
-  /**
-   * Evaluate the loss function used for the training of the neural network for a set of training data.
-   * 
-   * @param data The training data set used for the training.
-   * @param y Auxiliary output variable that will be reused in evalGradient().
-   * @param z Auxiliary output variable that will be reused in evalGradient().
-   * @param batch_idx Indices of the training samples belonging to the batch for which we want to 
-   * evaluate the neural network.
-   * @param options Collection of parameters for fine tuning of the optimization algorithm.
-   */
-  float evalFunctional(const std::vector<TrainingData>& data,
-		    std::vector<std::vector<DataArray*>>& y,
-		    std::vector<std::vector<DataArray*>>& z,
-		    const std::vector<size_t>& batch_idx,
-		    OptimizationOptions options) const;
-  
-  /**
-   * Evaluate the gradient of the loss function used for the training of the neural network.
-   *
-   * @param data The training data set used for the training.
-   * @param y Auxiliary data produced in evalFunctional() that can be reused here.
-   * @param z Auxiliary data produced in evalFunctional() that can be reused here.
-   * @param batch_idx Indices of the training samples belonging to the batch for which we want to 
-   * evaluate the neural network.
-   * @param options Collection of parameters for fine tuning of the optimization algorithm.
-   */
-  NeuralNetwork evalGradient(const std::vector<TrainingData>& data,
-			      const std::vector<std::vector<DataArray*>>& y,
-			      const std::vector<std::vector<DataArray*>>& z,
-			      const std::vector<size_t>& batch_idx,
-			      OptimizationOptions options) const;
 
   /**
    * Returns the scalar product of two neural networks. This is basically the sum of the 
@@ -212,6 +188,39 @@ class NeuralNetwork
   static NeuralNetwork load(const std::string&);
   
  private:
+
+  /**
+   * Evaluate the loss function used for the training of the neural network for a set of training data.
+   * 
+   * @param data The training data set used for the training.
+   * @param y Auxiliary output variable that will be reused in evalGradient().
+   * @param z Auxiliary output variable that will be reused in evalGradient().
+   * @param batch_idx Indices of the training samples belonging to the batch for which we want to 
+   * evaluate the neural network.
+   * @param options Collection of parameters for fine tuning of the optimization algorithm.
+   */
+  float evalFunctional(const std::vector<TrainingData>& data,
+		    std::vector<std::vector<DataArray*>>& y,
+		    std::vector<std::vector<DataArray*>>& z,
+		    const std::vector<size_t>& batch_idx,
+		    OptimizationOptions options) const;
+  
+  /**
+   * Evaluate the gradient of the loss function used for the training of the neural network.
+   *
+   * @param data The training data set used for the training.
+   * @param y Auxiliary data produced in evalFunctional() that can be reused here.
+   * @param z Auxiliary data produced in evalFunctional() that can be reused here.
+   * @param batch_idx Indices of the training samples belonging to the batch for which we want to 
+   * evaluate the neural network.
+   * @param options Collection of parameters for fine tuning of the optimization algorithm.
+   */
+  NeuralNetwork evalGradient(const std::vector<TrainingData>& data,
+			      const std::vector<std::vector<DataArray*>>& y,
+			      const std::vector<std::vector<DataArray*>>& z,
+			      const std::vector<size_t>& batch_idx,
+			      OptimizationOptions options) const;
+  
   // Layer list of neural network
   std::vector<std::unique_ptr<Layer>> layers;
 

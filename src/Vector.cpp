@@ -81,6 +81,11 @@ Tensor Vector::reshape(size_t d, size_t m, size_t n) const
   return Tensor(d, m, n, data);
 }
 
+std::unique_ptr<DataArray> Vector::clone() const
+{
+  return std::make_unique<Vector>(*this);
+}
+
 Vector Vector::operator+(const Vector& other) const
 {
   if(size != other.size)

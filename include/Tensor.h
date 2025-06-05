@@ -318,7 +318,9 @@ class Tensor : public DataArray
    */
   TensorSlice operator[](size_t);
   TensorSlice operator[](size_t) const;
-  
+
+  /// Create hard copy of the tensor.
+  std::unique_ptr<DataArray> clone() const override;
   
  private:
   /**

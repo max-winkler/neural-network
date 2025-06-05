@@ -2,6 +2,7 @@
 #define _DATA_ARRAY_H_
 
 #include <iostream>
+#include <memory>
 
 /**
  * Base class for all types of tensors (vectors, matrices, etc.). 
@@ -66,6 +67,11 @@ class DataArray
    */
   size_t nEntries() const;
 
+  /**
+   * Create a hard copy of the DataArray.
+   */
+  virtual std::unique_ptr<DataArray> clone() const = 0;
+  
   // TODO: Add a method apply(std::function) for element-wise application of functions, e.g.,
   // the activation function.
  protected:

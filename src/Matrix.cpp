@@ -295,6 +295,11 @@ void Matrix::write_pixels(unsigned char* pixels) const
     *pixel_ptr = (unsigned char)(255.0f*std::max(0.0f, std::min(1.0f, (*data_ptr))));
 }
 
+std::unique_ptr<DataArray> Matrix::clone() const
+{
+  return std::make_unique<Matrix>(*this);
+}
+
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix)
 {
   size_t m = matrix.nRows();

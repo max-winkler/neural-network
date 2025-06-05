@@ -187,6 +187,32 @@ Vector NeuralNetwork::eval(const DataArray& x) const
   return y;
 }
 
+std::vector<std::unique_ptr<DataArray>> NeuralNetwork::getLayerOutputs(const DataArray& input) const
+{
+  std::vector<std::unique_ptr<DataArray>> output;
+  
+  switch(layers.front()->layer_type)
+    {
+    case LayerType::VECTOR_INPUT:
+      // Create vector in first layer
+      output.emplace_back(std::make_unique<Vector>(dynamic_cast<const Vector&>(input)));
+      break;
+    case LayerType::MATRIX_INPUT:
+      output.emplace_back(std::make_unique<Tensor>(dynamic_cast<const Tensor&>(input)));
+      break;      
+    }
+  
+  for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)
+    {
+      std::unique_ptr<DataArray> x_new = output.back()->clone();
+      DataArray* x_ptr = x_new.get();
+      (*layer_it)->eval(x_ptr);      
+      output.emplace_back(std::move(x_new));
+    }
+
+  return output;
+}
+
 void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
 {
   // Parameters for momentum method

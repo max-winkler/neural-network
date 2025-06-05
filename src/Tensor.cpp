@@ -197,6 +197,11 @@ TensorSlice Tensor::operator[](size_t c) const
   return TensorSlice(m, size/m/d, data + c*m*n);
 }
 
+std::unique_ptr<DataArray> Tensor::clone() const
+{
+  return std::make_unique<Tensor>(*this);
+}
+
 ScaledTensor::ScaledTensor(float scale, const Tensor& tensor) : scale(scale), tensor(&tensor) {}
 
 ScaledTensor operator*(float scale, const Tensor& tensor)

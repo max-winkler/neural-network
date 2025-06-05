@@ -6,6 +6,7 @@
 #include "TrainingData.h"
 #include "NeuralNetwork.h"
 #include "MNIST.h"
+#include "Image.h"
 
 int main()
 {
@@ -32,7 +33,11 @@ int main()
                 << training_label_file << ".\n";
       return -1;
     }
-    
+
+  // For testing: Remove some training data
+  while(training_data.size() > 1000)
+    training_data.pop_back();
+  
   // Console output
   std::cout << "Data set:\n";
   std::cout << " images : " << n_images << std::endl;
@@ -62,8 +67,8 @@ int main()
   net.addInputLayer(width, height); // input layer
   net.addConvolutionLayer(16, 4, ActivationFunction::RELU, 1, 0);
   net.addPoolingLayer(3, 2);
-  net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
-  net.addPoolingLayer(2);
+  //net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
+  //net.addPoolingLayer(2);
   net.addFlatteningLayer();
   net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID);
   net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID);
@@ -79,31 +84,48 @@ int main()
   options.batch_size    = 100;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 10;
+  options.epochs        = 1;
   options.learning_rate = 0.005;
   
   net.train(training_data, options);
+    
+  // Test for 1 training set
+  std::vector<std::unique_ptr<DataArray>> outputs = net.getLayerOutputs(*(test_data.front().x));
+  int ctr = 0;
+  for(const auto& y: outputs)
+    {
+      if (auto tensor = dynamic_cast<Tensor*>(y.get()))
+        {
+          Image img = Image::from_tensor(*tensor);
+          
+          std::stringstream ss;
+          ss << "output_" << ctr << ".png";
+          img.write(ss.str());
+        }
+      ++ctr;
+    }
   
   // Compare to test data
   int correct = 0;
   int wrong   = 0;
+  
   for(auto data = test_data.begin(); data != test_data.end(); ++data)
     {
       Vector p = net.eval(*(data->x));
       if(p.indMax() != data->y.indMax())
         {
-	/*
-	std::cout << "Wrong classification detected.\n";
-	std::cout << "Image: \n" << dynamic_cast<const Matrix&>(*(data->x));
-	std::cout << "This is number " << data->y.indMax()
-		<< " but network predicts " << p.indMax() << ".\n";
-	std::cout << p << std::endl;
-	
-	char a;
-	std::cout << "Press enter to continue.\n";
-	std::cin >> a;
-	*/
-	wrong++;
+          /*
+            std::cout << "Wrong classification detected.\n";
+            std::cout << "Image: \n" << dynamic_cast<const Matrix&>(*(data->x));
+            std::cout << "This is number " << data->y.indMax()
+            << " but network predicts " << p.indMax() << ".\n";
+            std::cout << p << std::endl;
+            
+            char a;
+            std::cout << "Press enter to continue.\n";
+            std::cin >> a;
+          */
+          wrong++;
         }
       else
         correct++;
