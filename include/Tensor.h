@@ -321,6 +321,9 @@ class Tensor : public DataArray
 
   /// Create hard copy of the tensor.
   std::unique_ptr<DataArray> clone() const override;
+
+  /// Console output of tensor
+  friend std::ostream& operator<<(std::ostream&, const Tensor&);
   
  private:
   /**

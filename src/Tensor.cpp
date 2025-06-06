@@ -1,4 +1,5 @@
 #include <cstring>
+#include <iomanip>
 
 #include "Tensor.h"
 #include "Vector.h"
@@ -200,6 +201,26 @@ TensorSlice Tensor::operator[](size_t c) const
 std::unique_ptr<DataArray> Tensor::clone() const
 {
   return std::make_unique<Tensor>(*this);
+}
+
+std::ostream& operator<<(std::ostream& os, const Tensor& T)
+{
+  size_t c = T.nChannels();
+  size_t m = T.nRows();
+  size_t n = T.nCols();
+
+  for(size_t d=0; d<c; ++d)
+    {
+      std::cout << "Channel: " << d << std::endl;
+      for(size_t i=0; i<m; ++i)
+        {
+	os << "[ ";
+	for(size_t j=0; j<n; ++j)
+	  os << std::left << std::setw(7) << T(d,i,j) << " ";
+	os << "]\n";
+        }
+    }
+  return os;
 }
 
 ScaledTensor::ScaledTensor(float scale, const Tensor& tensor) : scale(scale), tensor(&tensor) {}

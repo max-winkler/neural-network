@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 #include "MNIST.h"
 
@@ -80,11 +81,14 @@ int MNIST::read(const std::string& image_file, const std::string& label_file,
 
       /*
       // Console output for testing only
+      if(m == 0)
+        {
       for(int i=0; i<height; ++i)
         {
 	for(int j=0; j<width; ++j)
 	  std::cout << std::setw(4) << (int)(pixel_buffer[width*i+j]);
 	std::cout << std::endl;
+        }
         }
       */
       

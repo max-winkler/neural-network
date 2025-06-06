@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <fstream>
 
 #include "Matrix.h"
 #include "TrainingData.h"
@@ -10,6 +11,8 @@
 
 int main()
 {
+  std::string xml_file("digit_rec_network.xml");
+  
   // Read training data
   int width, height, n_images, n_classes;
   std::vector<TrainingData> training_data;
@@ -33,10 +36,6 @@ int main()
                 << training_label_file << ".\n";
       return -1;
     }
-
-  // For testing: Remove some training data
-  while(training_data.size() > 1000)
-    training_data.pop_back();
   
   // Console output
   std::cout << "Data set:\n";
@@ -64,45 +63,61 @@ int main()
   
   // Create neural network
   NeuralNetwork net;
-  net.addInputLayer(width, height); // input layer
-  net.addConvolutionLayer(16, 4, ActivationFunction::RELU, 1, 0);
-  net.addPoolingLayer(3, 2);
-  //net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
-  //net.addPoolingLayer(2);
-  net.addFlatteningLayer();
-  net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID);
-  net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID);
-  net.addClassificationLayer(n_classes); // output layer
-  
-  net.initialize();
-  
-  // Output neural network structure
-  std::cout << net;
 
-  OptimizationOptions options;
-  options.loss_function = OptimizationOptions::LossFunction::MSE;
-  options.batch_size    = 100;
-  options.max_iter      = 1e4;
-  options.output_every  = 10;
-  options.epochs        = 1;
-  options.learning_rate = 0.005;
-  
-  net.train(training_data, options);
-    
-  // Test for 1 training set
-  std::vector<std::unique_ptr<DataArray>> outputs = net.getLayerOutputs(*(test_data.front().x));
-  int ctr = 0;
-  for(const auto& y: outputs)
+  std::ifstream fs(xml_file.c_str());
+  if(!fs.good())
     {
-      if (auto tensor = dynamic_cast<Tensor*>(y.get()))
+      std::cout << "No neural network XML file exists. Create and training new network.\n";      
+      
+      net.addInputLayer(width, height); // input layer
+      net.addConvolutionLayer(16, 4, ActivationFunction::RELU, 1, 0);
+      net.addPoolingLayer(3, 2);
+      //net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
+      //net.addPoolingLayer(2);
+      net.addFlatteningLayer();
+      net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID);
+      net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID);
+      net.addClassificationLayer(n_classes); // output layer
+  
+      net.initialize();
+  
+      // Output neural network structure
+      std::cout << net;
+
+      OptimizationOptions options;
+      options.loss_function = OptimizationOptions::LossFunction::MSE;
+      options.batch_size    = 100;
+      options.max_iter      = 1e4;
+      options.output_every  = 10;
+      options.epochs        = 10;
+      options.learning_rate = 0.005;
+  
+      net.train(training_data, options);
+    }
+  else
+    {
+      fs.close();
+      std::cout << "Loaded neural network from XML file\n";
+      net = NeuralNetwork::load(xml_file);
+    }
+  
+  // Test for 1 training set
+  for(int i=0; i<10; ++i)
+    {
+      std::vector<std::unique_ptr<DataArray>> outputs = net.getLayerOutputs(*(test_data[i].x));
+      int ctr = 0;
+      for(const auto& y: outputs)
         {
-          Image img = Image::from_tensor(*tensor);
-          
-          std::stringstream ss;
-          ss << "output_" << ctr << ".png";
-          img.write(ss.str());
+	if (auto tensor = dynamic_cast<Tensor*>(y.get()))
+	  {
+	    Image img = Image::from_tensor(*tensor);
+	    
+	    std::stringstream ss;
+	    ss << "output_" << ctr << "_" << i << ".png";
+	    img.write(ss.str());
+	  }
+	++ctr;
         }
-      ++ctr;
     }
   
   // Compare to test data
@@ -133,7 +148,7 @@ int main()
   std::cout << "Correctly classified : " << correct << " (" << (float)correct/n_test*100 << "%)\n";
   std::cout << "Wrongly classified   : " << wrong << " (" << (float)wrong/n_test*100 << "%)\n";
 
-  net.save("network.dat");
+  net.save(xml_file.c_str());
   
   return 0;
 }

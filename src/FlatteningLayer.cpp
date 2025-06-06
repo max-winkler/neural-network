@@ -12,8 +12,10 @@ FlatteningLayer::FlatteningLayer(size_t dim1, size_t dim2, size_t dim3)
 void FlatteningLayer::eval(DataArray*& x_) const
 {  
   Tensor* x = dynamic_cast<Tensor*>(x_);
-  x_ = new Vector(x->flatten());
-  delete x;
+  DataArray* x_new = new Vector(x->flatten());
+  
+  delete x_;
+  x_ = x_new;
 }
 
 void FlatteningLayer::forward_propagate(const DataArray& x_, DataArray& z_, DataArray& y_) const

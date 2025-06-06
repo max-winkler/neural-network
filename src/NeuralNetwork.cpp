@@ -204,10 +204,16 @@ std::vector<std::unique_ptr<DataArray>> NeuralNetwork::getLayerOutputs(const Dat
   
   for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)
     {
-      std::unique_ptr<DataArray> x_new = output.back()->clone();
+      DataArray* x_ptr = output.back()->clone().release(); // Übergabe an rohen Pointer
+      (*layer_it)->eval(x_ptr);                            // eval setzt x_ptr auf neues Objekt
+      output.emplace_back(std::unique_ptr<DataArray>(x_ptr));
+ 
+      /*      std::unique_ptr<DataArray> x_new = output.back()->clone();
       DataArray* x_ptr = x_new.get();
-      (*layer_it)->eval(x_ptr);      
+      (*layer_it)->eval(x_ptr);
+      x_new.reset(x_ptr);
       output.emplace_back(std::move(x_new));
+      */
     }
 
   return output;

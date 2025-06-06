@@ -238,8 +238,6 @@ std::map<std::string, std::pair<const float*, std::vector<size_t>>> Convolutiona
 
 void ConvolutionalLayer::set_weights(const std::map<std::string, std::pair<std::vector<float>, std::vector<size_t>>>& weights)
 {
-  size_t out_dim = weights.at("weight").second[0];
-  size_t in_dim = weights.at("weight").second[1];
   size_t F = K.size();
   
   // Set bias vector

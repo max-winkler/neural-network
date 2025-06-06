@@ -49,8 +49,7 @@ Image Image::read(const std::string& filename)
     png_set_gray_to_rgb(png);
 
   png_read_update_info(png, info);
-
-  // UNCLEAR: Did I get it right? We have 4 bytes per Pixel now? RGB and A?
+  
   if(4*width != png_get_rowbytes(png,info))    
     std::cerr << "ERROR: Unexpected behavior in Image::read function.\n";      
     
@@ -154,12 +153,12 @@ Image Image::from_tensor(const Tensor& T)
           float color = std::max(std::min(1.0f, T(c,i,j)), 0.0f);
           unsigned char value = static_cast<unsigned char>(color * 255.0f);
           
-          size_t index = (i*width*channels + c*width + j);
+          size_t index = 4*(i*width*channels + c*width + j);
 
           img_data[index + 0] = value; // R
-          img_data[index + 0] = value; // G          
-          img_data[index + 0] = value; // B
-          img_data[index + 0] = 255; // A          
+          img_data[index + 1] = value; // G          
+          img_data[index + 2] = value; // B
+          img_data[index + 3] = 255; // A          
         }
   return Image(width*channels, height, std::move(img_data));
 }
