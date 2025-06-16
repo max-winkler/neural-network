@@ -51,7 +51,7 @@ std::unique_ptr<Layer> LayerFactory::create(LayerType type,
       }
       break;
     case FLATTENING:
-      layer = new FlatteningLayer(dim[0], dim[1], dim[2]);
+      layer = new FlatteningLayer(in_dim[0], in_dim[1], in_dim[2]);
       break;
     default:
       std::cerr << "ERROR: LayerFactory can not create layers of type " << type << std::endl;

@@ -80,26 +80,26 @@ int main()
       net.addClassificationLayer(n_classes); // output layer
   
       net.initialize();
-  
-      // Output neural network structure
-      std::cout << net;
-
-      OptimizationOptions options;
-      options.loss_function = OptimizationOptions::LossFunction::MSE;
-      options.batch_size    = 100;
-      options.max_iter      = 1e4;
-      options.output_every  = 10;
-      options.epochs        = 10;
-      options.learning_rate = 0.005;
-  
-      net.train(training_data, options);
     }
   else
     {
       fs.close();
-      std::cout << "Loaded neural network from XML file\n";
+      std::cout << "Loaded (pre-trained) neural network from XML file\n";
       net = NeuralNetwork::load(xml_file);
     }
+
+  // Output neural network structure
+  std::cout << net;
+
+  OptimizationOptions options;
+  options.loss_function = OptimizationOptions::LossFunction::MSE;
+  options.batch_size    = 100;
+  options.max_iter      = 1e4;
+  options.output_every  = 10;
+  options.epochs        = 1;
+  options.learning_rate = 0.005;
+  
+  net.train(training_data, options);
   
   // Test for 1 training set
   for(int i=0; i<10; ++i)
