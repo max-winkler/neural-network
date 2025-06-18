@@ -11,11 +11,11 @@ Random Random::create_uniform_random_generator()
   return random;  
 }
 
-Random Random::create_normal_random_generator()
+Random Random::create_normal_random_generator(float ex, float stdev)
 {
   Random random;
   random.rnd_gen = std::mt19937(std::random_device()());
-  random.random_normal = std::normal_distribution<float>(0.0f, 1.0f);
+  random.random_normal = std::normal_distribution<float>(ex, stdev);
   random.distribution = DISTRIBUTION_NORMAL;
   return random;
 }
