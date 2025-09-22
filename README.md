@@ -20,10 +20,11 @@ The following packages are required:
 * libpng
 * blas
 * cblas (if not included in blas)
+* pugixml
 
 ## Compilation
 
-To build the library and all test examples simplfy type
+To build the library and all test examples simply type
 
 ```
 make
