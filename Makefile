@@ -25,13 +25,18 @@ TESTS = 	test/LinAlg.o \
 	test/Convolution.o \
 	test/Pooling.o
 
+# Compiler
+CC	  = g++
+
+# Includes
 CPP_INCLUDE = -Iinclude
 
+# Compilter Flags
 CPP_DEBUG_FLAGS = -g -O0
 CPP_RELEASE_FLAGS = -O3
-
 CPP_FLAGS = ${CPP_RELEASE_FLAGS}
 
+# Libraries
 LIBS = -L. -lnn -lpng -lblas -lpugixml
 
 
@@ -53,16 +58,16 @@ MNIST_FILES := $(addprefix $(MNIST_FILE_DIR)/,$(patsubst %.gz,%,$(notdir $(MNIST
 EXISTING_FILES := $(wildcard $(MNIST_FILES))
 
 %.o: %.cpp
-	g++ -c $< ${CPP_INCLUDE} ${CPP_FLAGS} -o $@
+	${CC} -c $< ${CPP_INCLUDE} ${CPP_FLAGS} -o $@
 
 
 test: libnn $(TESTS)
-	g++ test/LinAlg.o ${LIBS} ${CPP_FLAGS} -o linalg_test
-	g++ test/NeuralNetwork.o ${LIBS} ${CPP_FLAGS} -o neuralnetwork_test
-	g++ test/Classification.o ${LIBS} ${CPP_FLAGS} -o classification_test
-	g++ test/Convolution.o ${LIBS} ${CPP_FLAGS} -o convolution_test
-	g++ test/DigitRecognition.o ${LIBS} ${CPP_FLAGS} -o digitrecognition_test
-	g++ test/Pooling.o ${LIBS} ${CPP_FLAGS} -o pooling_test
+	${CC} test/LinAlg.o ${LIBS} ${CPP_FLAGS} -o linalg_test
+	${CC} test/NeuralNetwork.o ${LIBS} ${CPP_FLAGS} -o neuralnetwork_test
+	${CC} test/Classification.o ${LIBS} ${CPP_FLAGS} -o classification_test
+	${CC} test/Convolution.o ${LIBS} ${CPP_FLAGS} -o convolution_test
+	${CC} test/DigitRecognition.o ${LIBS} ${CPP_FLAGS} -o digitrecognition_test
+	${CC} test/Pooling.o ${LIBS} ${CPP_FLAGS} -o pooling_test
 
 # Target to create the output directory
 $(MNIST_FILE_DIR):
@@ -83,7 +88,7 @@ $(MNIST_FILES): $(MNIST_FILES_GZ)
 
 ressources: $(MNIST_FILES)
 libnn: $(OBJ)
-	ar rvs libnn.a $(OBJ)
+	ar rs libnn.a $(OBJ)
 default: libnn test
 
 debug: CPP_FLAGS = $(CPP_DEBUG_FLAGS)
