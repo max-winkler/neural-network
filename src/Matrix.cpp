@@ -1,7 +1,6 @@
 #include <iomanip>
 #include <cstring>
 #include <cblas.h>
-#include <cmath>
 
 #include "Matrix.h"
 #include "Vector.h"

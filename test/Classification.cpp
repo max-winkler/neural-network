@@ -1,9 +1,7 @@
 #include <iostream>
-#include <iomanip>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
-#include <fstream>
 #include <png.h>
 
 #include "NeuralNetwork.h"

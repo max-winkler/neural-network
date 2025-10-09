@@ -1,5 +1,3 @@
-#include <iomanip>
-
 #include "Layer.h"
 
 const std::unordered_map<LayerType, std::string> Layer::LayerName =
