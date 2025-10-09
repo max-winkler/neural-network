@@ -1,5 +1,6 @@
 #include "Image.h"
 
+#include <algorithm>
 #include <iostream>
 
 Image::Image(int width, int height, std::vector<unsigned char>&& data)
@@ -99,6 +100,8 @@ void Image::write(const std::string& filename)
 
   if (png && info)
     png_destroy_write_struct(&png, &info);
+
+  fclose(fp);
 }
 
 Matrix Image::to_matrix() const
@@ -178,9 +181,9 @@ Image Image::from_rgb_tensor(const Tensor &T)
   std::vector<unsigned char> img_data(4 * width * height);
   for (size_t i = 0; i < height; ++i)    
     for (size_t j = 0; j < width; ++j) {
-      float red   = std::max(std::min(1.0f, T(0, i, j)), 0.0f);
-      float green = std::max(std::min(1.0f, T(1, i, j)), 0.0f);
-      float blue  = std::max(std::min(1.0f, T(2, i, j)), 0.0f);
+      float red   = std::clamp(T(0, i, j), 0.0f, 1.0f);
+      float green = std::clamp(T(1, i, j), 0.0f, 1.0f);
+      float blue  = std::clamp(T(2, i, j), 0.0f, 1.0f);
 
       size_t index = 4 * (i * width + j);
       
