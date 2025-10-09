@@ -20,8 +20,8 @@ void VectorInputLayer::forward_propagate(const DataArray& x_, DataArray& z_, Dat
 }
 
 std::unique_ptr<Layer> VectorInputLayer::backward_propagate(std::vector<DataArray*>& DY,
-							    const std::vector<DataArray*>& Y,
-							    const std::vector<DataArray*>& Z) const
+						const std::vector<DataArray*>& Y,
+						const std::vector<DataArray*>& Z) const
 {
   VectorInputLayer output(dim[0]);
   return std::unique_ptr<Layer>(new VectorInputLayer(dim[0]));

@@ -7,6 +7,7 @@
 #include <png.h>
 
 #include "NeuralNetwork.h"
+#include "Image.h"
 
 int main()
 { 
@@ -58,58 +59,28 @@ int main()
   net.train(training_data, options);
   net.save("test.xml");
   
-  // Write classification to PNG file
-  FILE *fp = fopen("classification.png", "wb");
-  if(!fp)
-    {
-      std::cerr << "Error: Could not open image file\n";
-      return -1;      
-    }
-
+  // Generate output image
   const int width=512, height=512;
-  
-  png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  png_infop info = png_create_info_struct(png);
-  
-  png_init_io(png, fp);
+  Tensor output(3, height, width);
 
-  png_set_IHDR(png, info, width, height, 8,
-	     PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-	     PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT
-	     );
-
-  png_write_info(png, info);
-
-  png_bytep* row_pointers = new png_bytep[height];  
-  
   for(int i=0; i<height; ++i)
-    {
-      row_pointers[height-1-i] = new png_byte[3*width];
-      png_bytep row = row_pointers[height-1-i];
-      
+    {      
       for(int j=0; j<width; ++j)
         {
 	float x = float(j)/(width-1);
 	float y = float(i)/(height-1);
 	
-	Vector c = net.eval(Vector({x, y}));        
-	
-	for(int m=0; m<3; ++m)	  
-	  row[3*j + m] = png_byte(255*c[m]);
+	Vector c = net.eval(Vector({x, y}));
+
+        for (int m = 0; m < 3; ++m) {
+	output(m, i, j) = c[m];
         }
-    }
-    
-  png_write_image(png, row_pointers);
-  png_write_end(png, NULL);
-
-  if (png && info)
-    png_destroy_write_struct(&png, &info);
-
-  for(int i=0; i<height; ++i)
-    delete[] row_pointers[i];
-  delete[] row_pointers;
-
-  fclose(fp);
+      }
+  }
+  
+  // Write image to file
+  Image output_image = Image::from_rgb_tensor(output);
+  output_image.write("classification.png");
   
   while(true)
     {

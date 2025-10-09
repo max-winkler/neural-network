@@ -1,6 +1,7 @@
 #include "NeuralNetwork.h"
 
 // Include layer classes
+#include "DataArray.h"
 #include "VectorInputLayer.h"
 #include "MatrixInputLayer.h"
 #include "FullyConnectedLayer.h"
@@ -235,7 +236,7 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 
   // Random number generator for shuffling batches
   Random rnd_gen = Random::create_mt19937_random_generator();
-  
+
   // Allocate memory for auxiliary vectors
   for(size_t l=0; l<layers.size(); ++l)
     {
@@ -252,14 +253,13 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 	      // TODO: Are y and z really needed in input layers?	      
 	      y[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
 	      z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
-	      
 	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
 	    case CLASSIFICATION:
 	    case FLATTENING:
-	      z[l][idx] = new Vector(layers[l]->dim[0]);
 	      y[l][idx] = new Vector(layers[l]->dim[0]);
+	      z[l][idx] = new Vector(layers[l]->dim[0]);	      
 	      break;
 	      
 	    default:
@@ -401,11 +401,11 @@ float NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
       break;
     }
 
-  size_t l = 0;
-  for(auto layer = layers.begin()+1; layer != layers.end(); ++layer, ++l)
+  size_t l = 1;
+  for(auto layer = layers.begin() + 1; layer != layers.end(); ++layer, ++l)
     {
       for(size_t idx=0; idx<options.batch_size; ++idx)
-	(*layer)->forward_propagate(*y[l][idx], *z[l+1][idx], *y[l+1][idx]);			     
+	(*layer)->forward_propagate(*y[l-1][idx], *z[l][idx], *y[l][idx]);     
     }
   
   // Evaluate objective functional
@@ -479,9 +479,14 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	}
     }
 
-  // Backward propagation (desired version)
-  for(size_t l=layers.size(); l-- >0; )
+  // Backward propagation
+  for(size_t l=layers.size(); l-- > 1; )
     grad_net.layers[l] = layers[l]->backward_propagate(Dy, y[l-1], z[l]);
+
+  // For input layer (independent of Y and Z)
+  grad_net.layers[0] = layers[0]->backward_propagate(
+      Dy, std::vector<DataArray *>(), std::vector<DataArray *>());
+  
   
   for(size_t idx=0; idx<options.batch_size; ++idx)         
     delete Dy[idx];    

@@ -35,14 +35,26 @@ class Image
   static Image from_matrix(const Matrix&);
 
   /**
-   * Create a gray-scale image from a tensor having entries between 0 (black) and 1 (white).
-   * The tensor slices are concatenated horizontally in the resulting image.
+   * Create a gray-scale image from a tensor having entries between 0 (black)
+   * and 1 (white). The tensor slices are concatenated horizontally in
+   * the resulting image.
    *
    * @brief Create image from tensor.
    *
-   * @param T The tensors whose slices represent the gray-scale images.
+   * @param T The tensor whose slices represent the gray-scale images.
    */
   static Image from_tensor(const Tensor&);
+
+  /**
+   * Create a color image from a 3-slice tensor. The channeentries
+   * (0,i,j), (1,i,j) and (2,i,j) contain the red/green/blue value of
+   * the pixel in row i and column j.
+   *
+   * @brief Create color image from 3-slice tensor.
+   *
+   * @param T The tensor representing the image.
+   */
+  static Image from_rgb_tensor(const Tensor &);
   
   /**
    * Write image into a file.

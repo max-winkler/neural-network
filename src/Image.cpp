@@ -162,3 +162,35 @@ Image Image::from_tensor(const Tensor& T)
         }
   return Image(width*channels, height, std::move(img_data));
 }
+
+Image Image::from_rgb_tensor(const Tensor &T)
+{
+  size_t channels = T.nChannels();  
+  size_t height   = T.nRows();
+  size_t width = T.nCols();
+
+  if (channels != 3) {
+    std::cerr << "ERROR: The tensor should have 3 channels but it has "
+              << channels << std::endl;
+    return Image(0,0,std::vector<unsigned char>());
+  }
+
+  std::vector<unsigned char> img_data(4 * width * height);
+  for (size_t i = 0; i < height; ++i)    
+    for (size_t j = 0; j < width; ++j) {
+      float red   = std::max(std::min(1.0f, T(0, i, j)), 0.0f);
+      float green = std::max(std::min(1.0f, T(1, i, j)), 0.0f);
+      float blue  = std::max(std::min(1.0f, T(2, i, j)), 0.0f);
+
+      size_t index = 4 * (i * width + j);
+      
+      img_data[index + 0] = static_cast<unsigned char>(red * 255.0f);
+      img_data[index + 1] = static_cast<unsigned char>(green * 255.0f);
+      img_data[index + 2] = static_cast<unsigned char>(blue * 255.0f);
+      img_data[index + 3] = static_cast<unsigned char>(255.0f);
+    }
+
+  return Image(width, height, std::move(img_data));
+}
+
+
