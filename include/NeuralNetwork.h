@@ -2,7 +2,6 @@
 #define _NEURALNETWORK_H_
 
 #include <vector>
-#include <random>
 #include <memory>
 
 #include "Layer.h"
