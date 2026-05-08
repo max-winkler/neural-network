@@ -3,7 +3,6 @@
 #include "FullyConnectedLayer.h"
 #include "Random.h"
 #include "mpi.h"
-#include "ompi/mpi/cxx/mpicxx.h"
 
 FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFunction act)
   : Layer(std::vector<size_t>(1, dim), LayerType::FULLY_CONNECTED),
