@@ -338,7 +338,9 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
 				 data_idx.begin() + start_idx + local_batch_size);
       
-      float f = evalFunctional(data, y, z, batch_data_idx, options);
+      float f_local = evalFunctional(data, y, z, batch_data_idx, options);
+      float f;
+      MPI_Allreduce(&f_local, &f, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
       
       NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
       
@@ -382,8 +384,8 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
 
   if(rank == 0)
     std::cout << "Learning process finished after "
-	    << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count()
-	    << "[ms]" << std::endl;
+	    << std::chrono::duration_cast<std::chrono::seconds>(end_time - begin_time).count()
+	    << "[s]" << std::endl;
   
   // Delete memory
   for(size_t l=0; l<layers.size(); ++l)
@@ -435,7 +437,7 @@ float NeuralNetwork::evalFunctional(const std::vector<TrainingData> &data,
       break;
       
     case MATRIX_INPUT:
-      for(size_t idx=0; idx<options.batch_size; ++idx)
+      for(size_t idx=0; idx<local_batch_size; ++idx)
 	{
 	  dynamic_cast<Tensor&>(*y[0][idx]) = dynamic_cast<Tensor&>(*data[data_indices[idx]].x);
 	}      
