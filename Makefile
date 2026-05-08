@@ -30,7 +30,7 @@ TESTS = 	test/LinAlg.o \
 CC	  = mpic++
 
 # Includes
-CPP_INCLUDE = -Iinclude
+CPP_INCLUDE = -Iinclude -I./
 
 # Compilter Flags
 CPP_DEBUG_FLAGS = -g -O0
