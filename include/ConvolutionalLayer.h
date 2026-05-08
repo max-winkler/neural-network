@@ -4,7 +4,6 @@
 #include "Layer.h"
 
 #include "Tensor.h"
-#include "Matrix.h"
 
 /**
  * Class for convolution layers handling matrix-value input and computing the convolution with a kernel
@@ -96,8 +95,19 @@ class ConvolutionalLayer : public Layer
   /**
    * Create another layer with the same dimension and zero parameters.
    */
-  std::unique_ptr<Layer> zeros_like() const override;  
+  std::unique_ptr<Layer> zeros_like() const override;
 
+  /**
+   * Synchronize the data among multiple processes.
+   */
+  void synchronize() override;
+
+  /**
+   * Synchronize the data among multiple pocesses by summing up all local
+   * weights.
+   */
+  
+  void synchronize_sum() override;  
   /**
    * Save the layer to text written in the output stream.
    */

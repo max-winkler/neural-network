@@ -35,6 +35,10 @@ const float& DataArray::operator[](size_t i) const
   return data[i];
 }
 
+float *DataArray::values() {
+  return data;
+}  
+
 float DataArray::inner(const DataArray& B) const
 {
   const DataArray& A = *this;

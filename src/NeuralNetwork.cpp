@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <sstream>
 #include <pugixml.hpp>
+#include <mpi.h>
 
 NeuralNetwork::NeuralNetwork()
   : initialized(false), layers()
@@ -148,13 +149,20 @@ void NeuralNetwork::addClassificationLayer(size_t width)
   layers.emplace_back(std::make_unique<FullyConnectedLayer>(width, layers.back()->dim[0], ActivationFunction::SOFTMAX));
 }
 
-void NeuralNetwork::initialize()
-{ 
-  // Build up weight matrices and bias vectors
-  auto it_pred = layers.begin();
-  
-  for(auto it = it_pred+1; it != layers.end(); ++it, ++it_pred)
-    (*it)->initialize();
+void NeuralNetwork::initialize() {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0)
+    {    
+      // Initialize weights with random values
+      for(auto it = layers.begin()+1; it != layers.end(); ++it)
+        (*it)->initialize();
+  }
+
+  // Communicate to other processes  
+  for (auto it = layers.begin() + 1; it != layers.end(); ++it)
+    (*it)->synchronize();
   
   initialized = true;
 }
@@ -176,6 +184,8 @@ Vector NeuralNetwork::eval(const DataArray& x) const
       break;
     case LayerType::MATRIX_INPUT:
       x_tmp = new Tensor(dynamic_cast<const Tensor&>(x));
+      break;
+    default:
       break;      
     }
   
@@ -200,6 +210,8 @@ std::vector<std::unique_ptr<DataArray>> NeuralNetwork::getLayerOutputs(const Dat
       break;
     case LayerType::MATRIX_INPUT:
       output.emplace_back(std::make_unique<Tensor>(dynamic_cast<const Tensor&>(input)));
+      break;
+    default:
       break;      
     }
   
@@ -220,8 +232,25 @@ std::vector<std::unique_ptr<DataArray>> NeuralNetwork::getLayerOutputs(const Dat
   return output;
 }
 
-void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOptions options)
-{
+void NeuralNetwork::train(const std::vector<TrainingData> &data,
+                          OptimizationOptions options) {
+
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  // Local batch size
+  if (options.batch_size % size != 0) {
+    if (rank == 0) {
+      std::cerr << "ERROR: batch_size (" << options.batch_size 
+	      << ") must be divisible by num_procs (" << size << ")\n";
+    }
+    MPI_Finalize();
+    exit(1);
+  }
+  
+  size_t local_batch_size = options.batch_size / size;
+  
   // Parameters for momentum method
   const float momentum = 0.9;
   
@@ -236,14 +265,15 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 
   // Random number generator for shuffling batches
   Random rnd_gen = Random::create_mt19937_random_generator();
-
+  rnd_gen.generator().seed(666); // same seed for all processes
+  
   // Allocate memory for auxiliary vectors
   for(size_t l=0; l<layers.size(); ++l)
     {
-      z[l] = std::vector<DataArray*>(options.batch_size);
-      y[l] = std::vector<DataArray*>(options.batch_size);
+      z[l] = std::vector<DataArray*>(local_batch_size);
+      y[l] = std::vector<DataArray*>(local_batch_size);
 
-      for(size_t idx = 0; idx < options.batch_size; ++idx)
+      for(size_t idx = 0; idx < local_batch_size; ++idx)
 	{	  
 	  switch(layers[l]->layer_type)
 	    {
@@ -278,75 +308,86 @@ void NeuralNetwork::train(const std::vector<TrainingData>& data, OptimizationOpt
 
   // Monitor algorithm progress  
   std::ofstream os;
-  os.open("training.csv");  
+  if(rank == 0)
+    os.open("training.csv");  
   
   // Save increment for momentum method
   NeuralNetwork increment = NeuralNetwork::createLike(*this);
 
-  float grad_norm = 1.;  
-  size_t i=0;
-  for(size_t epoch=0; epoch<options.epochs; ++epoch)
-    {
-      std::cout << "**************************************************************\n";
-      std::cout << "* Epoch " << epoch+1 << " of " << options.epochs << std::endl;
-      std::cout << "**************************************************************\n";
-
-      std::cout << std::setw(20) << "Batch"
-		<< std::setw(20) << "Functional value"
-		<< std::setw(20) << "gradient norm" << std::endl;
-      
-      std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
-      
-      for(size_t start_idx = 0;
-	  start_idx < n_data-options.batch_size+1;
-	  start_idx+= options.batch_size)
-        {	
-	  std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
-					     data_idx.begin() + start_idx + options.batch_size);
-
-	  float f = evalFunctional(data, y, z, batch_data_idx, options);
-      
-	  NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
-	
-	  grad_norm = grad_net.norm();
-
-	  if(grad_norm < 1.e-8 || std::isnan(grad_norm))
-	    {
-	      std::cerr << "WARNING: The norm of the gradient is " << grad_norm << ", so we might be stuck in a local minimum.\n";
-	      return;
-	    }
-
-	  // Console output
-	  if(i++%options.output_every == 0)
-	    {
-	      std::cout << std::setw(13) << start_idx/options.batch_size << " / "
-			<< std::setw(4) << n_data/options.batch_size
-			<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
-	    }
-	
-	  // for testing only. remove later
-	  // gradientTest(grad_net, data, data_idx, options);
-	  // return;
-
-	  // Update increment
-	  increment.update_increment(momentum, grad_net, options.learning_rate);
-
-	  // Subtract increment
-	  apply_increment(increment);
-        }
+  float grad_norm = 1.;
+  size_t i = 0;
+  
+  for (size_t epoch = 0; epoch < options.epochs; ++epoch) {
+    if (rank == 0)
+      {      
+        std::cout << "**************************************************************\n";
+        std::cout << "* Epoch " << epoch+1 << " of " << options.epochs << std::endl;
+        std::cout << "**************************************************************\n";
+        
+        std::cout << std::setw(20) << "Batch"
+	        << std::setw(20) << "Functional value"
+	        << std::setw(20) << "gradient norm" << std::endl;
     }
+    
+    std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
 
-  os.close();
+    for (size_t start_idx = 0; start_idx < n_data - options.batch_size + 1;
+         start_idx += options.batch_size) {
+      
+      size_t local_start_idx = start_idx + (rank * local_batch_size);
+      std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
+				 data_idx.begin() + start_idx + local_batch_size);
+      
+      float f = evalFunctional(data, y, z, batch_data_idx, options);
+      
+      NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
+      
+      grad_norm = grad_net.norm();
+      
+      if(grad_norm < 1.e-8 || std::isnan(grad_norm))
+        {
+	std::cerr << "WARNING: The norm of the gradient is " << grad_norm
+		<< ", so we might be stuck in a local minimum.\n";
+	MPI_Finalize();
+	exit(1);
+        }
+      
+      // Console output
+      if(i++%options.output_every == 0 && rank == 0)
+        {
+	std::cout << std::setw(13) << start_idx / local_batch_size << " / "
+		<< std::setw(4) << n_data / options.batch_size
+		<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
+        }
+
+      // Reduce local gradients
+      grad_net.synchronize_sum();
+        
+      // for testing only. remove later
+      // gradientTest(grad_net, data, data_idx, options);
+      // exit(1);
+      
+      // Update increment
+      increment.update_increment(momentum, grad_net, options.learning_rate);
+      
+      // Subtract increment
+      apply_increment(increment);
+    }
+  }
+
+  if(rank == 0)
+    os.close();
 
   std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
 
-  std::cout << "Learning process finished after "
+  if(rank == 0)
+    std::cout << "Learning process finished after "
 	    << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - begin_time).count()
 	    << "[ms]" << std::endl;
-
+  
   // Delete memory
   for(size_t l=0; l<layers.size(); ++l)
-    for(size_t idx = 0; idx < options.batch_size; ++idx)
+    for(size_t idx = 0; idx < local_batch_size; ++idx)
       {
 	delete y[l][idx];
 	delete z[l][idx];
@@ -371,19 +412,23 @@ void NeuralNetwork::apply_increment(const NeuralNetwork& increment)
     (*layer)->apply_increment(**inc_layer);    
 }
 
-float NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
-				     std::vector<std::vector<DataArray*>>& y,
-				     std::vector<std::vector<DataArray*>>& z,
-				     const std::vector<size_t>& data_indices,
-				     OptimizationOptions options) const
-{
+float NeuralNetwork::evalFunctional(const std::vector<TrainingData> &data,
+                                    std::vector<std::vector<DataArray *>> &y,
+                                    std::vector<std::vector<DataArray *>> &z,
+                                    const std::vector<size_t> &data_indices,
+                                    OptimizationOptions options) const {
+  
+  int size;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  size_t local_batch_size = options.batch_size / size;
+  
   size_t n_data = data.size();
 
   // Set initial layer
   switch(layers[0]->layer_type)
     {
     case VECTOR_INPUT:
-      for(size_t idx=0; idx<options.batch_size; ++idx)
+      for(size_t idx=0; idx<local_batch_size; ++idx)
 	{
 	  dynamic_cast<Vector&>(*y[0][idx]) = dynamic_cast<Vector&>(*data[data_indices[idx]].x);
 	}
@@ -404,13 +449,13 @@ float NeuralNetwork::evalFunctional(const std::vector<TrainingData>& data,
   size_t l = 1;
   for(auto layer = layers.begin() + 1; layer != layers.end(); ++layer, ++l)
     {
-      for(size_t idx=0; idx<options.batch_size; ++idx)
+      for(size_t idx=0; idx<local_batch_size; ++idx)
 	(*layer)->forward_propagate(*y[l-1][idx], *z[l][idx], *y[l][idx]);     
     }
   
   // Evaluate objective functional
   float f = 0.;
-  for(size_t idx=0; idx<options.batch_size; ++idx)
+  for(size_t idx=0; idx<local_batch_size; ++idx)
     {
       // Get true data and prediction
       const Vector& Y = data[data_indices[idx]].y;
@@ -448,14 +493,15 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 				  OptimizationOptions options) const
 {
   size_t n_data = data.size();
-
+  size_t local_batch_size = data_indices.size();
+  
   NeuralNetwork grad_net(n_layers());
   //NeuralNetwork grad_net = NeuralNetwork::createLike(*this);
     
-  std::vector<DataArray*> Dy(options.batch_size);
+  std::vector<DataArray*> Dy(local_batch_size);
   
   // Set final value in backpropagation
-  for(size_t idx=0; idx<options.batch_size; ++idx)
+  for(size_t idx=0; idx<local_batch_size; ++idx)
     {
       const Vector& Y = data[data_indices[idx]].y;
       const Vector& P = dynamic_cast<Vector&>(*y[layers.size()-1][idx]);
@@ -488,7 +534,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
       Dy, std::vector<DataArray *>(), std::vector<DataArray *>());
   
   
-  for(size_t idx=0; idx<options.batch_size; ++idx)         
+  for(size_t idx = 0; idx < local_batch_size; ++idx)         
     delete Dy[idx];    
   
   return grad_net;
@@ -659,6 +705,12 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename)
   
   return network;
 }
+
+void NeuralNetwork::synchronize_sum() {
+  for (auto it = layers.begin(); it != layers.end(); ++it) {
+    (*it)->synchronize_sum();
+  }    
+}  
 
 void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
                                  const std::vector<TrainingData>& data,

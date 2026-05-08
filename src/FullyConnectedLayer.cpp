@@ -2,6 +2,8 @@
 
 #include "FullyConnectedLayer.h"
 #include "Random.h"
+#include "mpi.h"
+#include "ompi/mpi/cxx/mpicxx.h"
 
 FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFunction act)
   : Layer(std::vector<size_t>(1, dim), LayerType::FULLY_CONNECTED),
@@ -117,6 +119,19 @@ std::unique_ptr<Layer> FullyConnectedLayer::clone() const
 {
   return std::unique_ptr<Layer>(new FullyConnectedLayer(*this));
 }
+
+void FullyConnectedLayer::synchronize() {
+  MPI_Bcast(weight.values(), weight.nEntries(), MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(bias.values(), bias.nEntries(), MPI_FLOAT, 0, MPI_COMM_WORLD);
+}
+
+void FullyConnectedLayer::synchronize_sum() {
+
+  MPI_Allreduce(MPI_IN_PLACE, weight.values(), weight.nEntries(),
+                MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, bias.values(), bias.nEntries(),
+                MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);  
+}  
 
 void FullyConnectedLayer::save(std::ostream& os) const
 {

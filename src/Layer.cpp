@@ -78,6 +78,8 @@ float Layer::dot(const Layer&) const { return 0.;}
 void Layer::initialize() {}  
 void Layer::update_increment(float, const Layer&, float) {}
 void Layer::apply_increment(const Layer&) {}
+void Layer::synchronize() {}
+void Layer::synchronize_sum() {}
 
 void Layer::save(std::ostream&) const {}
 

@@ -28,6 +28,9 @@ public:
   std::unique_ptr<Layer> clone() const override;
   std::unique_ptr<Layer> zeros_like() const override;
 
+  void synchronize() override;
+  void synchronize_sum() override;  
+  
   void save(std::ostream&) const override;
 
   std::map<std::string, std::string> get_parameters() const override;

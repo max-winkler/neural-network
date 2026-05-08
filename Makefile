@@ -26,7 +26,8 @@ TESTS = 	test/LinAlg.o \
 	test/Pooling.o
 
 # Compiler
-CC	  = g++
+#CC	  = g++
+CC	  = mpic++
 
 # Includes
 CPP_INCLUDE = -Iinclude
@@ -34,7 +35,7 @@ CPP_INCLUDE = -Iinclude
 # Compilter Flags
 CPP_DEBUG_FLAGS = -g -O0
 CPP_RELEASE_FLAGS = -O3
-CPP_FLAGS = ${CPP_RELEASE_FLAGS}
+CPP_FLAGS = ${CPP_DEBUG_FLAGS}
 
 # Libraries
 LIBS = -L. -lnn -lpng -lblas -lpugixml
