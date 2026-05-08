@@ -2,7 +2,6 @@
 #define _NEURALNETWORK_H_
 
 #include <vector>
-#include <random>
 #include <memory>
 
 #include "Layer.h"
@@ -230,6 +229,9 @@ class NeuralNetwork
   // Update step with gradient method
   void update_increment(float momentum, const NeuralNetwork& gradient, float learning_rate);
   void apply_increment(const NeuralNetwork& increment);
+
+  // Methods used in parallel computations
+  void synchronize_sum();
   
   // Gradient test (for debugging and testing)
   void gradientTest(const NeuralNetwork&,

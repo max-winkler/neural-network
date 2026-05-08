@@ -1,7 +1,6 @@
 #ifndef _DATA_ARRAY_H_
 #define _DATA_ARRAY_H_
 
-#include <iostream>
 #include <memory>
 
 /**
@@ -46,6 +45,11 @@ class DataArray
    */
   const float& operator[](size_t) const;
 
+  /**
+   * Returns a pointer to the internal data of the DataArray. Use carefully!
+   */
+  float* values();
+  
   /**
    * Standard inner product for two DataArrays with matching dimension. For vectors this 
    * corresponds to the Euklidean inner product, for matrices this is the Frobenious inner

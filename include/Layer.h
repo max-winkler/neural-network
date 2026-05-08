@@ -121,6 +121,17 @@ public:
    */
   virtual std::unique_ptr<Layer> clone() const = 0;
 
+  /**
+   * Synchronize weights between different processes. Weights are initialized at
+   * process with rank 0 and will be broadcastet to the other processes.
+   */
+  virtual void synchronize();
+
+  /**
+   * Synchronize weights between different processes by summing up all weights
+   * (reduce) and broadcasting to all processes.
+   */
+  virtual void synchronize_sum();
   
   /// Map from LayerType to string representation of the layer.
   static const std::unordered_map<LayerType, std::string> LayerName; 

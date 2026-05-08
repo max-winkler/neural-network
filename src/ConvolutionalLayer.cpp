@@ -4,6 +4,7 @@
 
 #include "LinAlg.h"
 #include "Random.h"
+#include "mpi.h"
 
 ConvolutionalLayer::ConvolutionalLayer(std::vector<size_t> in_dim, size_t F,
 			         size_t k, size_t S, size_t P,
@@ -178,6 +179,24 @@ std::unique_ptr<Layer> ConvolutionalLayer::zeros_like() const
 std::unique_ptr<Layer> ConvolutionalLayer::clone() const
 {
   return std::unique_ptr<Layer>(new ConvolutionalLayer(*this));
+}
+
+void ConvolutionalLayer::synchronize()
+{ 
+  for(auto it = K.begin(); it != K.end(); ++it)
+    MPI_Bcast(it->values(), it->nEntries(), MPI_FLOAT, 0, MPI_COMM_WORLD);
+  
+  MPI_Bcast(bias.data(), bias.size(), MPI_FLOAT, 0, MPI_COMM_WORLD);
+}
+
+void ConvolutionalLayer::synchronize_sum() {
+  for (auto it = K.begin(); it != K.end(); ++it)
+    MPI_Allreduce(MPI_IN_PLACE, it->values(), it->nEntries(), MPI_FLOAT,
+                  MPI_SUM, MPI_COMM_WORLD);
+
+  MPI_Allreduce(MPI_IN_PLACE, bias.data(), bias.size(), MPI_FLOAT, MPI_SUM,
+                MPI_COMM_WORLD);  
+  
 }
 
 void ConvolutionalLayer::save(std::ostream& os) const
