@@ -21,7 +21,7 @@ void FullyConnectedLayer::forward_propagate(const DataArray& x_, DataArray& z_, 
   const Vector& x = dynamic_cast<const Vector&>(x_);
   Vector& z = dynamic_cast<Vector&>(z_);
   Vector& y = dynamic_cast<Vector&>(y_);
-
+  
   z = weight * x + bias;
   y = activate(z, act);
 }
