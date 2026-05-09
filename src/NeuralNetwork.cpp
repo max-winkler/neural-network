@@ -337,14 +337,20 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       size_t local_start_idx = start_idx + (rank * local_batch_size);
       std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
 				 data_idx.begin() + start_idx + local_batch_size);
-      
+
+      // Compute value of loss function      
       float f_local = evalFunctional(data, y, z, batch_data_idx, options);
       float f;
       MPI_Allreduce(&f_local, &f, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-      
+
+      // Compute gradient network
       NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
-      
-      grad_norm = grad_net.norm();
+
+      // Norm of gradient      
+      float grad_norm_local_sq = pow(grad_net.norm(), 2.);
+      MPI_Allreduce(&grad_norm_local_sq, &grad_norm, 1, MPI_FLOAT, MPI_SUM,
+                    MPI_COMM_WORLD);
+      grad_norm = sqrt(grad_norm);
       
       if(grad_norm < 1.e-8 || std::isnan(grad_norm))
         {
@@ -358,7 +364,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       if(i++%options.output_every == 0 && rank == 0)
         {
 	std::cout << std::setw(13) << start_idx / local_batch_size << " / "
-		<< std::setw(4) << n_data / options.batch_size
+		<< std::setw(4) << n_data / local_batch_size
 		<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
         }
 
