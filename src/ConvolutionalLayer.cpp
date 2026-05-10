@@ -128,9 +128,9 @@ float ConvolutionalLayer::dot(const Layer& other) const
 
 void ConvolutionalLayer::initialize()
 {
-  float a = sqrt(4.0f / (in_dim[0] * k * k));
+  float sigma = sqrt(2.0f / (in_dim[0] * k * k));
   
-  Random gen = Random::create_normal_random_generator(0.0f, a);
+  Random gen = Random::create_normal_random_generator(0.0f, sigma);
   for(auto e = K.begin(); e != K.end(); ++e)
     for(size_t c=0; c<(*e).nChannels(); ++c)
       for(size_t i=0; i<(*e).nRows(); ++i)
@@ -139,7 +139,7 @@ void ConvolutionalLayer::initialize()
 
   gen = Random::create_uniform_random_generator();
   for(auto b = bias.begin(); b != bias.end(); ++b)
-    (*b) = 0.3*gen();
+    (*b) = 0.f; // 0.3*gen();
 }
 
 void ConvolutionalLayer::update_increment(float momentum, const Layer& grad_layer_, float learning_rate)
