@@ -108,10 +108,12 @@ const float& Matrix::operator()(size_t i, size_t j) const
   return data[i*size/m + j];
 }
 
-Matrix& Matrix::operator*=(float a)
-{
-  for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
-    (*data_ptr) *= a;
+Matrix &Matrix::operator*=(float a) {
+  cblas_sscal(size, a, data, 1);
+  /*
+    for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
+      (*data_ptr) *= a;
+  */
   
   return *this;  
 }
@@ -169,22 +171,24 @@ Matrix& Matrix::operator+=(float a)
   
   return *this;
 }
-  
-Matrix& Matrix::operator+=(const Matrix& B)
-{
+
+Matrix &Matrix::operator+=(const Matrix &B) {
   operator+=(ScaledMatrix(1., B));
   return *this;
 }
 
-Matrix& Matrix::operator+=(const ScaledMatrix& B)
-{
+Matrix &Matrix::operator+=(const ScaledMatrix &B) {
+
+  cblas_saxpy(size, B.scale, B.matrix->data, 1, data, 1);
+  /*
   if(B.matrix->size != size || B.matrix->m != m)
     {
-      std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
-      std::cerr << "  (" << nRows() << ", " << nCols()
-		<< ") vs. (" << B.matrix->nRows() << ", " << B.matrix->nCols() << ")\n";
+      std::cerr << "Error: Matrices have incompatible dimension for
+  summation.\n"; std::cerr << "  (" << nRows() << ", " << nCols()
+                << ") vs. (" << B.matrix->nRows() << ", " << B.matrix->nCols()
+  << ")\n";
     }
-  
+
   float* data_ptr;
   const float* B_data_ptr;
 
@@ -192,6 +196,7 @@ Matrix& Matrix::operator+=(const ScaledMatrix& B)
       data_ptr != data+size;
       ++data_ptr, ++B_data_ptr)
     *data_ptr += B.scale * (*B_data_ptr);
+    */
   
   return *this;
 }
