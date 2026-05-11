@@ -179,15 +179,16 @@ Matrix &Matrix::operator+=(const Matrix &B) {
 
 Matrix &Matrix::operator+=(const ScaledMatrix &B) {
 
-  cblas_saxpy(size, B.scale, B.matrix->data, 1, data, 1);
-  /*
   if(B.matrix->size != size || B.matrix->m != m)
     {
-      std::cerr << "Error: Matrices have incompatible dimension for
-  summation.\n"; std::cerr << "  (" << nRows() << ", " << nCols()
-                << ") vs. (" << B.matrix->nRows() << ", " << B.matrix->nCols()
-  << ")\n";
+      std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
+      std::cerr << "  (" << nRows() << ", " << nCols() << ") vs. ("
+                << B.matrix->nRows() << ", " << B.matrix->nCols() << ")\n";      
     }
+  
+  cblas_saxpy(size, B.scale, B.matrix->data, 1, data, 1);
+  /*
+
 
   float* data_ptr;
   const float* B_data_ptr;
