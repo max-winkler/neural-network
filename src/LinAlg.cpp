@@ -81,6 +81,7 @@ namespace linalg
 	      int x_k = static_cast<int>(i+k)-static_cast<int>(P);
 	      int x_l = static_cast<int>(j+l)-static_cast<int>(P);
 
+	      // TODO: This bound check might reduce the performance. Better implementation possible.
 	      // Bound check when padding is used
 	      if(x_k < 0 || x_l < 0 || x_k >= n1 || x_l >= n2)
 	        continue;
@@ -106,7 +107,7 @@ namespace linalg
     if(S != 1)
       {
         std::cerr << "ERROR: Convolution with stride not equal to 1 is not implemented yet.\n";
-        return Matrix();
+        exit(1);
       }
 
     // Size of current matrix and filter
@@ -159,7 +160,7 @@ namespace linalg
     if(S != 1 || P != 0)
       {
         std::cerr << "ERROR: Convolution with padding or stride not equal to 1 not implemented yet.\n";
-        return Tensor();
+        exit(1);
       }
   
     // Size of current matrix and filter

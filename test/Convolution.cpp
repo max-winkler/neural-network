@@ -20,10 +20,10 @@ int main()
     0, 1, 0};
   K *= (1./8);
   
-  A = linalg::convolve(A, K, 1, 0, false);
-  A = linalg::pool(A, 2, POOLING_MAX);
-  A = linalg::convolve(A, K, 1, 0, false);
-  A = linalg::pool(A, 2, POOLING_MAX);
+  A = linalg::convolve(A, K, 1, 1, false);
+  //A = linalg::pool(A, 2, POOLING_MAX);
+  //A = linalg::convolve(A, K, 1, 0, false);
+  //A = linalg::pool(A, 2, POOLING_MAX);
 
   int width_new = A.nCols();
   int height_new = A.nRows();
