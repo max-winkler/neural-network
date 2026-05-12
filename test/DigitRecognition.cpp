@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
     net.addInputLayer(width, height); // input layer
     net.addConvolutionLayer(16, 4, ActivationFunction::RELU, 1, 0);
     net.addPoolingLayer(3, 2);
-    //net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
-    //net.addPoolingLayer(2);
+    // net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
+    // net.addPoolingLayer(2);
     net.addFlatteningLayer();
     net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID);
     net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID);
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
   options.batch_size    = 1024;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 1;
+  options.epochs        = 100;
   options.learning_rate = 0.005;
   
   net.train(training_data, options);

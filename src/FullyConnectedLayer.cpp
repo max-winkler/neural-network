@@ -79,14 +79,14 @@ float FullyConnectedLayer::dot(const Layer& other) const
 
 void FullyConnectedLayer::initialize()
 {
-  float a = 2.;
+  // float a = 2.;
+  // Xavier initialization (good for TANH and SIGMOID)
+  float a = sqrt(6.0f / (weight.nCols() + weight.nRows()));
   
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<weight.nRows(); ++i)
     for(size_t j=0; j<weight.nCols(); ++j)
-      weight(i,j) = -a+2.*a*gen();
-  
-  // std::cout << "Initial weight: \n" << weight << std::endl;
+      weight(i,j) = -a+2.*a*gen(); 
 }
 
 void FullyConnectedLayer::update_increment(float momentum, const Layer& grad_layer_, float learning_rate)
