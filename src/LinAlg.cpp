@@ -99,10 +99,7 @@ namespace linalg
     return Z;    
   }
 
-  Matrix tensor_convolve(const Tensor& T, const Tensor& K, size_t S, size_t P, bool flip)
-  {
-    // TODO: Can we reuse the matrix convolve function? Transform each slice to matrix view and convolve
-    // them should do the trick. Convolve should then be a free function taking MatrixView as argument.
+  Matrix tensor_convolve(const Tensor& T, const Tensor& K, size_t S, size_t P, bool flip)  {
   
     if(S != 1)
       {
@@ -122,35 +119,14 @@ namespace linalg
 
     if(d != K.nChannels())
       {
-        std::cerr << "ERROR: Number of channels of input and kernel matrix mus coincide.\n";
+        std::cerr << "ERROR: Number of channels of input and kernel matrix must coincide.\n";
         return Matrix();
       }
 
     Matrix A(n1_new, n2_new);
-    for(size_t i=0; i<n1_new; ++i)
-      for(size_t j=0; j<n2_new; ++j)
-        {
-	float val = 0.;
-	for(size_t c=0; c<d; ++c)
-	  for(size_t k=0; k<m; ++k)
-	    for(size_t l=0; l<m; ++l)
-	      {
-	        // Indices to access left-hand side
-	        int x_k = static_cast<int>(i+k)-static_cast<int>(P);
-	        int x_l = static_cast<int>(j+l)-static_cast<int>(P);
 
-	        // Bound check when padding is used
-	        if(x_k < 0 || x_l < 0 || x_k >= n1 || x_l >= n2)
-		continue;
-
-	        // Indices to access right-hand side
-	        int k_idx = flip ? m-1-k : k;
-	        int l_idx = flip ? m-1-l : l;
-	    
-	        val += T(c, i*S+k,j*S+l) * K(c, k_idx,l_idx);
-	      }
-	A(i,j) = val;
-        }
+    for (size_t c = 0; c < d; ++c)
+      A += convolve(T[c], K[c], S, P, flip);
   
     return A;    
   }
