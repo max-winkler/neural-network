@@ -32,9 +32,9 @@ CC	  = mpic++
 # Includes
 CPP_INCLUDE = -Iinclude -I./
 
-# Compilter Flags
-CPP_DEBUG_FLAGS = -g -O0
-CPP_RELEASE_FLAGS = -O3
+# Compiler Flags
+CPP_DEBUG_FLAGS = -g -O0 -Wall
+CPP_RELEASE_FLAGS = -O3 -march=native -ffast-math
 CPP_FLAGS = ${CPP_RELEASE_FLAGS}
 
 # Libraries

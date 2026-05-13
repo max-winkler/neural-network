@@ -73,10 +73,10 @@ int main(int argc, char* argv[]) {
     std::cout << "No neural network XML file exists. Create and training new network.\n";      
       
     net.addInputLayer(width, height); // input layer
-    net.addConvolutionLayer(16, 4, ActivationFunction::RELU, 1, 0);
-    net.addPoolingLayer(3, 2);
-    // net.addConvolutionLayer(32, 3, ActivationFunction::RELU, 1, 0);
-    // net.addPoolingLayer(2);
+    net.addConvolutionLayer(16, 5, ActivationFunction::RELU, 1, 2);
+    net.addPoolingLayer(2, 2);
+    net.addConvolutionLayer(32, 5, ActivationFunction::RELU, 1, 2);
+    net.addPoolingLayer(2, 2);
     net.addFlatteningLayer();
     net.addFullyConnectedLayer(50, ActivationFunction::SIGMOID);
     net.addFullyConnectedLayer(20, ActivationFunction::SIGMOID);
@@ -99,8 +99,8 @@ int main(int argc, char* argv[]) {
   options.batch_size    = 1024;
   options.max_iter      = 1e4;
   options.output_every  = 10;
-  options.epochs        = 100;
-  options.learning_rate = 0.005;
+  options.epochs        = 10;
+  options.learning_rate = 0.005 / 5;
   
   net.train(training_data, options);
 

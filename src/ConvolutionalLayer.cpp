@@ -54,12 +54,15 @@ void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, D
   const Tensor& x = dynamic_cast<const Tensor&>(x_);
   Tensor& z = dynamic_cast<Tensor&>(z_);
   Tensor& y = dynamic_cast<Tensor&>(y_);
-  
-  for(size_t c=0; c<y.nChannels(); ++c)
-    {
-      z[c] = linalg::tensor_convolve(x, K[c], S, P);
-      z[c] += bias[c];
-    }
+
+  for (size_t c = 0; c < y.nChannels(); ++c) {
+    // TODO: Make this working so that we do not need the tensor_convolve function any more.
+    //for(size_t d=0; d<x.nChannels(); ++d)
+    //  z[c] += linalg::convolve(x[d], K[c][d], S, P);
+    
+    z[c] = linalg::tensor_convolve(x, K[c], S, P);
+    z[c] += bias[c];
+  }
   
   for(size_t c=0; c<y.nChannels(); ++c)
     for(size_t i=0; i<y.nRows(); ++i)
@@ -95,16 +98,23 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
       
       for(size_t d=0; d<F; ++d)
         {
-	MatrixView Dz_slice = Dz[d];
-	MatrixView Dy_slice = Dy[d];
-	  
-	output->K[d] += linalg::tensor_convolve(y, linalg::multiply(Dz_slice, Dy_slice), S, P);
-	output->bias[d] += linalg::dot(Dz_slice, Dy_slice);
+	MatrixView Dy_slice = Dy[d]; // df/dY
+	MatrixView Dz_slice = Dz[d]; // dY/dZ
+	Matrix DyDz_slice = linalg::multiply(Dy_slice, Dz_slice); 
+	// Note: The Hadamard product of these two gives df/dZ
 
-	for(size_t c=0; c<y.nChannels(); ++c)
-	  Dx[c] += linalg::convolve(linalg::multiply(Dz_slice, Dy_slice), K[d][c], 1, k-1, true);
+	// This works
+	//output->K[d] += linalg::tensor_convolve(y, linalg::multiply(Dz_slice, Dy_slice), S, P);
+
+	// New try with matrix convolution
+	for (size_t c = 0; c < y.nChannels(); ++c) {
+	  output->K[d][c] += linalg::convolve(y[c], DyDz_slice, S, P);
+	  Dx[c] += linalg::convolve(DyDz_slice, K[d][c], S, k-1-P, true);
+	}
+	
+	output->bias[d] += linalg::dot(Dz_slice, Dy_slice);         
         }
-
+      
       delete *Dy_it;
       *Dy_it = new Tensor(std::move(Dx));
     }

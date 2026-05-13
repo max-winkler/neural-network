@@ -35,8 +35,14 @@ TensorSlice& TensorSlice::operator+=(float a)
   return *this;
 }
 
-TensorSlice& TensorSlice::operator+=(const Matrix& A)
-{
+TensorSlice &TensorSlice::operator+=(const Matrix &A) {
+
+  if (A.nRows() != this->m || A.nCols() != this->n) {
+    std::cerr << "ERROR: Tensor slice and matrix have incompatible dimension "
+                 "in +=.\n";    
+    exit(1);
+  }
+  
   for(size_t i=0; i<m; ++i)
     for(size_t j=0; j<n; ++j)
       data[i*n+j] += A(i,j);

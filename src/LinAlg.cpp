@@ -131,11 +131,11 @@ namespace linalg
     return A;    
   }
 
-  Tensor tensor_convolve(const Tensor& T, const Matrix& K, size_t S, size_t P)
+  Tensor unused_tensor_convolve(const Tensor& T, const Matrix& K, size_t S, size_t P)
   {
-    if(S != 1 || P != 0)
+    if(S != 1)
       {
-        std::cerr << "ERROR: Convolution with padding or stride not equal to 1 not implemented yet.\n";
+        std::cerr << "ERROR: Convolution with or stride not equal to 1 not implemented yet.\n";
         exit(1);
       }
   
