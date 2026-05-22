@@ -51,7 +51,7 @@ namespace linalg{
 	        size_t S=1, size_t P=0, bool flip=false);
   Matrix tensor_convolve(const Tensor&, const Tensor&,
 		     size_t S=1, size_t P=0, bool flip=false);
-  Tensor tensor_convolve(const Tensor&, const Matrix&,
+  Tensor unused_tensor_convolve(const Tensor&, const Matrix&,
 		     size_t, size_t);
 
   /**

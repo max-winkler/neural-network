@@ -265,7 +265,12 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
 
   // Random number generator for shuffling batches
   Random rnd_gen = Random::create_mt19937_random_generator();
-  rnd_gen.generator().seed(666); // same seed for all processes
+  unsigned int seed;
+  if (rank == 0) 
+    seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
+
+  MPI_Bcast(&seed, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);  
+  rnd_gen.generator().seed(seed);
   
   // Allocate memory for auxiliary vectors
   for(size_t l=0; l<layers.size(); ++l)
@@ -315,8 +320,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   NeuralNetwork increment = NeuralNetwork::createLike(*this);
 
   float grad_norm = 1.;
-  size_t i = 0;
-  
+    
   for (size_t epoch = 0; epoch < options.epochs; ++epoch) {
     if (rank == 0)
       {      
@@ -330,7 +334,8 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
     }
     
     std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
-
+    size_t i = 0;
+    
     for (size_t start_idx = 0; start_idx < n_data - options.batch_size + 1;
          start_idx += options.batch_size) {
       
@@ -373,9 +378,9 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       // Reduce local gradients
       grad_net.synchronize_sum();
         
-      // for testing only. remove later
-      // gradientTest(grad_net, data, data_idx, options);
-      // exit(1);
+      // Gradient Test for debugging
+      // gradientTest(grad_net, data, data_idx, options);	
+      // exit(2);
       
       // Update increment
       increment.update_increment(momentum, grad_net, options.learning_rate);
