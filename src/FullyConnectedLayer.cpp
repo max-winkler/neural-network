@@ -82,6 +82,8 @@ void FullyConnectedLayer::initialize()
   // float a = 2.;
   // Xavier initialization (good for TANH and SIGMOID)
   float a = sqrt(6.0f / (weight.nCols() + weight.nRows()));
+  // He inialization (good for RELU)
+  //float a = sqrt(2.0f / weight.nRows());  
   
   Random gen = Random::create_uniform_random_generator();
   for(size_t i=0; i<weight.nRows(); ++i)
