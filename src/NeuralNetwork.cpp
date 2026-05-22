@@ -252,7 +252,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   size_t local_batch_size = options.batch_size / size;
   
   // Parameters for momentum method
-  const float momentum = 0.9;
+  float momentum = options.momentum;
   
   size_t n_data = data.size();
   
@@ -356,8 +356,10 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
         {
 	std::cerr << "WARNING: The norm of the gradient is " << grad_norm
 		<< ", so we might be stuck in a local minimum.\n";
-	MPI_Finalize();
-	exit(1);
+	// MPI_Finalize();
+	// exit(1);
+	// TOOD: Think what to do in this case. Accept the current solution?
+	return;
         }
       
       // Console output
@@ -855,7 +857,6 @@ float NeuralNetwork::norm() const
   return sqrt(dot(*this));
 }
 
-OptimizationOptions::OptimizationOptions() : max_iter(1e4), batch_size(128),
-				     learning_rate(1.e-2), loss_function(LossFunction::MSE),
-				     output_every(1), epochs(3)				     
-{}
+OptimizationOptions::OptimizationOptions()
+    : max_iter(1e4), batch_size(128), momentum(0.9), learning_rate(1.e-2),
+      loss_function(LossFunction::MSE), output_every(1), epochs(3) {}

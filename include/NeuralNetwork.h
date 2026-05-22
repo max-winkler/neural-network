@@ -18,6 +18,7 @@ struct OptimizationOptions
   size_t max_iter;
   size_t batch_size;
   float learning_rate;
+  float momentum;
   size_t output_every;
   size_t epochs;
   
