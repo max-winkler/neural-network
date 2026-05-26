@@ -35,6 +35,7 @@ int main()
   
   // Linear algebra for matrices
   std::cout << "(B,C)_F = " << linalg::dot(B, C) << std::endl;
+  std::cout << "B .* C =\n" << linalg::multiply(B, C) << std::endl;
   
   // Matrix vector operations
   Vector c = A*b;
