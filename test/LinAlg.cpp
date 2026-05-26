@@ -1,3 +1,4 @@
+#include "LinAlg.h"
 #include <iostream>
 
 #include "Matrix.h"
@@ -26,6 +27,14 @@ int main()
   Matrix B(2,2);
   B = {1.,2.,3.,4.};
   std::cout << "B =\n" << B;
+
+  Matrix C(2, 2);
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 2; ++j) C(i, j) = 1.;
+  std::cout << "C = \n" << C;
+  
+  // Linear algebra for matrices
+  std::cout << "(B,C)_F = " << linalg::dot(B, C) << std::endl;
   
   // Matrix vector operations
   Vector c = A*b;
@@ -51,8 +60,8 @@ int main()
   Vector u({1.,1.});
   Vector v({1.,2.});
   
-  Rank1Matrix C(u,v);
-  B += C;
+  Rank1Matrix D(u,v);
+  B += D;
   std::cout << "B+(1 1)^T*(1 2) =\n" << B << std::endl;
 
   return 0;
