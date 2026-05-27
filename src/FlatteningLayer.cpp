@@ -2,6 +2,7 @@
 
 #include "FlatteningLayer.h"
 #include "Tensor.h"
+#include "Vector.h"
 
 FlatteningLayer::FlatteningLayer(size_t dim1, size_t dim2, size_t dim3)
   : Layer(std::vector<size_t>(1, dim1*dim2*dim3), LayerType::FLATTENING),

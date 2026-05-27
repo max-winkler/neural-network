@@ -1,4 +1,5 @@
 #include <iomanip>
+#include "Vector.h"
 
 #include "VectorInputLayer.h"
 

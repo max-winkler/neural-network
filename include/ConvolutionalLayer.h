@@ -1,6 +1,7 @@
 #ifndef _CONVOLUTIONAL_LAYER_H_
 #define _CONVOLUTIONAL_LAYER_H_
 
+#include "Activation.h"
 #include "Layer.h"
 
 #include "Tensor.h"

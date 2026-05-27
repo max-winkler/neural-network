@@ -8,8 +8,7 @@
 #include <cstring>
 #include <memory>
 
-#include "Activation.h"
-#include "Matrix.h"
+#include "DataArray.h"
 
 // Forward declarations for friend definitions
 class NeuralNetwork;
@@ -29,7 +28,8 @@ enum LayerType
 class Layer
 {
 public:
-
+  virtual ~Layer() = default;
+     
   /**
    * Evaluate the layer and overwrite the input.
    *

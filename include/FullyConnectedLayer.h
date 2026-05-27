@@ -1,7 +1,10 @@
 #ifndef _FULLY_CONNECTED_LAYER_H_
 #define _FULLY_CONNECTED_LAYER_H_
 
+#include "Activation.h"
 #include "Layer.h"
+#include "Matrix.h"
+#include "Vector.h"
 
 class FullyConnectedLayer : public Layer
 {  
