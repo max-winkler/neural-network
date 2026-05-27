@@ -6,9 +6,11 @@
 
 #include "NeuralNetwork.h"
 #include "Image.h"
+#include "mpi.h"
 
-int main()
-{ 
+int main(int argc, char* argv[]) {
+  MPI_Init(&argc, &argv);
+  
   // Create neural network  
   NeuralNetwork net;
   net.addInputLayer(2); // input layer
@@ -94,6 +96,7 @@ int main()
       for(int i=0; i<3; ++i)
         std::cout << "  class " << i << ": " << c[i]*100 << "%\n";      
     }
-  
+
+  MPI_Finalize();
   return 0;
 }
