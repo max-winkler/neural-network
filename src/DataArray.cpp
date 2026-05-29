@@ -25,6 +25,24 @@ DataArray::~DataArray()
   delete[] data;
 }
 
+DataArray::DataArray(DataArray&& other)
+  : data(other.data), size(other.size)
+{
+  other.data = nullptr;
+}
+
+DataArray& DataArray::operator=(DataArray&& other) {
+  if (this != &other) {
+    delete[] data;
+    
+    data = other.data;
+    size = other.size;
+
+    other.data = nullptr;
+  }
+  return *this;  
+}  
+
 float& DataArray::operator[](size_t i)
 {
   return data[i];

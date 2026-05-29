@@ -96,7 +96,15 @@ class Matrix : public DataArray
    * @param A The matrix to be copied.
    */
   Matrix(const Matrix&);
-  // TODO: Implement move constructor
+
+  /**
+   * Move constructor used to avoid expensive copying of matrices.
+   *
+   * @brief Move constructor
+   *
+   * @param other The matrix to be moved.
+   */
+  Matrix(Matrix&&) noexcept;
 
   /**
    * Constructor creating a matrix of size \p m x \p n and initializing their values with image data 
@@ -110,7 +118,7 @@ class Matrix : public DataArray
    * @param n The number of columns of the matrix.
    * @param ptr A contiguous block of \p m x \p n unsigned chars representing image data.
    */
-  // TODO: This is not necessary and more. Use instead Image::to_matrix().
+  // TODO: This is not necessary any more. Use instead Image::to_matrix().
   Matrix(size_t, size_t, const unsigned char*);
 
   /**
@@ -129,7 +137,7 @@ class Matrix : public DataArray
    *
    * @param other The matrix to be moved.
    */
-  Matrix& operator=(Matrix&&);
+  Matrix& operator=(Matrix&&) noexcept;
 
   /**
    * Assign entries from a brace-enclosed list of values.

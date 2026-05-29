@@ -43,14 +43,8 @@ Vector& Vector::operator=(const Vector& other)
   return *this;
 }
 
-Vector& Vector::operator=(Vector&& other)
-{
-  delete[] data;
-  
-  size = other.size;
-  data = other.data;
-  other.data = nullptr;
-
+Vector& Vector::operator=(Vector&& other) {
+  DataArray::operator=(std::move(other));  
   return *this;
 }
 

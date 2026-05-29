@@ -176,13 +176,22 @@ class Tensor : public DataArray
   Tensor& operator=(const Tensor&);
 
   /**
+   * Move constructor used to avoid expensive copying of tensors.
+   *
+   * @brief Move constructor
+   *
+   * @param other The tensor to be moved
+   */
+  Tensor(Tensor&&) noexcept;
+  
+  /**
    * Move assignment operator used to move a tensor coming as rvalue and avoid copying.
    *
    * @brief Move assignment operator
    *
    * @param other The tensor to be moved.
    */
-  Tensor& operator=(Tensor&&);
+  Tensor& operator=(Tensor&&) noexcept;
   
   /**
    * Return the number of channels (depth) of the tensor.

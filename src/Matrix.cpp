@@ -28,9 +28,9 @@ Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : DataArray(m*n)
     *data_ptr = float(*pixel_ptr) / 255.0f;
 }
 
-Matrix::Matrix(const Matrix& other) : DataArray(other), m(other.m)
-{
-}
+Matrix::Matrix(const Matrix& other) : DataArray(other), m(other.m) {}
+
+Matrix::Matrix(Matrix&& other) noexcept : DataArray(std::move(other)), m(other.m) {}
 
 Matrix& Matrix::operator=(const Matrix& other)
 {
@@ -45,20 +45,18 @@ Matrix& Matrix::operator=(const Matrix& other)
   return *this;
 }
 
-Matrix& Matrix::operator=(Matrix&& other)  
+Matrix& Matrix::operator=(Matrix&& other) noexcept 
 {
-  if(this == &other)
-    std::cerr << "WARNING: Self assignment of matrix. This might fail.\n";
-  
-  delete[] data;
-  
-  size = other.size;
-  m = other.m;
-  
-  data = other.data;
-  other.data = nullptr;
-  
-  return *this;
+    if (this == &other) {
+        std::cerr << "WARNING: Self assignment of matrix. Aborting assignment.\n";
+        return *this;
+    }
+
+    DataArray::operator=(std::move(other));
+
+    m = other.m; 
+
+    return *this;
 }
 
 Matrix& Matrix::operator=(std::initializer_list<float> val)

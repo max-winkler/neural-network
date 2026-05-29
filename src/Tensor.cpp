@@ -83,16 +83,24 @@ Tensor& Tensor::operator=(const Tensor& other)
   return *this;
 }
 
-Tensor& Tensor::operator=(Tensor&& other)
+Tensor::Tensor(Tensor&& other) noexcept
+    : DataArray(std::move(other)),
+      d(other.d),
+      m(other.m),
+      c_stride(size / d),
+      r_stride(size / d / m) {}
+
+Tensor& Tensor::operator=(Tensor&& other) noexcept
 {
-  if(this == &other)
-    std::cerr << "WARNING: Self assignment of a tensor. This might fail.\n";
+  if (this == &other) {
+    std::cerr << "WARNING: Self assignment of tensor. Aborting assignment.\n";
+    return *this;
+  }
 
-  delete[] data;
+  DataArray::operator=(std::move(other));
 
-  size = other.size;
-  d = other.d;
-  m = other.m;
+  d = other.d;  
+  m = other.m; 
   c_stride = other.c_stride;
   r_stride = other.r_stride;
   

@@ -32,6 +32,20 @@ class DataArray
   virtual ~DataArray();
 
   /**
+   * Move constructor used to avoid expensive copying of data arrays
+   *
+   * @param other The data array to be moved.
+   */
+  DataArray(DataArray&&) noexcept;
+
+  /**
+   * Move assignment used to acoid expensive copying of data arrays
+   *
+   * @param other The data array to be moved.
+   */
+  DataArray& operator=(DataArray&&) noexcept;
+  
+  /**
    * Element access by reference. Can be used to write single components of the array.
    *
    * @param i Index of component to be accessed.
