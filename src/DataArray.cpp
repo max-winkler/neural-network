@@ -25,13 +25,29 @@ DataArray::~DataArray()
   delete[] data;
 }
 
-DataArray::DataArray(DataArray&& other)
+DataArray::DataArray(DataArray&& other) noexcept
   : data(other.data), size(other.size)
 {
   other.data = nullptr;
 }
 
-DataArray& DataArray::operator=(DataArray&& other) {
+DataArray& DataArray::operator=(const DataArray& other) {
+  if (this == &other) return *this;
+
+  delete[] data;
+  size = other.size;
+
+  if (size > 0)
+    {
+      data = new float[size];
+      memcpy(data, other.data, size * sizeof(float));
+  } else
+    data = nullptr;
+
+  return *this; 
+}  
+
+DataArray& DataArray::operator=(DataArray&& other) noexcept {
   if (this != &other) {
     delete[] data;
     

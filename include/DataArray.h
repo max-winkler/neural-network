@@ -39,6 +39,15 @@ class DataArray
   DataArray(DataArray&&) noexcept;
 
   /**
+   * Create a copy of a data array by assignment.
+   *
+   * @brief Copy assignment
+   *
+   * @param other The data array to be copied.
+   */
+  DataArray& operator=(const DataArray&);  
+
+  /**
    * Move assignment used to acoid expensive copying of data arrays
    *
    * @param other The data array to be moved.
