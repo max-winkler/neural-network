@@ -104,9 +104,6 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept
   c_stride = other.c_stride;
   r_stride = other.r_stride;
   
-  data = other.data;
-  other.data = nullptr;
-
   return *this;
 }
 
