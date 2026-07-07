@@ -23,7 +23,8 @@ TESTS = 	test/LinAlg.o \
 	test/Classification.o \
 	test/NeuralNetwork.o \
 	test/Convolution.o \
-	test/Pooling.o
+	test/Pooling.o \
+	test/CatDog.o
 
 # Compiler
 #CC	  = g++
@@ -38,7 +39,7 @@ CPP_RELEASE_FLAGS = -O3 -march=native -ffast-math
 CPP_FLAGS = ${CPP_RELEASE_FLAGS}
 
 # Libraries
-LIBS = -L. -lnn -lpng -lblas -lpugixml
+LIBS = -L. -lnn -lpng -ljpeg -lblas -lpugixml
 
 
 CBLAS_CHECK := $(shell echo 'int main(){}' | $(CXX) -x c++ - -lcblas -lblas -o /dev/null 2>/dev/null && echo yes || echo no)
@@ -69,6 +70,7 @@ test: libnn $(TESTS)
 	${CC} test/Convolution.o ${LIBS} ${CPP_FLAGS} -o convolution_test
 	${CC} test/DigitRecognition.o ${LIBS} ${CPP_FLAGS} -o digitrecognition_test
 	${CC} test/Pooling.o ${LIBS} ${CPP_FLAGS} -o pooling_test
+	${CC} test/CatDog.o ${LIBS} ${CPP_FLAGS} -o catdog_test
 
 # Target to create the output directory
 $(MNIST_FILE_DIR):
