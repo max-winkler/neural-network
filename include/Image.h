@@ -8,6 +8,15 @@
 #include "Matrix.h"
 #include "Tensor.h"
 
+struct ImageInfo {
+  ImageInfo(size_t width, size_t height) : width(width), height(height) {}  
+  ImageInfo(int width, int height)
+      : width(static_cast<size_t>(width)),
+        height(static_cast<size_t>(height)) {}  
+  size_t width;
+  size_t height;  
+};
+
 /**
  * Class used to store images that can be read from a PNG file and converted into a
  * matrix or tensor to be processed by the neural network.
@@ -15,7 +24,15 @@
 class Image
 {
  public:
-
+  /**
+   * Returns width of the image
+   */
+  size_t get_width() const { return width; }
+  /**
+   * Returns height of the image
+   */
+  size_t get_height() const { return height; }
+  
   /**
    * Read PNG image from a file.
    *
@@ -25,6 +42,13 @@ class Image
    */
   static Image read(const std::string& filename);
 
+  /**
+   * Get the size of an image with a given file name.
+   *
+   * @param filename The name of the file to be read.
+   */
+  static ImageInfo get_info(const std::string& filename);
+  
   /**
    * Create gray-scale image from a matrix having entries between 0 (black) and 1 (white).
    *
@@ -72,6 +96,12 @@ class Image
    * @brief Convert image to matrix.
    */
   Matrix to_matrix() const;
+
+  /**
+   * Resizes the image to a square image using cropping and bilinear
+   * interpolation.
+   */
+  void resize(size_t);
   
  private:
 
@@ -88,6 +118,34 @@ class Image
    */
   Image(int width, int height, std::vector<unsigned char>&& data);
 
+
+  /**
+   * Read PNG image from a file.
+   *
+   * @brief Read PNG image.
+   *
+   * @param filename The name of the file to be read.
+   */
+  static Image read_png(const std::string& filename);
+
+
+  /**
+   * Read PNG image from a file.
+   *
+   * @brief Read JPG image.
+   *
+   * @param filename The name of the file to be read.
+   */
+  static Image read_jpg(const std::string& filename);
+
+  /**
+   * Get the size of an image with a given file name.
+   *
+   * @param filename The name of the file to be read.
+   */
+  static ImageInfo get_info_png(const std::string& filename);
+  static ImageInfo get_info_jpg(const std::string& filename);
+  
   /// Data vector
   std::vector<unsigned char> data;
 

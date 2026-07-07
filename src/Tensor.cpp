@@ -222,7 +222,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& T)
 
   for(size_t d=0; d<c; ++d)
     {
-      std::cout << "Channel: " << d << std::endl;
+      os << "Channel: " << d << std::endl;
       for(size_t i=0; i<m; ++i)
         {
 	os << "[ ";
