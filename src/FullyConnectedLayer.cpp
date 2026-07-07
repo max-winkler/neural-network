@@ -1,6 +1,7 @@
 #include <iomanip>
 
 #include "FullyConnectedLayer.h"
+#include "Activation.h"
 #include "Random.h"
 #include "mpi.h"
 
