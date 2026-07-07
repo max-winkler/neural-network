@@ -12,6 +12,7 @@
 #include "LayerFactory.h"
 #include "Random.h"
 
+#include <cmath>
 #include <fstream>
 #include <algorithm>
 #include <numeric>
@@ -318,9 +319,9 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   
   // Save increment for momentum method
   NeuralNetwork increment = NeuralNetwork::createLike(*this);
-
+  
   float grad_norm = 1.;
-    
+  
   for (size_t epoch = 0; epoch < options.epochs; ++epoch) {
     if (rank == 0)
       {      
@@ -335,19 +336,23 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
     
     std::shuffle(data_idx.begin(), data_idx.end(), rnd_gen.generator());
     size_t i = 0;
+
+    float loss_value = 0.;
+    float total_grad_norm = 0.;
     
     for (size_t start_idx = 0; start_idx < n_data - options.batch_size + 1;
          start_idx += options.batch_size) {
       
       size_t local_start_idx = start_idx + (rank * local_batch_size);
-      std::vector<size_t> batch_data_idx(data_idx.begin() + start_idx,
-				 data_idx.begin() + start_idx + local_batch_size);
+      std::vector<size_t> batch_data_idx(data_idx.begin() + local_start_idx,
+				 data_idx.begin() + local_start_idx + local_batch_size);
 
       // Compute value of loss function      
       float f_local = evalFunctional(data, y, z, batch_data_idx, options);
       float f;
       MPI_Allreduce(&f_local, &f, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-
+      loss_value += f;
+      
       // Compute gradient network
       NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
 
@@ -356,6 +361,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       MPI_Allreduce(&grad_norm_local_sq, &grad_norm, 1, MPI_FLOAT, MPI_SUM,
                     MPI_COMM_WORLD);
       grad_norm = sqrt(grad_norm);
+      total_grad_norm += grad_norm;
       
       if(grad_norm < 1.e-8 || std::isnan(grad_norm))
         {
@@ -388,8 +394,14 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       // Subtract increment
       apply_increment(increment);
     }
-  }
 
+    size_t total_batches = n_data / options.batch_size;
+    if (rank == 0)
+      {
+        std::cout << "Avg. loss value: " << loss_value / total_batches << std::endl;
+        std::cout << "Avg. gradient norm: " << total_grad_norm / total_batches << std::endl;
+      }
+  }
   if(rank == 0)
     os.close();
 
@@ -483,14 +495,14 @@ float NeuralNetwork::evalFunctional(const std::vector<TrainingData> &data,
 	  break;
 	case OptimizationOptions::LossFunction::LOG:
 	  // TODO: What happens for nL > 1?
-	  if(P[0] <= 0. || P[0] >= 1.)
+	  if(P[0] <= 0.)
 	    {
 	      std::cerr << "Error: Can not evaluate log loss function for argument p=" << P[0] << std::endl;
 	      std::cerr << "  to avoid this consider using the Sigmoid activation function in the output layer.\n";
 	      return 0;
 	    }
 	  for(size_t i=0; i<layers.back()->dim[0]; ++i)
-	    f -= (Y[i] * log(P[i]) + (1-Y[i])*log(1-P[i])); 
+	    f -= Y[i] * std::log(P[i]); 
 	  break;
 	default:
 	  std::cerr << "Error: Unknown loss function provided.\n";
@@ -534,7 +546,7 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	    Dy[idx] = new Vector(nL);	  
 
 	    for(size_t i=0; i<nL; ++i)
-	      (*Dy[idx])[i] = (1.-Y[i]) / (1.-P[i]) - Y[i] / P[i];
+	      (*Dy[idx])[i] = - Y[i] / P[i];
 	  }
 	  break;
 	}
