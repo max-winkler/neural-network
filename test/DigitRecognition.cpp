@@ -37,15 +37,6 @@ int main(int argc, char* argv[]) {
 	    << training_label_file << ".\n";
     return -1;
   }
-
-  // Console output
-  if (rank == 0) {      
-    std::cout << "Data set:\n";
-    std::cout << " images : " << n_images << std::endl;
-    std::cout << " width  : " << width << std::endl;
-    std::cout << " height : " << height << std::endl;
-  }  
-
   // Read test data
   std::vector<TrainingData> test_data;
   int n_test, n_classes_test;
@@ -61,8 +52,12 @@ int main(int argc, char* argv[]) {
 
   // Console output
   if (rank == 0) {      
-    std::cout << "Training set:\n";
-    std::cout << " images : " << n_images << std::endl;
+
+    std::cout << " training data : " << n_images << std::endl;
+    std::cout << " test data     : " << n_test << std::endl;
+    std::cout << " classes : " << n_classes << std::endl;
+    std::cout << " width   : " << width << std::endl;
+    std::cout << " height  : " << height << std::endl;
   }
 
   // Create neural network
@@ -95,12 +90,12 @@ int main(int argc, char* argv[]) {
 
   // Refine optimization options
   OptimizationOptions options;
-  options.loss_function = OptimizationOptions::LossFunction::MSE;
+  options.loss_function = OptimizationOptions::LossFunction::LOG;
   options.batch_size    = 1024;
   options.max_iter      = 1e4;
   options.output_every  = 10;
   options.epochs        = 10;
-  options.learning_rate = 0.005 / 5;
+  options.learning_rate = 0.005 /5;
   
   net.train(training_data, options);
 
