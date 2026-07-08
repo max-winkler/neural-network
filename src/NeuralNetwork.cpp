@@ -22,6 +22,8 @@
 #include <pugixml.hpp>
 #include <mpi.h>
 
+constexpr float EPS = 1.e-7;
+
 NeuralNetwork::NeuralNetwork()
   : initialized(false), layers()
 {
@@ -494,15 +496,11 @@ float NeuralNetwork::evalFunctional(const std::vector<TrainingData> &data,
 	  f += 0.5*pow(::norm(Y-P), 2.);
 	  break;
 	case OptimizationOptions::LossFunction::LOG:
-	  // TODO: What happens for nL > 1?
-	  if(P[0] <= 0.)
-	    {
-	      std::cerr << "Error: Can not evaluate log loss function for argument p=" << P[0] << std::endl;
-	      std::cerr << "  to avoid this consider using the Sigmoid activation function in the output layer.\n";
-	      return 0;
-	    }
 	  for(size_t i=0; i<layers.back()->dim[0]; ++i)
-	    f -= Y[i] * std::log(P[i]); 
+	    {
+	      float p_clipped = std::max(P[i], EPS);
+	      f -= Y[i] * std::log(p_clipped);
+	    }
 	  break;
 	default:
 	  std::cerr << "Error: Unknown loss function provided.\n";
@@ -546,7 +544,10 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 	    Dy[idx] = new Vector(nL);	  
 
 	    for(size_t i=0; i<nL; ++i)
-	      (*Dy[idx])[i] = - Y[i] / P[i];
+	      {
+	        float p_clipped = std::max(P[i], EPS);
+	        (*Dy[idx])[i] = - Y[i] / p_clipped;
+	      }
 	  }
 	  break;
 	}
