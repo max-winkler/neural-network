@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
   options.max_iter      = 1e4;
   options.output_every  = 10;
   options.epochs        = 10;
-  options.learning_rate = 0.005 /5;
+  options.learning_rate = 0.005 /10;
   
   net.train(training_data, options);
 

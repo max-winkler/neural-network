@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
     net.addPoolingLayer(2);
     net.addConvolutionLayer(32, 5, ActivationFunction::RELU, 1, 2);
     net.addPoolingLayer(4);
-    // net.addConvolutionLayer(64, 5, ActivationFunction::RELU, 1, 2);
-    // net.addPoolingLayer(4);
+    net.addConvolutionLayer(64, 5, ActivationFunction::RELU, 1, 2);
+    net.addPoolingLayer(4);
     net.addFlatteningLayer();
     net.addFullyConnectedLayer(64, ActivationFunction::RELU);
     // net.addFullyConnectedLayer(20, ActivationFunction::RELU);
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
   OptimizationOptions options;
   options.loss_function = OptimizationOptions::LOG;
   options.epochs = 10;
-  options.learning_rate = 0.001;
+  options.learning_rate = 0.0001;
   options.batch_size = 512;
   options.momentum = 0.9;  
 
