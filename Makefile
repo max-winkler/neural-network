@@ -40,7 +40,7 @@ CPP_RELEASE_FLAGS = -O3 -march=native -ffast-math
 CPP_FLAGS = ${CPP_RELEASE_FLAGS}
 
 # Libraries
-LIBS = -L. -lnn -lpng -lopenblas -lpugixml
+LIBS = -L. -lnn -lpng -lblas -lpugixml
 
 
 CBLAS_CHECK := $(shell echo 'int main(){}' | $(CXX) -x c++ - -lcblas -lblas -o /dev/null 2>/dev/null && echo yes || echo no)

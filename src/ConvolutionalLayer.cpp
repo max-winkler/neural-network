@@ -30,24 +30,23 @@ void ConvolutionalLayer::eval(DataArray*& x_) const
 {
   Tensor& x = dynamic_cast<Tensor&>(*x_);
   Tensor y(dim[0], dim[1], dim[2]);
-
-  Matrix y_col = linalg::im2col(x, k);
+  /*
+  Matrix y_col = linalg::im2col(x, k, P);
   Matrix K_row = linalg::kernels2row(K);
 
   linalg::matmul_into(K_row, y_col, y.values());
 
   for (size_t c = 0; c < y.nChannels(); ++c)
     y[c] += bias[c];
-
+  */
+  
   // Old Version:  
-  // Apply convolution and add bias  
-  /*
+  // Apply convolution and add bias    
   for(size_t c=0; c<dim[0]; ++c)
     {
       y[c] = linalg::tensor_convolve(x, K[c], S, P);
       y[c] += bias[c];
-    }
-  */
+    }  
   
   // Apply activation function
   // TODO: Think about more efficient implementation and shorter notation
@@ -65,7 +64,7 @@ void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, D
   const Tensor& x = dynamic_cast<const Tensor&>(x_);
   Tensor& z = dynamic_cast<Tensor&>(z_);
   Tensor& y = dynamic_cast<Tensor&>(y_);
-  
+  /*
   Matrix y_col = linalg::im2col(x, k, P);
   Matrix K_row = linalg::kernels2row(K);
 
@@ -73,9 +72,8 @@ void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, D
 
   for (size_t c = 0; c < K.size(); ++c)
     z[c] += bias[c];
-  
+  */
   // Old implementation
-  /*
   for (size_t c = 0; c < K.size(); ++c) {
     // TODO: Make this working so that we do not need the tensor_convolve
     // function any more.
@@ -85,7 +83,6 @@ void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, D
     z[c] = linalg::tensor_convolve(x, K[c], S, P);
     z[c] += bias[c];
   }
-  */
   
   // TODO: This can be realized with 1 loop
   for(size_t c=0; c<y.nChannels(); ++c)
