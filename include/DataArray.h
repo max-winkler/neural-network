@@ -3,6 +3,8 @@
 
 #include <memory>
 
+struct TakeOwnership {};
+
 /**
  * Base class for all types of tensors (vectors, matrices, etc.). 
  *
@@ -26,6 +28,16 @@ class DataArray
    */
   DataArray(const DataArray&);
 
+  /**
+   * Constructor creating a data array of specified dimension and copying the
+   * data provided by a data array.
+   *
+   * @param size The size of the data array.
+   * @param x The pointer to the data.
+   */
+  DataArray(size_t, const float*);
+  DataArray(size_t, float*, TakeOwnership o);
+  
   /**
    * Destructor that deallocates the internal memory used to store the DataArray.
    */
@@ -72,6 +84,7 @@ class DataArray
    * Returns a pointer to the internal data of the DataArray. Use carefully!
    */
   float* values();
+  const float* values() const;
   
   /**
    * Standard inner product for two DataArrays with matching dimension. For vectors this 

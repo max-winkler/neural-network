@@ -4,6 +4,8 @@
 #define POOLING_MAX 0
 #define POOLING_AVG 1
 
+#include <vector>
+
 #include "Matrix.h"
 #include "Tensor.h"
 
@@ -47,8 +49,10 @@ namespace linalg{
    * @param flip Is false when cross-correlation, and true when the mathematical convolution
    * operation shall be applied. 
    */
-  Matrix convolve(const MatrixView&, const MatrixView&,
-	        size_t S=1, size_t P=0, bool flip=false);
+  Matrix convolve(const MatrixView&, const MatrixView&, size_t S = 1,
+                  size_t P = 0, bool flip = false);
+  Matrix convolve_2(const MatrixView&, const MatrixView&, size_t S = 1,
+                  size_t P = 0, bool flip = false);  
   Matrix tensor_convolve(const Tensor&, const Tensor&,
 		     size_t S=1, size_t P=0, bool flip=false);
   Tensor unused_tensor_convolve(const Tensor&, const Matrix&,
@@ -82,6 +86,25 @@ namespace linalg{
    * @param P The padding that was added to the original matrix before pooling.
    */
   Matrix unpool(const MatrixView&, const MatrixView&, size_t k, int type=POOLING_MAX, size_t S=2, size_t P=0);
+
+  void matmul_into(const MatrixView&, const MatrixView&, float*, bool transA = false,
+	      bool transB = false); 
+  Matrix matmul(const MatrixView&, const MatrixView&, bool transA = false,
+                bool transB = false);  
+  Matrix im2col(const Tensor&, size_t k, size_t P=0);
+  Matrix im2col(const MatrixView&, size_t k);
+
+
+  /**
+   * Transforms a list of tensors into a matrix storing the tensor values row
+   * wise. This operation is used together with the im2col method to perform a fast
+   * convolution using generalized matrix multiplication.
+   *
+   * @brief Store tensor list row wise in a matrix.
+   *
+   * @param kernels The kernerl/filter list to be sorted into the matrix.
+   */
+  Matrix kernels2row(const std::vector<Tensor>&);
 }
 
 /**
@@ -104,7 +127,9 @@ public:
   // TODO: Let multiply return a proxy object "HadamardView" to avoid memory allocation
   friend Matrix linalg::multiply(const MatrixView&, const MatrixView&);
   friend float linalg::dot(const MatrixView&, const MatrixView&);
-  
+  friend void linalg::matmul_into(const MatrixView&, const MatrixView&, float*, bool, bool);
+  friend Matrix linalg::matmul(const MatrixView&, const MatrixView&, bool, bool);    
+  friend Matrix linalg::im2col(const MatrixView& A, size_t k);
 private:
   const float* data;
   size_t m;

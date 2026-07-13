@@ -5,6 +5,8 @@
 #include "Matrix.h"
 #include "Vector.h"
 
+// TODO: This allocates memory. Why do we need this?If fixed remove the delete
+// in Matrix::uninitialized.
 Matrix::Matrix() : DataArray(1), m(1)
 {
 }
@@ -17,6 +19,11 @@ Matrix::Matrix(size_t m, size_t n, const float* x)
   : DataArray(m*n), m(m)
 {
   memcpy(data, x, size*sizeof(float));
+}
+
+Matrix::Matrix(size_t m, size_t n, float* x, TakeOwnership o)
+  : DataArray(m*n, x, o), m(m)
+{
 }
 
 Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : DataArray(m*n), m(m)
@@ -32,6 +39,14 @@ Matrix::Matrix(const Matrix& other) : DataArray(other), m(other.m) {}
 
 Matrix::Matrix(Matrix&& other) noexcept : DataArray(std::move(other)), m(other.m) {}
 
+Matrix Matrix::uninitialized(size_t m, size_t n) {
+  Matrix A;
+  delete[] A.data;
+  A.size = m * n;
+  A.m = m;
+  A.data = new float[A.size];
+  return A;  
+}
 Matrix& Matrix::operator=(const Matrix& other)
 {
   if(nRows() != other.nRows() || nCols() != other.nCols())
@@ -94,16 +109,6 @@ const MatrixRow Matrix::operator[](size_t i) const
 float& MatrixRow::operator[](size_t j)
 {
   return data_ptr[j];
-}
-
-float& Matrix::operator()(size_t i, size_t j)
-{
-  return data[i*size/m + j];
-}
-
-const float& Matrix::operator()(size_t i, size_t j) const
-{
-  return data[i*size/m + j];
 }
 
 Matrix &Matrix::operator*=(float a) {
@@ -265,6 +270,16 @@ Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const
 
   return K;
 }
+
+void Matrix::reshape(size_t m, size_t n) {
+  if (m * n != size) {
+    std::cerr << "ERROR: The new dimension is invalid. Product should be "
+              << size << ".\n";
+    exit(-1);
+  }
+
+  this->m = m;  
+}  
 
 Matrix Matrix::kron(const Matrix& K, int S, int overlap) const
 {

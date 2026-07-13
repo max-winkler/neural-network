@@ -18,6 +18,8 @@ const std::unordered_map<std::string, ActivationFunction> ActivationFunctionFrom
   {"softmax", SOFTMAX},
 };
 
+// TODO: This function should be inline and defined in the header to enable
+// compiler optimization
 float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   switch(act)
@@ -32,7 +34,7 @@ float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
       return std::max(0.0f, x);
     }
   
-  return 0.;
+  return 0.0f;
 }
 
 Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGMOID)

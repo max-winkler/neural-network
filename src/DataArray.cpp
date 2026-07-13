@@ -20,6 +20,14 @@ DataArray::DataArray(const DataArray& other)
   std::memcpy(data, other.data, size*sizeof(float));
 }
 
+DataArray::DataArray(size_t s, const float* x) : size(s), data(new float[s]) {
+  std::memcpy(data, x, size*sizeof(float));
+}
+
+DataArray::DataArray(size_t s, float* x, TakeOwnership)
+    : size(s), data(x) {}
+
+  
 DataArray::~DataArray()
 {
   delete[] data;
@@ -69,9 +77,8 @@ const float& DataArray::operator[](size_t i) const
   return data[i];
 }
 
-float *DataArray::values() {
-  return data;
-}  
+float* DataArray::values() { return data; }
+const float* DataArray::values() const { return data; }
 
 float DataArray::inner(const DataArray& B) const
 {

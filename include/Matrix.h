@@ -15,7 +15,6 @@ struct ScaledMatrix;
 // Forward declarations of free functions
 ScaledMatrix operator*(float, const Matrix&);
 
-
 /**
  * Proxy class representing a matrix row. This is used to allow element access of matrices 
  * using [i][j] notation. Each instance holds a pointer to the i-th row of a matrix and allows
@@ -87,6 +86,7 @@ class Matrix : public DataArray
    * @param ptr Pointer to the data block to be copied into the matrix.
    */
   Matrix(size_t, size_t, const float*);  
+  Matrix(size_t, size_t, float*, TakeOwnership);  
 
   /**
    * Copy constructor creating a hard copy of another matrix.
@@ -121,6 +121,18 @@ class Matrix : public DataArray
   // TODO: This is not necessary any more. Use instead Image::to_matrix().
   Matrix(size_t, size_t, const unsigned char*);
 
+  /**
+   * Create a matrix with specified dimension without initialization of their
+   * values. This function should be used when the matrix entries are
+   * initialized directly after creation.
+   *
+   * @brief Create matrix with uninitialized entries
+   *
+   * @param m The number of rows of the matrix.
+   * @param n The number of columns of the matrix.
+   */
+  static Matrix uninitialized(size_t, size_t);
+  
   /**
    * Copy assignment operator creating a hard copy of another matrix.
    *
@@ -191,7 +203,7 @@ class Matrix : public DataArray
    * @param i Row index of the element to be accessed.
    * @param j Column index of the element to be accessed.
    */
-  float& operator()(size_t, size_t);
+  inline float& operator()(size_t i, size_t j) { return data[i * size / m + j]; }  
 
   /**
    * Access single element using the notation A(i,j), which is more efficient that A[i][j].
@@ -199,7 +211,10 @@ class Matrix : public DataArray
    * @param i Row index of the element to be accessed.
    * @param j Column index of the element to be accessed.
    */
-  const float& operator()(size_t, size_t) const;
+  inline const float& operator()(size_t i , size_t j) const {
+    return data[i * size / m + j];
+  }
+  
   
   /**
    * Multiplies all matrix entries with a given value.
@@ -275,6 +290,15 @@ class Matrix : public DataArray
    */
   Vector flatten() const;
 
+  /**
+   * Reshape the matrix. This does not change the data in memory.
+   *
+   * @brief Reshape matrix to a new dimension
+   *
+   * @param m The number of rows.
+   * @param n The number of columns.
+   */
+  void reshape(size_t, size_t);
 
   /**
    * Adjoint operation to the convolution. This method returns the gradient of the operation A.convolve(K)
