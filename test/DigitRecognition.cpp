@@ -37,10 +37,11 @@ int main(int argc, char* argv[]) {
 	    << training_label_file << ".\n";
     return -1;
   }
+  
   // Read test data
   std::vector<TrainingData> test_data;
   int n_test, n_classes_test;
-
+  
   if(MNIST::read(test_data_file, test_label_file,
 	       n_test, width, height, n_classes_test, test_data) != 0)    
     return -1;
