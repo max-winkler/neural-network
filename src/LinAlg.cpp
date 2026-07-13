@@ -1,6 +1,10 @@
 #include "LinAlg.h"
+#include <cblas.h>
 
+#include <complex>
 #include <cstdlib>
+#include <cstring>
+#include "DataArray.h"
 
 namespace linalg
 {
@@ -99,6 +103,33 @@ namespace linalg
     return Z;    
   }
 
+  Matrix convolve_2(const MatrixView&  A, const MatrixView& K,
+	        size_t S, size_t P, bool flip)
+  {
+    if(S != 1)
+      {
+        std::cerr << "ERROR: Convolution with stride different than 1 not implemented yet.\n";
+        return Matrix();
+      }
+  
+    // Size of current matrix and filter
+    const size_t n1 = A.nRows();
+    const size_t n2 = A.nCols();
+    const size_t m = K.nRows();
+
+    // Size of resulting matrix
+    const size_t n1_new = (n1-m+2*P)/S+1;
+    const size_t n2_new = (n2-m+2*P)/S+1;
+    
+    Matrix im_A = im2col(A, m);
+    Matrix im_K = im2col(K, m);
+    Matrix Z = matmul(im_A, im_K, true);
+    Z.reshape(n1_new, n2_new);
+    
+    return Z;    
+  }
+  
+  
   Matrix tensor_convolve(const Tensor& T, const Tensor& K, size_t S, size_t P, bool flip)  {
   
     if(S != 1)
@@ -277,8 +308,134 @@ namespace linalg
     return D;
   }
 
-} // end of namespace linalg
+  Matrix matmul(const MatrixView& A, const MatrixView& B, bool transA,
+                bool transB) {
+    size_t m = !transA ? A.nRows() : A.nCols();
+    size_t n = !transB ? B.nCols() : B.nRows();
+    Matrix out(m, n);
 
+    matmul_into(A, B, out.values(), transA, transB);
+
+    return out;
+  }
+
+  void matmul_into(const MatrixView& A, const MatrixView& B, float* out_data,
+                   bool transA, bool transB) {
+    size_t m = !transA ? A.nRows() : A.nCols();
+    size_t n = !transB ? B.nCols() : B.nRows();
+    size_t k = !transA ? A.nCols() : A.nRows();
+
+    if (k != (!transB ? B.nRows() : B.nCols())) {
+      std::cerr
+          << "ERROR: Matrices have incompatible dimension for multiplication\n";
+      std::cerr << " A is " << A.nRows() << " x " << A.nCols()
+                << (transA ? " (to be transposed)\n" : "\n");
+      std::cerr << " B is " << B.nRows() << " x " << B.nCols()
+                << (transB ? " (to be transposed)\n" : "\n");
+
+      exit(-1);
+    }
+
+    cblas_sgemm(CblasRowMajor, transA ? CblasTrans : CblasNoTrans,
+                transB ? CblasTrans : CblasNoTrans, m, n, k, 1.0f, A.data,
+                A.nCols(), B.data, B.nCols(), 0.0f, out_data, n);
+  }
+
+  Matrix im2col(const Tensor& A, size_t k, size_t P) {
+    // Output dimension
+    size_t orig_h = A.nRows();
+    size_t orig_w = A.nCols();
+
+    size_t out_h = orig_h + 2 * P - k + 1;
+    size_t out_w = orig_w + 2 * P - k + 1;
+    
+    size_t d = A.nChannels();
+    
+    // Dimension of output matrix
+    size_t out_rows = d * k * k;
+    size_t out_cols = out_h * out_w;
+
+    //Matrix out = Matrix::uninitialized(out_rows, out_cols);
+    float* __restrict out_data = new float[out_rows * out_cols];
+    
+    size_t col=0;    
+    for (size_t i = 0; i < out_h; ++i) {
+      for (size_t j = 0; j < out_w; ++j) {
+        size_t row = 0;
+
+        for (int c = 0; c < d; ++c)
+          for (int m = 0; m < k; ++m) {
+            long src_i = (long)i + (long)m - (long)P;
+            for (int n = 0; n < k; ++n) {
+              long src_j = (long)j + (long)n - (long)P;
+              float val = 0.0f;
+              if (src_i >= 0 && src_i < (long)orig_h && src_j >= 0 &&
+                  src_j < (long)orig_w)
+                val = A(c, src_i, src_j);
+
+              out_data[out_cols * row + col] = val;
+              ++row;
+            }
+          }
+        ++col;
+      }
+    }
+    return Matrix(out_rows, out_cols, out_data, TakeOwnership());
+  }
+  
+  Matrix im2col(const MatrixView& A, size_t k) {
+    // todo: Matrix is copied in Tensor constructor. This should be avoided.
+    // idea: implement a proxy class TensorView (analogous to MatrixView)
+    // return im2col(Tensor(1,A.nRows(), A.nCols(), A.data), k);
+
+    // Output dimension
+    size_t out_h = A.nRows() - k + 1;
+    size_t out_w = A.nCols() - k + 1;
+    
+    // Dimension of output matrix
+    size_t out_rows = k * k;
+    size_t out_cols = out_h * out_w;
+
+    // Matrix out = Matrix::uninitialized(out_rows, out_cols);
+    //float* __restrict out_data = out.values();
+    float* __restrict out_data = new float[out_rows * out_cols];
+
+    size_t col = 0;
+    for (size_t i = 0; i < out_h; ++i) {
+      for (size_t j = 0; j < out_w; ++j) {
+        size_t row = 0;
+        for (int m = 0; m < k; ++m) {         
+	for (int n = 0; n < k; ++n) {
+	  out_data[out_cols * row + col] = A(i + m, j + n);
+	  ++row;          
+	  //out(row, col) = A(i+m, j+n);
+	}
+        }
+        ++col;                
+      }
+    }
+
+    // return out;
+    return Matrix(out_rows, out_cols, out_data, TakeOwnership());
+  }
+
+  Matrix kernels2row(const std::vector<Tensor>& kernels) {
+    if (kernels.size() == 0) {
+      std::cerr << "ERROR: The kernel list is empty.\n";
+      exit(-1);
+    }
+
+    const Tensor& T = kernels[0];
+    size_t tensor_size = T.nChannels() * T.nRows() * T.nCols();
+    Matrix output = Matrix::uninitialized(kernels.size(), tensor_size);
+
+    for(size_t c=0; c<kernels.size(); ++c) 
+      memcpy(output.values() + c*tensor_size, kernels[c].values(), tensor_size*sizeof(float));
+    
+    return output;
+  }
+  
+}  // end of namespace linalg
 
 MatrixView::MatrixView(const float* data, size_t m, size_t n) : data(data), m(m), n(n) {}
 MatrixView::MatrixView(const Matrix& A) : data(A.data), m(A.m), n(A.size/A.m) {}

@@ -2,6 +2,7 @@
 #include <iomanip>
 
 #include "Tensor.h"
+#include "DataArray.h"
 #include "Vector.h"
 
 TensorSlice::TensorSlice(size_t m, size_t n, float* data) : m(m), n(n), data(data) {}
@@ -27,10 +28,10 @@ TensorSlice& TensorSlice::operator=(const Matrix& A)
   return *this;
 }
 
-TensorSlice& TensorSlice::operator+=(float a)
-{
+TensorSlice& TensorSlice::operator+=(float a) {
+  float* __restrict d = data;  
   for(size_t i = 0; i < m*n; ++i)
-    data[i] += a;
+    d[i] += a;
 
   return *this;
 }
@@ -59,6 +60,11 @@ Tensor::Tensor(size_t d, size_t m, size_t n, const float* x)
 {
   memcpy(data, x, size*sizeof(float));
 }
+Tensor::Tensor(size_t d, size_t m, size_t n, float* x, TakeOwnership o)
+  : DataArray(d*m*n, x, o), d(d), m(m), c_stride(m*n), r_stride(n)
+{
+}
+
 Tensor::Tensor(const Tensor& T)
   : DataArray(T), d(T.d), m(T.m), c_stride(size/d), r_stride(size/d/m) {}
 Tensor::Tensor(const Matrix& A)

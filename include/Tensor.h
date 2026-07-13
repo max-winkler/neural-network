@@ -147,7 +147,7 @@ class Tensor : public DataArray
    * @param x Pointer to the data.
    */
   Tensor(size_t, size_t, size_t, const float*);
-  
+  Tensor(size_t, size_t, size_t, float*, TakeOwnership);    
   /**
    * Copy constructor creating a hard copy of another tensor.
    *
