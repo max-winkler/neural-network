@@ -136,16 +136,16 @@ const float& Tensor::operator()(size_t c, size_t i, size_t j) const
 }
 */
 
-Tensor& Tensor::operator*=(float a)
-{
+Tensor& Tensor::operator*=(float a) {
+  // TODO: Use cblas_sscal function here (see Matrix class)
   for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
     (*data_ptr) *= a;
 
   return *this;
 }
 
-Tensor& Tensor::operator+=(const Tensor& T)
-{
+Tensor& Tensor::operator+=(const Tensor& T) {
+  // TODO: Use cblas_saxpy function here
   const float* data_ptr_T;
   float* data_ptr;
     
