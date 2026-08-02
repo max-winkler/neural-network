@@ -32,6 +32,9 @@ float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
       return 2.0f / (1.0f + exp(-2.0f*x)) - 1.0f;
     case ActivationFunction::RELU:
       return std::max(0.0f, x);
+    default:
+      std::cerr << "ERROR: Unable to evaluate activation function component-wise.";
+      return 0.;
     }
   
   return 0.0f;
