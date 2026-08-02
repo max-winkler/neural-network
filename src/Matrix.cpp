@@ -26,15 +26,6 @@ Matrix::Matrix(size_t m, size_t n, float* x, TakeOwnership o)
 {
 }
 
-Matrix::Matrix(size_t m, size_t n, const unsigned char* pixels) : DataArray(m*n), m(m)
-{
-  float* data_ptr;
-  const unsigned char* pixel_ptr;
-  
-  for(data_ptr = data, pixel_ptr = pixels; data_ptr != data+m*n; ++data_ptr, ++pixel_ptr)
-    *data_ptr = float(*pixel_ptr) / 255.0f;
-}
-
 Matrix::Matrix(const Matrix& other) : DataArray(other), m(other.m) {}
 
 Matrix::Matrix(Matrix&& other) noexcept : DataArray(std::move(other)), m(other.m) {}
@@ -111,7 +102,7 @@ float& MatrixRow::operator[](size_t j)
   return data_ptr[j];
 }
 
-Matrix &Matrix::operator*=(float a) {
+Matrix& Matrix::operator*=(float a) {
   cblas_sscal(size, a, data, 1);
   /*
     for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
