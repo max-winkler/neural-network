@@ -109,19 +109,48 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 
       Tensor Dx(y.nChannels(), y.nRows(), y.nCols());
       
-      Tensor Dz(z);
-      for(size_t c=0; c<Dz.nChannels(); ++c)
-        for(size_t i=0; i<Dz.nRows(); ++i)
-	for(size_t j=0; j<Dz.nCols(); ++j)
-	  Dz(c,i,j) = Dactivate(Dz(c,i,j), act);
-      
+      Tensor Dsigma(z);
+      for(size_t c=0; c<Dsigma.nChannels(); ++c)
+        for(size_t i=0; i<Dsigma.nRows(); ++i)
+	for(size_t j=0; j<Dsigma.nCols(); ++j)
+	  Dsigma(c,i,j) = Dactivate(Dsigma(c,i,j), act);
+
+      //====== NEW =====      
       const int F = K.size();
+      size_t out_hw = z.nRows()*z.nCols();
+      Matrix Dz_matrix = Matrix::uninitialized(F, out_hw);
+
+      // Hadamard product gives Dz. We need it for each channel in the row of a matrix
+      size_t Dz_cols = z.nCols();
+      for (size_t d = 0; d < F; ++d) {
+        for (size_t i = 0; i < z.nRows(); ++i)
+	for(size_t j=0; j<z.nCols(); ++j)
+	  Dz_matrix(d, i * Dz_cols + j) = Dy(d, i, j) * Dsigma(d, i, j);
+      }
+
+      for (size_t d = 0; d < F; ++d) {
+
+        // Gradient w.r.t. bias is row sum over Dz_matrix = (Dsigma[d], Dy[d])_F
+        const float* row = Dz_matrix.values() + d * out_hw;
+        float sum = 0.0f;
+        for (size_t i = 0; i < out_hw; ++i)
+	sum += row[i];
+        output->bias[d] += sum;
+        
+      }
+
+      // TODO: This was computed in the forward propagation already. Reuse!      
+      Matrix y_col = linalg::im2col(y, k, P);
+      
+      
+      
+      //=================
       
       for(size_t d=0; d<F; ++d)
         {
 	MatrixView Dy_slice = Dy[d]; // df/dY
-	MatrixView Dz_slice = Dz[d]; // dY/dZ
-	Matrix DyDz_slice = linalg::multiply(Dy_slice, Dz_slice); 
+	MatrixView Dsigma_slice = Dsigma[d]; // dY/dZ
+	Matrix Dz_slice = linalg::multiply(Dy_slice, Dsigma_slice); 
 	// Note: The Hadamard product of these two gives df/dZ
 
 	// This works
@@ -129,11 +158,11 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 
 	// New try with matrix convolution
 	for (size_t c = 0; c < y.nChannels(); ++c) {
-	  output->K[d][c] += linalg::convolve(y[c], DyDz_slice, S, P);
-	  Dx[c] += linalg::convolve(DyDz_slice, K[d][c], S, k-1-P, true);
+	  output->K[d][c] += linalg::convolve(y[c], Dz_slice, S, P);
+	  Dx[c] += linalg::convolve(Dz_slice, K[d][c], S, k-1-P, true);
 	}
 	
-	output->bias[d] += linalg::dot(Dz_slice, Dy_slice);         
+	output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);         
         }
       
       delete *Dy_it;
