@@ -1,3 +1,4 @@
+#include <cblas.h>
 #include <cstring>
 #include <iomanip>
 
@@ -137,10 +138,7 @@ const float& Tensor::operator()(size_t c, size_t i, size_t j) const
 */
 
 Tensor& Tensor::operator*=(float a) {
-  // TODO: Use cblas_sscal function here (see Matrix class)
-  for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
-    (*data_ptr) *= a;
-
+  cblas_sscal(size, a, data, 1);
   return *this;
 }
 

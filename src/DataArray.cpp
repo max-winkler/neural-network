@@ -7,10 +7,9 @@ DataArray::DataArray(size_t size)
 {
   data = new float[size];
 
-  // TODO: Valgrind throws "uninitialized value" when using memset
   for(size_t i=0; i<size; ++i)
     data[i] = 0.;
-  //std::memset(data, 0.0, size*sizeof(float));
+  // std::memset(data, 0, size*sizeof(float));
 }
 
 DataArray::DataArray(const DataArray& other)

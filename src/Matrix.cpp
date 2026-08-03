@@ -111,13 +111,8 @@ float& MatrixRow::operator[](size_t j)
   return data_ptr[j];
 }
 
-Matrix &Matrix::operator*=(float a) {
-  cblas_sscal(size, a, data, 1);
-  /*
-    for(float* data_ptr = data; data_ptr != data+size; ++data_ptr)
-      (*data_ptr) *= a;
-  */
-  
+Matrix& Matrix::operator*=(float a) {
+  cblas_sscal(size, a, data, 1);  
   return *this;  
 }
   
