@@ -7,7 +7,7 @@
 
 FullyConnectedLayer::FullyConnectedLayer(size_t dim, size_t in_dim, ActivationFunction act)
   : Layer(std::vector<size_t>(1, dim), LayerType::FULLY_CONNECTED),
-    act(act), bias(dim), weight(dim, in_dim)
+    weight(dim, in_dim), bias(dim), act(act)
 {
 }
 
