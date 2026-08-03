@@ -1,6 +1,7 @@
 #include "LinAlg.h"
 #include <cblas.h>
 
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include "DataArray.h"
@@ -85,7 +86,8 @@ namespace linalg
 
 	      // TODO: This bound check might reduce the performance. Better implementation possible.
 	      // Bound check when padding is used
-	      if(x_k < 0 || x_l < 0 || x_k >= n1 || x_l >= n2)
+	      if (x_k < 0 || x_l < 0 || static_cast<size_t>(x_k) >= n1 ||
+		static_cast<size_t>(x_l) >= n2)                
 	        continue;
 
 	      // Indices to access right-hand side
@@ -223,19 +225,12 @@ namespace linalg
 	      float max_val = 0.;
 	      
 	      // Find maxiumum within the patch
-	      for(int m=0; m<k; ++m)		  
-	        for(int n=0; n<k; ++n)
+	      for(size_t m=0; m<k; ++m)		  
+	        for(size_t n=0; n<k; ++n)
 		{
 		  size_t i2 = i*S+m;
 		  size_t j2 = j*S+n;
-
-		  // Bound check (should never be necessary, remove when tested)
-		  if(i2 < 0 || i2 >= n1 || j2 < 0 || j2 >= n2)
-		    {
-		      std::cerr << "ERROR: Invalid matrix index used in pooling operation.\n";
-		      continue;
-		    }
-
+		  
 		  // Udate maximum value
 		  float cur_val = A(i2,j2);
 		  if(cur_val > max_val)
@@ -286,8 +281,8 @@ namespace linalg
 	      int i_max = 0, j_max = 0;
 	      float val_max = B(S*m,S*n);
 	    
-	      for(int i=0; i<k; ++i)
-	        for(int j=0; j<k; ++j)
+	      for(size_t i=0; i<k; ++i)
+	        for(size_t j=0; j<k; ++j)
 		{
 		  if(B(S*m+i,S*n+j) > val_max)
 		    {
@@ -361,10 +356,10 @@ namespace linalg
       for (size_t j = 0; j < out_w; ++j) {
         size_t row = 0;
 
-        for (int c = 0; c < d; ++c)
-          for (int m = 0; m < k; ++m) {
+        for (size_t c = 0; c < d; ++c)
+          for (size_t m = 0; m < k; ++m) {
             long src_i = (long)i + (long)m - (long)P;
-            for (int n = 0; n < k; ++n) {
+            for (size_t n = 0; n < k; ++n) {
               long src_j = (long)j + (long)n - (long)P;
               float val = 0.0f;
               if (src_i >= 0 && src_i < (long)orig_h && src_j >= 0 &&
@@ -402,8 +397,8 @@ namespace linalg
     for (size_t i = 0; i < out_h; ++i) {
       for (size_t j = 0; j < out_w; ++j) {
         size_t row = 0;
-        for (int m = 0; m < k; ++m) {         
-	for (int n = 0; n < k; ++n) {
+        for (size_t m = 0; m < k; ++m) {         
+	for (size_t n = 0; n < k; ++n) {
 	  out_data[out_cols * row + col] = A(i + m, j + n);
 	  ++row;          
 	  //out(row, col) = A(i+m, j+n);
