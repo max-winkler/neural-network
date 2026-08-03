@@ -116,13 +116,14 @@ class DataArray
   // the activation function.
  protected:
   /**
-   * Pointer to the memory where the entries of the DataArray are stored
-   */
-  float* data;
-  /**
    * Integer storing the size of the DataArray (n1*n2*...*nd for tensors of stage d).
    */
   size_t size;
+  
+  /**
+   * Pointer to the memory where the entries of the DataArray are stored
+   */
+  float* data;
 };
 
 #endif

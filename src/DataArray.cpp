@@ -34,7 +34,7 @@ DataArray::~DataArray()
 }
 
 DataArray::DataArray(DataArray&& other) noexcept
-  : data(other.data), size(other.size)
+  : size(other.size), data(other.data)
 {
   other.data = nullptr;
 }
