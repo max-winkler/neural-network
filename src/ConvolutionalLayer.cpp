@@ -7,11 +7,11 @@
 #include "mpi.h"
 
 ConvolutionalLayer::ConvolutionalLayer(std::vector<size_t> in_dim, size_t F,
-			         size_t k, size_t S, size_t P,
-			         ActivationFunction act)
-  : Layer(std::vector<size_t>(3,0), LayerType::CONVOLUTION),
-    in_dim(in_dim), k(k), S(S==0 ? k : S), P(P),
-    K(F), bias(F), act(act)
+                                       size_t k, size_t S, size_t P,
+                                       ActivationFunction act)
+  : Layer(std::vector<size_t>(3, 0), LayerType::CONVOLUTION),
+    K(F), bias(F), act(act),      
+    k(k), S(S==0 ? k : S), P(P), in_dim(in_dim)    
 {
   // Set up kernel tensors
   for(size_t i=0; i<F; ++i)
@@ -116,7 +116,7 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 	  Dsigma(c,i,j) = Dactivate(Dsigma(c,i,j), act);
 
       //====== NEW =====      
-      const int F = K.size();
+      const size_t F = K.size();
       size_t out_hw = z.nRows()*z.nCols();
       Matrix Dz_matrix = Matrix::uninitialized(F, out_hw);
 
