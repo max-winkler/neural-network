@@ -105,7 +105,22 @@ class Matrix : public DataArray
    * @param other The matrix to be moved.
    */
   Matrix(Matrix&&) noexcept;
-  
+
+  /**
+   * Constructor creating a matrix of size \p m x \p n and initializing their values with image data 
+   * behind the pointer \p ptr. It is assumed that \p ptr points at a contiguous block of unsigned chars.
+   * The unsigned chars (0-255) are converted to single precision values in the range 0.0-1.0. 
+   * This constructor is helpful when image data should be processed in the neural network.
+   *
+   * @brief Create matrix from image data
+   *
+   * @param m The number of rows of the matrix.
+   * @param n The number of columns of the matrix.
+   * @param ptr A contiguous block of \p m x \p n unsigned chars representing image data.
+   */
+  // TODO: This is not necessary any more. Use instead Image::to_matrix().
+  Matrix(size_t, size_t, const unsigned char*);
+
   /**
    * Create a matrix with specified dimension without initialization of their
    * values. This function should be used when the matrix entries are
