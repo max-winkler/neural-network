@@ -8,7 +8,7 @@
 PoolingLayer::PoolingLayer(std::vector<size_t> in_dim,
 		       size_t k, size_t S, size_t P)
   : Layer(std::vector<size_t>(3, 0), LayerType::POOLING),
-    in_dim(in_dim), k(k), S(S==0 ? k : S), P(P), type(POOLING_MAX)
+    k(k), S(S==0 ? k : S), P(P), in_dim(in_dim), type(POOLING_MAX)
 {
   S = this->S;
   
