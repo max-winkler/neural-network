@@ -1,7 +1,6 @@
 #include "LinAlg.h"
 #include <cblas.h>
 
-#include <complex>
 #include <cstdlib>
 #include <cstring>
 #include "DataArray.h"
@@ -21,13 +20,12 @@ namespace linalg
 
     Matrix C(m,n);
 
-    float* data_ptr;
-    const float* A_data_ptr;
-    const float* B_data_ptr;
-
-    for(size_t i=0; i<m; ++i)
-      for(size_t j=0; j<n; ++j)
-        C(i,j) = A(i,j) * B(i,j);
+    float* data_ptr = C.values();
+    const float* A_data_ptr = A.data;
+    const float* B_data_ptr = B.data;
+    
+    for(size_t i=0; i<m*n; ++i)
+      data_ptr[i] = A_data_ptr[i]*B_data_ptr[i];
     
     return C; 
   }
