@@ -25,19 +25,19 @@
 constexpr float EPS = 1.e-7;
 
 NeuralNetwork::NeuralNetwork()
-  : initialized(false), layers()
+  : layers(), initialized(false)
 {
   layers.reserve(10);
 }
 
 NeuralNetwork::NeuralNetwork(size_t n_layers)
-  : initialized(false), layers(n_layers)
+  : layers(n_layers), initialized(false)
 {
   // layers.reserve(n_layers);
 }
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& other)
-  : initialized(true), layers()
+  : layers(), initialized(true)
 {  
   for(auto layer = other.layers.begin(); layer != other.layers.end(); ++layer)    
     layers.push_back((*layer)->clone());  
@@ -45,7 +45,7 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork& other)
 
 
 NeuralNetwork::NeuralNetwork(NeuralNetwork&& other)
-  : initialized(true), layers(std::move(other.layers))
+  : layers(std::move(other.layers)), initialized(true)
 {}
 
 NeuralNetwork& NeuralNetwork::operator=(NeuralNetwork&& other)
@@ -451,8 +451,6 @@ float NeuralNetwork::evalFunctional(const std::vector<TrainingData> &data,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   size_t local_batch_size = options.batch_size / size;
   
-  size_t n_data = data.size();
-
   // Set initial layer
   switch(layers[0]->layer_type)
     {
@@ -517,7 +515,6 @@ NeuralNetwork NeuralNetwork::evalGradient(const std::vector<TrainingData>& data,
 				  const std::vector<size_t>& data_indices,
 				  OptimizationOptions options) const
 {
-  size_t n_data = data.size();
   size_t local_batch_size = data_indices.size();
   
   NeuralNetwork grad_net(n_layers());
@@ -602,7 +599,7 @@ void NeuralNetwork::save(std::ostream& os) const
 
       // Dimensions string (comma-separated)
       std::ostringstream ss;
-      for(int i=0; i<(*layer)->dim.size()-1; ++i)
+      for(size_t i=0; i<(*layer)->dim.size()-1; ++i)
         ss << (*layer)->dim[i] << ", ";
       ss << (*layer)->dim.back();
 
@@ -636,7 +633,7 @@ void NeuralNetwork::save(std::ostream& os) const
             }
 
           // Write data
-          size_t line_length = 8;
+          // size_t line_length = 8;
           for (size_t i = 0; i < size; ++i) {
             /*
               if (i % line_length == 0 && i != 0) {
@@ -751,8 +748,6 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
   direction.initialize(); // fills weights with random data
 
   float deriv_exact = grad_net.dot(direction);
-
-  size_t n_data = data.size();
   
   std::vector<std::vector<DataArray*>> z(layers.size());
   std::vector<std::vector<DataArray*>> y(layers.size()+1);
@@ -876,5 +871,11 @@ float NeuralNetwork::norm() const
 }
 
 OptimizationOptions::OptimizationOptions()
-    : max_iter(1e4), batch_size(128), momentum(0.9), learning_rate(1.e-2),
-      loss_function(LossFunction::MSE), output_every(1), epochs(3) {}
+    : max_iter(1e4),
+      batch_size(128),
+      learning_rate(1.e-2),
+      momentum(0.9),
+      output_every(1),
+      epochs(3),
+      loss_function(LossFunction::MSE) {}
+
