@@ -25,7 +25,26 @@ extern const std::unordered_map<std::string, ActivationFunction> ActivationFunct
 /**
  * Apply activation function to single float value.
  */
-float activate(float, ActivationFunction);
+inline float activate(float x, ActivationFunction act=SIGMOID)
+{
+  switch(act)
+    {
+    case ActivationFunction::NONE:
+      return x;
+    case ActivationFunction::SIGMOID:
+      return x>0.0f ? 1.0f / (1.0f + exp(-x)) : exp(x) / (1.0f + exp(x));
+    case ActivationFunction::TANH:
+      return 2.0f / (1.0f + exp(-2.0f*x)) - 1.0f;
+    case ActivationFunction::RELU:
+      return std::max(0.0f, x);
+    default:
+      std::cerr << "ERROR: Unable to evaluate activation function component-wise.";
+      return 0.;
+    }
+  
+  return 0.0f;
+}
+
 /**
  * Apply activation function componentwise to a vector.
  */

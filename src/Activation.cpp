@@ -18,28 +18,6 @@ const std::unordered_map<std::string, ActivationFunction> ActivationFunctionFrom
   {"softmax", SOFTMAX},
 };
 
-// TODO: This function should be inline and defined in the header to enable
-// compiler optimization
-float activate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
-{
-  switch(act)
-    {
-    case ActivationFunction::NONE:
-      return x;
-    case ActivationFunction::SIGMOID:
-      return x>0.0f ? 1.0f / (1.0f + exp(-x)) : exp(x) / (1.0f + exp(x));
-    case ActivationFunction::TANH:
-      return 2.0f / (1.0f + exp(-2.0f*x)) - 1.0f;
-    case ActivationFunction::RELU:
-      return std::max(0.0f, x);
-    default:
-      std::cerr << "ERROR: Unable to evaluate activation function component-wise.";
-      return 0.;
-    }
-  
-  return 0.0f;
-}
-
 Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGMOID)
 {
   Vector y(x.length());
