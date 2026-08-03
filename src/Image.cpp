@@ -38,10 +38,10 @@ Image Image::read_png(const std::string& filename)
   png_init_io(png, fp);
   png_read_info(png, info);
 
-  int width      = png_get_image_width(png, info);
-  int height     = png_get_image_height(png, info);
-  int color_type = png_get_color_type(png, info);
-  int bit_depth  = png_get_bit_depth(png, info);
+  unsigned width  = png_get_image_width(png, info);
+  unsigned height = png_get_image_height(png, info);
+  int color_type  = png_get_color_type(png, info);
+  int bit_depth   = png_get_bit_depth(png, info);
   
   if(bit_depth == 16)
     png_set_strip_16(png);
@@ -74,7 +74,7 @@ Image Image::read_png(const std::string& filename)
   std::vector<png_byte> img_data(4*width*height);
   std::vector<png_bytep> row_pointers(height);
   
-  for(int y = 0; y < height; y++)
+  for(unsigned y = 0; y < height; y++)
     row_pointers[y] = img_data.data() + 4*width*y;  
   
   png_read_image(png, row_pointers.data());

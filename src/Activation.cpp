@@ -93,10 +93,12 @@ float Dactivate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
     case ActivationFunction::TANH:
       return 4.0f*exp(-2.0f*x)/pow(1.+exp(-2.0f*x), 2.0f);
     case ActivationFunction::RELU:
-      return x<0.0f ? 0.0f : 1.0f;
+      return x < 0.0f ? 0.0f : 1.0f;
+    default:
+      std::cerr
+          << "ERROR: Activation function can not be applied component-wise.\n";
+      return 0.;      
     }
-  
-  return 0.;
 }
 
 Vector Dactivate(const Vector& x, ActivationFunction act=ActivationFunction::SIGMOID)

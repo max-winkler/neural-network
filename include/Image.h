@@ -146,14 +146,14 @@ class Image
   static ImageInfo get_info_png(const std::string& filename);
   static ImageInfo get_info_jpg(const std::string& filename);
   
-  /// Data vector
-  std::vector<unsigned char> data;
-
   /// Image width
   size_t width;
 
   /// Image height
   size_t height;
+
+  /// Data vector
+  std::vector<unsigned char> data;  
 };
 
 #endif
