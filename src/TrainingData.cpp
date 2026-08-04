@@ -2,8 +2,15 @@
 
 #include "Tensor.h"
 
-TrainingData::TrainingData(const Vector& x, const Vector& y) : x(new Vector(x)), y(y) {}
-TrainingData::TrainingData(const Matrix& x, const Vector& y) : x(new Tensor(x)), y(y) {}
+TrainingData::TrainingData(const Vector& x, const Vector& y)
+    : x(new Vector(x)), y(y) {}
+TrainingData::TrainingData(const Matrix& x, const Vector& y)
+  : x(new Tensor(x)), y(y) {}
+TrainingData::TrainingData(Vector&& x, Vector&& y)
+  : x(new Vector(std::move(x))), y(std::move(y)) {}
+TrainingData::TrainingData(Matrix&& x, Vector&& y)
+  : x(new Tensor(std::move(x))), y(std::move(y)) {}
+
 
 TrainingData::TrainingData(const TrainingData& other) : y(other.y) {
 

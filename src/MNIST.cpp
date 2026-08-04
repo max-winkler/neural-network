@@ -112,9 +112,8 @@ int MNIST::read(const std::string& image_file, const std::string& label_file,
 	}
       
       y[label] = 1.;
-
-      // TODO: Training data is copied here. Use move semantics instead
-      TrainingData data(x, y);
+      
+      TrainingData data(std::move(x), std::move(y));
       training_data.push_back(data);
     }
   

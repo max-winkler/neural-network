@@ -67,9 +67,23 @@ Tensor::Tensor(size_t d, size_t m, size_t n, float* x, TakeOwnership o)
 }
 
 Tensor::Tensor(const Tensor& T)
-  : DataArray(T), d(T.d), m(T.m), c_stride(size/d), r_stride(size/d/m) {}
+    : DataArray(T),
+      d(T.d),
+      m(T.m),
+      c_stride(size / d),
+      r_stride(size / d / m) {}
 Tensor::Tensor(const Matrix& A)
-  : DataArray(A), d(1), m(A.nRows()), c_stride(size/d), r_stride(size/d/m) {}
+    : DataArray(A),
+      d(1),
+      m(A.nRows()),
+      c_stride(size / d),
+      r_stride(size / d / m) {}
+Tensor::Tensor(Matrix&& A)
+    : DataArray(std::move(A)),
+      d(1),
+      m(A.nRows()),
+      c_stride(size / d),
+      r_stride(size / d / m) {}
 
 Tensor& Tensor::operator=(const Tensor& other)
 {

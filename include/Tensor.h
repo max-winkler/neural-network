@@ -165,6 +165,16 @@ class Tensor : public DataArray
    * @param A The matrix to be copied.
    */
   Tensor(const Matrix&);
+
+  /**
+   * Create a tensor of dimension 1 x m x n from a matrix of dimension m x n.
+   * Data is moved and not copied.
+   *
+   * @brief Move constructor for matrix input
+   *
+   * @param A The matrix to be moved.
+   */
+  Tensor(Matrix&&);
   
   /**
    * Copy assignment operator creating a hard copy of another matrix.

@@ -28,6 +28,22 @@ class TrainingData
   TrainingData(const Matrix& x, const Vector& y);
 
   /**
+   * Create training data with vector input. Data are moved and not copied.
+   *
+   * @param x The input vector.
+   * @param y The label vector.
+   */
+  TrainingData(Vector&& x, Vector&& y);
+
+  /**
+   * Create training data with matrix input. Data are moved and not copied.
+   *
+   * @param x The input vector.
+   * @param y The label vector.
+   */
+  TrainingData(Matrix&& x, Vector&& y);
+  
+  /**
    * Copy a training datum.
    *
    * @param other The training datum to be copied.

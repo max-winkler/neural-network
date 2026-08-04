@@ -46,7 +46,7 @@ inline float activate(float x, ActivationFunction act=SIGMOID)
 }
 
 /**
- * Apply activation function componentwise to a vector.
+ * Apply activation function componentwise to a vector. 
  */
 Vector activate(const Vector&, ActivationFunction);
 /**
