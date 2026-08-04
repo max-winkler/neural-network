@@ -387,7 +387,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       grad_net.synchronize_sum();
         
       // Gradient Test for debugging
-      // gradientTest(grad_net, data, data_idx, options);	
+      // gradientTest(grad_net, data, batch_data_idx, options);	
       // exit(2);
       
       // Update increment
