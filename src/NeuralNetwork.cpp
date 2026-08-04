@@ -288,7 +288,6 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
 	    case MATRIX_INPUT:
 	    case POOLING:
 	    case CONVOLUTION:
-	      // TODO: Are y and z really needed in input layers?	      
 	      y[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
 	      z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
 	      break;
@@ -765,10 +764,8 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	  case MATRIX_INPUT:
 	  case POOLING:
 	  case CONVOLUTION:
-	    // TODO: Are y and z really needed in input layers?	      
 	    y[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
-	    z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
-	      
+	    z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);	      
 	    break;
 	  case FULLY_CONNECTED:
 	  case VECTOR_INPUT:
@@ -807,10 +804,8 @@ void NeuralNetwork::gradientTest(const NeuralNetwork& grad_net,
 	      case MATRIX_INPUT:
 	      case POOLING:
 	      case CONVOLUTION:
-	        // TODO: Are y and z really needed in input layers?	      
 	        y_s[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
-	        z_s[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
-	      
+	        z_s[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);	      
 	        break;
 	      case FULLY_CONNECTED:
 	      case VECTOR_INPUT:

@@ -51,7 +51,7 @@ Vector& Vector::operator=(Vector&& other) {
 Vector& Vector::operator=(std::initializer_list<float> val)
 {
   size = val.size();
-  // TODO: Check if array large big enough?
+  
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
@@ -99,7 +99,6 @@ Vector Vector::operator+(const Vector& other) const
 
 Vector Vector::operator-(const Vector& other) const
 {
-  // TODO: Implement an axpy method and replace + and - by calls to axpy
   if(size != other.size)
     {
       std::cerr << "Error: Vector sized are incompatible for summation: (" << size << ") vs. (" << other.size << ")\n";
@@ -108,15 +107,6 @@ Vector Vector::operator-(const Vector& other) const
   
   Vector c(*this);
   cblas_saxpy(size, -1., other.data, 1, c.data, 1);
-
-  /*
-  for(float *data_ptr = data, *data_ptr_other = other.data, *data_ptr_c = c.data;
-      data_ptr != data+size;
-      ++data_ptr, ++data_ptr_other, ++data_ptr_c)
-    {
-      (*data_ptr_c) = (*data_ptr)-(*data_ptr_other);
-    }
-  */
   
   return c;
 }
