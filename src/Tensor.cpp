@@ -21,11 +21,8 @@ TensorSlice& TensorSlice::operator=(const Matrix& A)
       return *this;
     }
 
-  // TODO: Could be faster with memcpy
-  for(size_t i=0; i<m; ++i)
-    for(size_t j=0; j<n; ++j)
-      (*this)(i,j) = A(i,j);
-
+  std::memcpy(data, A.values(), m * n * sizeof(float));
+  
   return *this;
 }
 
