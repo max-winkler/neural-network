@@ -146,24 +146,7 @@ Vector Vector::operator*(const Matrix& A) const
   
   Vector y(n);
 
-  // TODO: As we transpose A, will nRows and nCols have to be changed?
-  // cblas_sgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1., A.data, A.nCols(), data, 1, 0., y.data, 1);
-
-  
-  float* A_col;
-  float* x_data;
-
-  const float* x_data_end = data+m;
-  
-  for(size_t i=0; i<n; ++i)
-    {
-      float val=0;      
-      for(A_col = A.data + i, x_data = data; x_data != x_data_end; x_data++, A_col+=n)
-        val += (*A_col)*(*x_data);
-
-      y[i] = val;
-    }
-  
+  cblas_sgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1.0f, A.data, A.nCols(), data, 1, 0.0f, y.data, 1);
   
   return y;
 }
