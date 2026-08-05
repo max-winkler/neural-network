@@ -17,15 +17,12 @@ ConvolutionalLayer::ConvolutionalLayer(std::vector<size_t> in_dim, size_t F,
 {
   // Set up kernel tensors
   for(size_t i=0; i<F; ++i)
-    K[i] = Tensor(in_dim[0], k, k);    
-  
-  // Apply a simple convolution to get the output dimension of the layer
-  Matrix A(in_dim[1], in_dim[2]);
-  Matrix B = linalg::convolve(A, Matrix(k,k), S, P);
+    K[i] = Tensor(in_dim[0], k, k);
 
+  // Output dimension
   dim[0] = F;
-  dim[1] = B.nRows();
-  dim[2] = B.nCols();
+  dim[1] = (in_dim[1] + 2*P - k) / this->S + 1;
+  dim[2] = (in_dim[2] + 2*P - k) / this->S + 1;
 }
 
 void ConvolutionalLayer::eval(DataArray*& x_) const
