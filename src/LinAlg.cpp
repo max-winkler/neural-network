@@ -334,43 +334,45 @@ namespace linalg
                 A.nCols(), B.data, B.nCols(), 0.0f, out_data, n);
   }
 
-  Matrix im2col(const Tensor& A, size_t k, size_t P) {
+  Matrix im2col(const Tensor& T, size_t k, size_t P) {
     // Output dimension
-    size_t orig_h = A.nRows();
-    size_t orig_w = A.nCols();
-
+    size_t orig_h = T.nRows();
+    size_t orig_w = T.nCols();
     size_t out_h = orig_h + 2 * P - k + 1;
     size_t out_w = orig_w + 2 * P - k + 1;
-    
-    size_t d = A.nChannels();
-    
+
+    size_t d = T.nChannels();
+
     // Dimension of output matrix
     size_t out_rows = d * k * k;
     size_t out_cols = out_h * out_w;
-
-    //Matrix out = Matrix::uninitialized(out_rows, out_cols);
     float* __restrict out_data = new float[out_rows * out_cols];
-    
-    size_t col=0;    
+
+    const float* __restrict T_data = T.values();  // Layout: (d, orig_h, orig_w)
+    const size_t plane = orig_h * orig_w;         // Stride pro Kanal
+
+    size_t col = 0;
     for (size_t i = 0; i < out_h; ++i) {
       for (size_t j = 0; j < out_w; ++j) {
-        size_t row = 0;
-
-        for (size_t c = 0; c < d; ++c)
+          size_t row = 0;
+          for (size_t c = 0; c < d; ++c) {
+          const float* __restrict A_channel = T_data + c * plane;
           for (size_t m = 0; m < k; ++m) {
             long src_i = (long)i + (long)m - (long)P;
+            bool valid_i = (src_i >= 0 && src_i < (long)orig_h);
+            const float* __restrict A_row =
+                valid_i ? A_channel + src_i * orig_w : nullptr;
             for (size_t n = 0; n < k; ++n) {
-              long src_j = (long)j + (long)n - (long)P;
-              float val = 0.0f;
-              if (src_i >= 0 && src_i < (long)orig_h && src_j >= 0 &&
-                  src_j < (long)orig_w)
-                val = A(c, src_i, src_j);
-
-              out_data[out_cols * row + col] = val;
-              ++row;
+                long src_j = (long)j + (long)n - (long)P;
+                float val = 0.0f;
+                if (valid_i && src_j >= 0 && src_j < (long)orig_w)
+                    val = A_row[src_j];
+                out_data[out_cols * row + col] = val;
+                ++row;
             }
           }
-        ++col;
+          }
+          ++col;
       }
     }
     return Matrix(out_rows, out_cols, out_data, TakeOwnership());
