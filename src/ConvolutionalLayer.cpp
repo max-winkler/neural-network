@@ -2,8 +2,10 @@
 
 #include "ConvolutionalLayer.h"
 
+#include "DataArray.h"
 #include "LinAlg.h"
 #include "Random.h"
+#include "Tensor.h"
 #include "mpi.h"
 
 ConvolutionalLayer::ConvolutionalLayer(std::vector<size_t> in_dim, size_t F,
@@ -119,17 +121,19 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 
       //====== NEW =====      
       const size_t F = K.size();
-      size_t out_hw = z.nRows()*z.nCols();
+      const size_t out_hw = z.nRows() * z.nCols();
+      const size_t n_entries = F*out_hw;
+          
       Matrix Dz_matrix = Matrix::uninitialized(F, out_hw);
 
       // Hadamard product gives Dz. We need it for each channel in the row of a matrix
-      size_t Dz_cols = z.nCols();
-      for (size_t d = 0; d < F; ++d) {
-        for (size_t i = 0; i < z.nRows(); ++i)
-	for(size_t j=0; j<z.nCols(); ++j)
-	  Dz_matrix(d, i * Dz_cols + j) = Dy(d, i, j) * Dsigma(d, i, j);
-      }
-
+      const float* Dy_values = Dy.values();
+      const float* Dsigma_values = Dsigma.values();
+      float* Dz_values = Dz_matrix.values();
+      
+      for (size_t i = 0; i < n_entries; ++i)
+        Dz_values[i] = Dy_values[i] * Dsigma_values[i];
+      
       // TODO: This was computed in the forward propagation already. Reuse!      
       Matrix y_col = linalg::im2col(y, k, P);
 
@@ -137,9 +141,24 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
       Vector sums = Dz_matrix.row_sum();      
       for(size_t d=0; d<F; ++d)
         output->bias[d] += sums[d];
-      
+
+      // Gradient w.r.t. kernel
+      Matrix dK_row = linalg::matmul(Dz_matrix, y_col, false, true);
+      const size_t n_entries_kernel = y.nChannels() * k * k;
+      for (size_t d = 0; d < F; ++d) {
+        float* dK_row_data = new float[n_entries_kernel];
+        memcpy(dK_row_data, dK_row.values() + d*n_entries_kernel, n_entries_kernel*sizeof(float));
+        output->K[d] +=
+            Tensor(y.nChannels(), k, k, dK_row_data, TakeOwnership());
+      }
+
+      // Gradient w.r.t. the input
+      Matrix K_row = linalg::kernels2row(K);
+      Matrix Dx_col = linalg::matmul(K_row, Dz_matrix, true, false);
+      Dx += linalg::col2im(Dx_col,  y.nChannels(), y.nRows(), y.nCols(), k, P);
+            
       //=================
-      
+      /*
       for(size_t d=0; d<F; ++d)
         {
 	MatrixView Dy_slice = Dy[d]; // df/dY
@@ -148,17 +167,17 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 	// Note: The Hadamard product of these two gives df/dZ
 
 	// This works
-	//output->K[d] += linalg::tensor_convolve(y, linalg::multiply(Dz_slice, Dy_slice), S, P);
+	output->K[d] += linalg::tensor_convolve(y, linalg::multiply(Dz_slice, Dy_slice), S, P);
 
 	// New try with matrix convolution
 	for (size_t c = 0; c < y.nChannels(); ++c) {
-	  output->K[d][c] += linalg::convolve(y[c], Dz_slice, S, P);
+	  // output->K[d][c] += linalg::convolve(y[c], Dz_slice, S, P);
 	  Dx[c] += linalg::convolve(Dz_slice, K[d][c], S, k-1-P, true);
 	}
 	
-	// output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);         
+	output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);         
         }
-      
+      */
       delete *Dy_it;
       *Dy_it = new Tensor(std::move(Dx));
     }

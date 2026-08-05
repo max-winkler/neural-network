@@ -93,8 +93,9 @@ namespace linalg{
                 bool transB = false);  
   Matrix im2col(const Tensor&, size_t k, size_t P=0);
   Matrix im2col(const MatrixView&, size_t k);
-
-
+  
+  Tensor col2im(const Matrix&, size_t, size_t, size_t, size_t, size_t);
+  
   /**
    * Transforms a list of tensors into a matrix storing the tensor values row
    * wise. This operation is used together with the im2col method to perform a fast
@@ -105,6 +106,7 @@ namespace linalg{
    * @param kernels The kernerl/filter list to be sorted into the matrix.
    */
   Matrix kernels2row(const std::vector<Tensor>&);
+  
 }
 
 /**

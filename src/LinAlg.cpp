@@ -375,7 +375,46 @@ namespace linalg
     }
     return Matrix(out_rows, out_cols, out_data, TakeOwnership());
   }
-  
+
+  Tensor col2im(const Matrix& T_col, size_t C_in, size_t orig_h, size_t orig_w,
+                size_t k, size_t P) {
+    size_t out_h = orig_h + 2 * P - k + 1;
+    size_t out_w = orig_w + 2 * P - k + 1;
+    size_t out_cols = out_h * out_w;
+
+    Tensor T(C_in, orig_h, orig_w);
+
+    float* __restrict T_data = T.values();
+    const float* __restrict col_data = T_col.values();
+
+    const size_t plane = orig_h * orig_w;
+
+    size_t col = 0;
+    for (size_t i = 0; i < out_h; ++i) {
+      for (size_t j = 0; j < out_w; ++j) {
+        size_t row = 0;
+        for (size_t c = 0; c < C_in; ++c) {
+          float* __restrict dX_channel = T_data + c * plane;
+          for (size_t m = 0; m < k; ++m) {
+            long src_i = (long)i + (long)m - (long)P;
+            bool valid_i = (src_i >= 0 && src_i < (long)orig_h);
+            const float* __restrict col_row_base =
+                col_data + row * out_cols + col;
+            for (size_t n = 0; n < k; ++n) {
+              long src_j = (long)j + (long)n - (long)P;
+              if (valid_i && src_j >= 0 && src_j < (long)orig_w)
+                dX_channel[src_i * orig_w + src_j] +=
+                    col_row_base[n * out_cols];
+              ++row;
+            }
+          }
+        }
+        ++col;
+      }
+    }
+    return T;
+  }
+
   Matrix im2col(const MatrixView& A, size_t k) {
     // todo: Matrix is copied in Tensor constructor. This should be avoided.
     // idea: implement a proxy class TensorView (analogous to MatrixView)
@@ -427,7 +466,7 @@ namespace linalg
     
     return output;
   }
-  
+ 
 }  // end of namespace linalg
 
 MatrixView::MatrixView(const float* data, size_t m, size_t n) : data(data), m(m), n(n) {}
