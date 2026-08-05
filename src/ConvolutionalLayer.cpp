@@ -29,23 +29,14 @@ void ConvolutionalLayer::eval(DataArray*& x_) const
 {
   Tensor& x = dynamic_cast<Tensor&>(*x_);
   Tensor y(dim[0], dim[1], dim[2]);
-  /*
-  Matrix y_col = linalg::im2col(x, k, P);
+    
+  Matrix x_col = linalg::im2col(x, k, P);
   Matrix K_row = linalg::kernels2row(K);
 
-  linalg::matmul_into(K_row, y_col, y.values());
+  linalg::matmul_into(K_row, x_col, y.values());
 
-  for (size_t c = 0; c < y.nChannels(); ++c)
+  for (size_t c = 0; c < K.size(); ++c)
     y[c] += bias[c];
-  */
-  
-  // Old Version:  
-  // Apply convolution and add bias    
-  for(size_t c=0; c<dim[0]; ++c)
-    {
-      y[c] = linalg::tensor_convolve(x, K[c], S, P);
-      y[c] += bias[c];
-    }  
   
   // Apply activation function
   // TODO: Think about more efficient implementation and shorter notation
@@ -53,7 +44,7 @@ void ConvolutionalLayer::eval(DataArray*& x_) const
     for(size_t i=0; i<y.nRows(); ++i)
       for(size_t j=0; j<y.nCols(); ++j)
         y(c,i,j) = activate(y(c,i,j), act);
-
+  
   delete x_;
   x_ = new Tensor(std::move(y));
 }
