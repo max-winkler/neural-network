@@ -130,21 +130,13 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 	  Dz_matrix(d, i * Dz_cols + j) = Dy(d, i, j) * Dsigma(d, i, j);
       }
 
-      for (size_t d = 0; d < F; ++d) {
-
-        // Gradient w.r.t. bias is row sum over Dz_matrix = (Dsigma[d], Dy[d])_F
-        const float* row = Dz_matrix.values() + d * out_hw;
-        float sum = 0.0f;
-        for (size_t i = 0; i < out_hw; ++i)
-	sum += row[i];
-        output->bias[d] += sum;
-        
-      }
-
       // TODO: This was computed in the forward propagation already. Reuse!      
       Matrix y_col = linalg::im2col(y, k, P);
-      
-      
+
+      // Gradient w.r.t. bias
+      Vector sums = Dz_matrix.row_sum();      
+      for(size_t d=0; d<F; ++d)
+        output->bias[d] += sums[d];
       
       //=================
       
@@ -164,7 +156,7 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 	  Dx[c] += linalg::convolve(Dz_slice, K[d][c], S, k-1-P, true);
 	}
 	
-	output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);         
+	// output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);         
         }
       
       delete *Dy_it;

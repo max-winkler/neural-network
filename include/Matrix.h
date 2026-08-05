@@ -290,6 +290,13 @@ class Matrix : public DataArray
   Vector flatten() const;
 
   /**
+   * Computes a vector containing the sums of the entries of each row
+   *
+   * Compute row sums
+   */
+  Vector row_sum() const;
+  
+  /**
    * Reshape the matrix. This does not change the data in memory.
    *
    * @brief Reshape matrix to a new dimension

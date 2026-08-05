@@ -1,6 +1,7 @@
 #include <cblas.h>
 #include <cstring>
 #include <iomanip>
+#include <vector>
 
 #include "Tensor.h"
 #include "DataArray.h"

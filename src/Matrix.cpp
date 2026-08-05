@@ -1,5 +1,6 @@
 #include <iomanip>
 #include <cstring>
+#include <vector>
 #include <cblas.h>
 
 #include "Matrix.h"
@@ -233,6 +234,22 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
 Vector Matrix::flatten() const
 {
   return Vector(nRows()*nCols(), data);
+}
+
+Vector Matrix::row_sum() const {
+  size_t m  = nRows();
+  size_t n = nCols();
+  
+  std::vector<float> ones(n, 1.0f);
+  Vector result(m);
+  
+  cblas_sgemv(CblasRowMajor, CblasNoTrans,
+	    (int)m, (int)n,
+	    1.0f, values(), (int)n,
+	    ones.data(), 1,
+              0.0f, result.values(), 1);
+  
+  return result;
 }
 
 Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const
