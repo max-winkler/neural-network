@@ -126,10 +126,6 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept
   return *this;
 }
 
-size_t Tensor::nChannels() const {return d; }
-size_t Tensor::nRows() const {return m; }
-size_t Tensor::nCols() const {return size/m/d;}
-
 /*
 float& Tensor::operator()(size_t c, size_t i, size_t j)
 {

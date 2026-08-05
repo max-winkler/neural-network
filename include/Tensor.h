@@ -209,22 +209,22 @@ class Tensor : public DataArray
    * @brief Get number of channels.
    *
    */
-  size_t nChannels() const;
+  inline size_t nChannels() const {return d; }
 
   /**
    * Return the number of rows of the tensor.
    *
    * @brief Get number of rows.
    */
-  size_t nRows() const;
+  inline size_t nRows() const {return m; }
   
   /**
    * Return number of columns of the tensor.
    *
    * @brief Get number of columns.
    */
-  size_t nCols() const;
-
+  inline size_t nCols() const {return size/m/d;}
+  
   /**
    * Access a single element using the notation T(c,i,j).
    *
