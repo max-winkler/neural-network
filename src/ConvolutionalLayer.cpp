@@ -38,15 +38,11 @@ void ConvolutionalLayer::eval(DataArray*& x_) const
   for (size_t c = 0; c < K.size(); ++c)
     y[c] += bias[c];
   
-  // Apply activation function
-  // TODO: Think about more efficient implementation and shorter notation
-  for(size_t c=0; c<y.nChannels(); ++c)
-    for(size_t i=0; i<y.nRows(); ++i)
-      for(size_t j=0; j<y.nCols(); ++j)
-        y(c,i,j) = activate(y(c,i,j), act);
-  
-  delete x_;
-  x_ = new Tensor(std::move(y));
+  float* y_data = y.values();
+  for (size_t i = 0; i < y.nEntries(); ++i)
+    y_data[i] = activate(y_data[i], act);
+
+  x = std::move(y);
 }
 
 void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, DataArray& y_) const
