@@ -33,26 +33,25 @@ TrainingData::TrainingData(TrainingData&& other) : x(other.x), y(std::move(other
 
 TrainingData& TrainingData::operator=(const TrainingData& other)
 {
-  if(x != other.x)
+  if(this != &other)
     {
       delete x;
-
-      *x = *(other.x);
+      x = other.x->clone().release();
       y = other.y;
     }
-  
   return *this;
 }
 
 TrainingData& TrainingData::operator=(TrainingData&& other)
 {
-  if(x != other.x)
+  if(this != &other)
     {
       delete x;
       x = other.x;
+      other.x = nullptr;
+      y = std::move(other.y);      
     }
 
-  y = std::move(other.y);
   return *this;
 }
 
