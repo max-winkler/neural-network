@@ -51,7 +51,7 @@ TensorSlice &TensorSlice::operator+=(const Matrix &A) {
 }
 
 Tensor::Tensor()
-  : DataArray(1), d(1), m(1), c_stride(1), r_stride(1) {}
+  : DataArray(0), d(0), m(0), c_stride(0), r_stride(0) {}
 Tensor::Tensor(size_t d, size_t m, size_t n)
   : DataArray(d*m*n), d(d), m(m), c_stride(m*n), r_stride(n) {}
 Tensor::Tensor(size_t d, size_t m, size_t n, const float* x)
@@ -82,6 +82,18 @@ Tensor::Tensor(Matrix&& A)
       m(A.nRows()),
       c_stride(size / d),
       r_stride(size / d / m) {}
+
+Tensor Tensor::uninitialized(size_t c, size_t m, size_t n) {
+  Tensor A;
+
+  A.size = c * m * n;
+  A.d = c;
+  A.m = m;
+  A.data = new float[A.size];
+  A.c_stride = m*n;
+  A.r_stride = n;
+  return A;
+}
 
 Tensor& Tensor::operator=(const Tensor& other)
 {

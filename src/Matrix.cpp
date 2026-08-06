@@ -6,9 +6,7 @@
 #include "Matrix.h"
 #include "Vector.h"
 
-// TODO: This allocates memory. Why do we need this?If fixed remove the delete
-// in Matrix::uninitialized.
-Matrix::Matrix() : DataArray(1), m(1)
+Matrix::Matrix() : DataArray(), m(0)
 {
 }
 
@@ -42,12 +40,14 @@ Matrix::Matrix(Matrix&& other) noexcept : DataArray(std::move(other)), m(other.m
 
 Matrix Matrix::uninitialized(size_t m, size_t n) {
   Matrix A;
-  delete[] A.data;
+  
   A.size = m * n;
   A.m = m;
   A.data = new float[A.size];
-  return A;  
+  
+  return A;
 }
+
 Matrix& Matrix::operator=(const Matrix& other)
 {
   if(nRows() != other.nRows() || nCols() != other.nCols())

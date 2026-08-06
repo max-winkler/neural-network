@@ -15,6 +15,10 @@ class DataArray
 {
  public:
   /**
+   * Derfault constructor creating an array with 0 elements.
+   */
+  DataArray();  
+  /**
    * Standard constructor initializing a DataArray with given size. All components are set to zero.
    *
    * @param size The number of components stored in the data array (n1*n2*...*nd for tensors of stage d)

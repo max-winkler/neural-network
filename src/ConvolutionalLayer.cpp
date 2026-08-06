@@ -28,7 +28,7 @@ ConvolutionalLayer::ConvolutionalLayer(std::vector<size_t> in_dim, size_t F,
 void ConvolutionalLayer::eval(DataArray*& x_) const
 {
   Tensor& x = dynamic_cast<Tensor&>(*x_);
-  Tensor y(dim[0], dim[1], dim[2]);
+  Tensor y = Tensor::uninitialized(dim[0], dim[1], dim[2]);
     
   Matrix x_col = linalg::im2col(x, k, P);
   Matrix K_row = linalg::kernels2row(K);
@@ -37,9 +37,10 @@ void ConvolutionalLayer::eval(DataArray*& x_) const
 
   for (size_t c = 0; c < K.size(); ++c)
     y[c] += bias[c];
-  
+
   float* y_data = y.values();
-  for (size_t i = 0; i < y.nEntries(); ++i)
+  const size_t y_entries = y.nEntries();
+  for (size_t i = 0; i < y_entries; ++i)
     y_data[i] = activate(y_data[i], act);
 
   x = std::move(y);
@@ -71,12 +72,12 @@ void ConvolutionalLayer::forward_propagate(const DataArray& x_, DataArray& z_, D
     z[c] += bias[c];
   }
   */
-  
-  // TODO: This can be realized with 1 loop
-  for(size_t c=0; c<y.nChannels(); ++c)
-    for(size_t i=0; i<y.nRows(); ++i)
-      for(size_t j=0; j<y.nCols(); ++j)
-        y(c,i,j) = activate(z(c,i,j), act);
+
+  float* y_data = y.values();
+  const float* z_data = z.values();
+  const size_t y_entries = y.nEntries();
+  for (size_t i = 0; i < y_entries; ++i)
+    y_data[i] = activate(z_data[i], act);  
 }
 
 std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataArray*>& DY,
@@ -87,6 +88,8 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 
   auto y_it = Y.begin(), z_it = Z.begin();
   auto Dy_it = DY.begin();
+
+  Matrix K_row = linalg::kernels2row(K);
   
   for(; y_it != Y.end(); ++y_it, ++z_it, ++Dy_it)
     {
@@ -97,12 +100,15 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
 
       Tensor Dx(y.nChannels(), y.nRows(), y.nCols());
       
-      Tensor Dsigma(z);
-      for(size_t c=0; c<Dsigma.nChannels(); ++c)
-        for(size_t i=0; i<Dsigma.nRows(); ++i)
-	for(size_t j=0; j<Dsigma.nCols(); ++j)
-	  Dsigma(c,i,j) = Dactivate(Dsigma(c,i,j), act);
-
+      const size_t Dsigma_entries = z.nEntries();      
+      float* __restrict Dsigma_data = new float[Dsigma_entries];
+      const float* __restrict z_data = z.values();
+      for (size_t i = 0; i < Dsigma_entries; ++i)
+        Dsigma_data[i] = Dactivate(z_data[i], act);
+      
+      Tensor Dsigma(z.nChannels(), z.nRows(), z.nCols(), Dsigma_data,
+                    TakeOwnership());
+      
       //====== NEW =====      
       const size_t F = K.size();
       const size_t out_hw = z.nRows() * z.nCols();
@@ -127,6 +133,7 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
         output->bias[d] += sums[d];
 
       // Gradient w.r.t. kernel
+      /*      
       Matrix dK_row = linalg::matmul(Dz_matrix, y_col, false, true);
       const size_t n_entries_kernel = y.nChannels() * k * k;
       for (size_t d = 0; d < F; ++d) {
@@ -135,9 +142,18 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
         output->K[d] +=
             Tensor(y.nChannels(), k, k, dK_row_data, TakeOwnership());
       }
+      */      
+      Matrix dK_row = linalg::matmul(Dz_matrix, y_col, false, true);
+      const size_t n_entries_kernel = y.nChannels() * k * k;
+      const float* dK_row_data = dK_row.values();
+      for (size_t d = 0; d < F; ++d) {
+        float* __restrict K_d_data = output->K[d].values();
+        const float* __restrict src = dK_row_data + d * n_entries_kernel;
+        for (size_t i = 0; i < n_entries_kernel; ++i)
+	K_d_data[i] += src[i];
+      }
 
       // Gradient w.r.t. the input
-      Matrix K_row = linalg::kernels2row(K);
       Matrix Dx_col = linalg::matmul(K_row, Dz_matrix, true, false);
       Dx += linalg::col2im(Dx_col,  y.nChannels(), y.nRows(), y.nCols(), k, P);
             
@@ -145,25 +161,26 @@ std::unique_ptr<Layer> ConvolutionalLayer::backward_propagate(std::vector<DataAr
       /*
       for(size_t d=0; d<F; ++d)
         {
-	MatrixView Dy_slice = Dy[d]; // df/dY
-	MatrixView Dsigma_slice = Dsigma[d]; // dY/dZ
-	Matrix Dz_slice = linalg::multiply(Dy_slice, Dsigma_slice); 
-	// Note: The Hadamard product of these two gives df/dZ
+        MatrixView Dy_slice = Dy[d]; // df/dY
+        MatrixView Dsigma_slice = Dsigma[d]; // dY/dZ
+        Matrix Dz_slice = linalg::multiply(Dy_slice, Dsigma_slice);
+        // Note: The Hadamard product of these two gives df/dZ
 
-	// This works
-	output->K[d] += linalg::tensor_convolve(y, linalg::multiply(Dz_slice, Dy_slice), S, P);
+        // This works
+        output->K[d] += linalg::tensor_convolve(y, linalg::multiply(Dz_slice,
+      Dy_slice), S, P);
 
-	// New try with matrix convolution
-	for (size_t c = 0; c < y.nChannels(); ++c) {
-	  // output->K[d][c] += linalg::convolve(y[c], Dz_slice, S, P);
-	  Dx[c] += linalg::convolve(Dz_slice, K[d][c], S, k-1-P, true);
-	}
-	
-	output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);         
+        // New try with matrix convolution
+        for (size_t c = 0; c < y.nChannels(); ++c) {
+          // output->K[d][c] += linalg::convolve(y[c], Dz_slice, S, P);
+          Dx[c] += linalg::convolve(Dz_slice, K[d][c], S, k-1-P, true);
+        }
+
+        output->bias[d] += linalg::dot(Dsigma_slice, Dy_slice);
         }
       */
-      delete *Dy_it;
-      *Dy_it = new Tensor(std::move(Dx));
+      Tensor& Dy_target = dynamic_cast<Tensor&>(**Dy_it);
+      Dy_target = std::move(Dx);
     }
   
   return  std::unique_ptr<Layer>(output);

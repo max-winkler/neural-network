@@ -193,6 +193,19 @@ class Tensor : public DataArray
    * @param other The tensor to be moved
    */
   Tensor(Tensor&&) noexcept;
+
+  /**
+   * Creates a new tensor with the specified dimension. Entries are not
+   * initialized with zero. This function should be used when values
+   * are overwritten directly after creation of the tensor.
+   *
+   * @brief Create Tensor with uninitialized entries
+   *
+   * @param c Number of channels
+   * @param m Number of rows
+   * @param n Number of columns
+   */
+  static Tensor uninitialized(size_t, size_t, size_t);
   
   /**
    * Move assignment operator used to move a tensor coming as rvalue and avoid copying.

@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+DataArray::DataArray() : data(nullptr), size(0) {}
+
 DataArray::DataArray(size_t size)
   : size(size)
 {

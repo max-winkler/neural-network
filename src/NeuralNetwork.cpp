@@ -288,8 +288,8 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
 	    case MATRIX_INPUT:
 	    case POOLING:
 	    case CONVOLUTION:
-	      y[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
-	      z[l][idx] = new Tensor(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]);
+	      y[l][idx] = new Tensor(Tensor::uninitialized(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]));
+	      z[l][idx] = new Tensor(Tensor::uninitialized(layers[l]->dim[0], layers[l]->dim[1], layers[l]->dim[2]));
 	      break;
 	    case FULLY_CONNECTED:
 	    case VECTOR_INPUT:
