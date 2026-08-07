@@ -77,7 +77,7 @@ Matrix& Matrix::operator=(std::initializer_list<float> val)
   if(val.size() != size)
     {
       std::cerr << "ERROR: Number of elements in initializer list do not match the dimension of the data array.\n";
-      return *this;
+      exit(-1);
     }
   
   size_t i=0;
@@ -135,10 +135,10 @@ Vector Matrix::operator*(const Vector& b) const
     {
       std::cerr << "Error: Matrix and vector have incompatible size for multiplication.\n";
       std::cerr << "  (" << nRows() << "," << nCols() << ") vs. (" << b.size << ")\n";
-      return Vector(0);
+      exit(-1);
     }
 
-  Vector c(m);
+  Vector c = Vector::uninitialized(m);
 
   cblas_sgemv(CblasRowMajor, CblasNoTrans, nRows(), nCols(), 1., data, nCols(), b.data, 1, 0., c.data, 1);
   
@@ -179,7 +179,8 @@ Matrix &Matrix::operator+=(const ScaledMatrix &B) {
     {
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
       std::cerr << "  (" << nRows() << ", " << nCols() << ") vs. ("
-                << B.matrix->nRows() << ", " << B.matrix->nCols() << ")\n";      
+                << B.matrix->nRows() << ", " << B.matrix->nCols() << ")\n";
+      exit(-1);
     }
   
   cblas_saxpy(size, B.scale, B.matrix->data, 1, data, 1);
@@ -205,7 +206,9 @@ Matrix& Matrix::operator+=(const Rank1Matrix& B)
   if(B.nRows() != nRows() || B.nCols() != nCols())
     {
       std::cerr << "Error: Matrices have incompatible dimension for summation.\n";
-      std::cerr << "  (" << m << ", " << n << ") vs. (" << B.nRows() << ", " << B.nCols() << ")\n";
+      std::cerr << "  (" << m << ", " << n << ") vs. (" << B.nRows() << ", "
+                << B.nCols() << ")\n";
+      exit(-1);      
     }
   
   cblas_sger(CblasRowMajor, nRows(), nCols(), 1., B.u->data, 1, B.v->data, 1, data, nCols());
@@ -238,7 +241,7 @@ Vector Matrix::row_sum() const {
   size_t n = nCols();
   
   std::vector<float> ones(n, 1.0f);
-  Vector result(m);
+  Vector result = Vector::uninitialized(m);
   
   cblas_sgemv(CblasRowMajor, CblasNoTrans,
 	    (int)m, (int)n,
@@ -264,7 +267,7 @@ Matrix Matrix::back_convolve(const Matrix& Y, size_t J, size_t P) const
   if(P!=0)
     {
       std::cerr << "ERROR: Back convolution with padding not implemented yet.\n";
-      return Matrix();
+      exit(-1);
     }
 
   for(size_t k=0; k<n1_new; ++k)
