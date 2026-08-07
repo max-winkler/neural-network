@@ -222,7 +222,7 @@ namespace linalg
 	  {
 	  case POOLING_MAX:
 	    {
-	      float max_val = 0.;
+	      float max_val = A(i * S, j * S);
 	      
 	      // Find maxiumum within the patch
 	      for(size_t m=0; m<k; ++m)		  
