@@ -55,6 +55,15 @@ Vector& Vector::operator=(std::initializer_list<float> val)
   return *this;
 }
 
+Vector Vector::uninitialized(size_t m) {
+  Vector v;
+  
+  v.size = m;
+  v.data = new float[v.size];
+  
+  return v;
+}
+
 size_t Vector::length() const
 {
   return size;

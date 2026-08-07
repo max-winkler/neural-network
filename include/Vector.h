@@ -128,6 +128,16 @@ class Vector : public DataArray {
    * @param list The list storing the values to be copied to the vector.
    */
   Vector& operator=(std::initializer_list<float>);
+
+  /**
+   * Create vector and not initialize its entries with zero. Should be used when
+   * entries are overwritten after initialization.
+   *
+   * @brief Create vector with uninitialized values
+   *
+   * @param m The number of components
+   */
+  static Vector uninitialized(size_t);
   
   /**
    * Summation of two vectors. Returns the resulting vector.
