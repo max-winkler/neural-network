@@ -31,7 +31,7 @@ PoolingLayer::PoolingLayer(std::vector<size_t> in_dim,
 void PoolingLayer::eval(DataArray*& x_) const
 {
   Tensor& x = dynamic_cast<Tensor&>(*x_);
-  Tensor y(dim[0], dim[1], dim[2]);
+  Tensor y = Tensor::uninitialized(dim[0], dim[1], dim[2]);
   
   size_t d = x.nChannels();
 
@@ -72,7 +72,7 @@ std::unique_ptr<Layer> PoolingLayer::backward_propagate(std::vector<DataArray*>&
       Tensor& Dy = dynamic_cast<Tensor&>(**Dy_it);      
       const Tensor& y = dynamic_cast<const Tensor&>(**y_it);
 
-      Tensor Dx(y.nChannels(), y.nRows(), y.nCols());
+      Tensor Dx = Tensor::uninitialized(y.nChannels(), y.nRows(), y.nCols());
 
       size_t d = Dy.nChannels();
 

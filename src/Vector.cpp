@@ -5,8 +5,8 @@
 #include "Vector.h"
 
 Vector::Vector()
-  : DataArray(1)
-{ }
+  : DataArray()
+{}
 
 Vector::Vector(size_t n)
   : DataArray(n)
@@ -139,7 +139,7 @@ Vector Vector::operator*(const Matrix& A) const
       return Vector(0);
     }
   
-  Vector y(n);
+  Vector y = Vector::uninitialized(n);
 
   cblas_sgemv(CblasRowMajor, CblasTrans, A.nRows(), A.nCols(), 1.0f, A.data, A.nCols(), data, 1, 0.0f, y.data, 1);
   
@@ -157,7 +157,7 @@ Vector Vector::operator*(const DiagonalMatrix& A) const
       return Vector(0);
     }
   
-  Vector y(n);
+  Vector y = Vector::uninitialized(n);
   
   for(size_t i=0; i<n; ++i)
     y[i] = (*A.diagonal)[i]*data[i];
