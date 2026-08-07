@@ -30,6 +30,7 @@ Image Image::read_png(const std::string& filename)
   if(!fp)
     {
       std::cerr << "ERROR: File " << filename << " not found.\n";
+      exit(-1);
     }
   
   png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
