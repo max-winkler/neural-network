@@ -15,10 +15,7 @@ Matrix::Matrix(size_t m, size_t n) : DataArray(m*n), m(m)
 }
 
 Matrix::Matrix(size_t m, size_t n, const float* x)
-  : DataArray(m*n), m(m)
-{
-  memcpy(data, x, size*sizeof(float));
-}
+    : DataArray(m * n, x), m(m) {}
 
 Matrix::Matrix(size_t m, size_t n, float* x, TakeOwnership o)
   : DataArray(m*n, x, o), m(m)

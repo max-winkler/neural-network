@@ -12,11 +12,7 @@ Vector::Vector(size_t n)
   : DataArray(n)
 {}
 
-Vector::Vector(size_t n, const float* x)
-  : DataArray(n)
-{
-  memcpy(data, x, size*sizeof(float));  
-}
+Vector::Vector(size_t n, const float* x) : DataArray(n, x) {}
 
 Vector::Vector(const Vector& other)
   : DataArray(other)

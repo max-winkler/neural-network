@@ -55,10 +55,8 @@ Tensor::Tensor()
 Tensor::Tensor(size_t d, size_t m, size_t n)
   : DataArray(d*m*n), d(d), m(m), c_stride(m*n), r_stride(n) {}
 Tensor::Tensor(size_t d, size_t m, size_t n, const float* x)
-  : DataArray(d*m*n), d(d), m(m), c_stride(m*n), r_stride(n)
-{
-  memcpy(data, x, size*sizeof(float));
-}
+    : DataArray(d * m * n, x), d(d), m(m), c_stride(m * n), r_stride(n) {}
+
 Tensor::Tensor(size_t d, size_t m, size_t n, float* x, TakeOwnership o)
   : DataArray(d*m*n, x, o), d(d), m(m), c_stride(m*n), r_stride(n)
 {
