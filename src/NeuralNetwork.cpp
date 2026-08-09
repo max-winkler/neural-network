@@ -326,7 +326,10 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   // Monitor algorithm progress  
   std::ofstream os;
   if(rank == 0)
-    os.open("training.csv");  
+    {
+      os.open("training.csv");
+      os << "epoch,batch,loss,gradient_norm\n";
+    }
   
   // Save increment for momentum method
   NeuralNetwork increment = NeuralNetwork::createLike(*this);
@@ -392,6 +395,9 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
 		<< std::setw(4) << n_data / local_batch_size
 		<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
         }
+
+      if(rank == 0)
+	os << epoch << ',' << start_idx / options.batch_size << ',' << f << ',' << grad_norm << '\n';
 
       // Gradient Test for debugging
       // gradientTest(grad_net, data, batch_data_idx, options);	
