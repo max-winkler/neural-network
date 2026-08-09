@@ -178,7 +178,7 @@ size_t NeuralNetwork::n_layers() const
 Vector NeuralNetwork::eval(const DataArray& x) const
 {
   // Input layer
-  DataArray* x_tmp;
+  DataArray* x_tmp = nullptr;
   switch(layers.front()->layer_type)
     {
     case LayerType::VECTOR_INPUT:
@@ -189,16 +189,17 @@ Vector NeuralNetwork::eval(const DataArray& x) const
       x_tmp = new Tensor(dynamic_cast<const Tensor&>(x));
       break;
     default:
-      break;      
+      std::cerr << "ERROR: The input layer must be of type VECTOR_INPUT or MATRIX_INPUT.\n";
+      exit(-1);
     }
-  
+
   // Hidden and output layers
-  for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)    
+  for(auto layer_it = layers.begin()+1; layer_it != layers.end(); ++layer_it)
     (*layer_it)->eval(x_tmp);
-  
-  Vector y = dynamic_cast<Vector&>(*x_tmp);
-  
-  return y;
+
+  std::unique_ptr<DataArray> owner(x_tmp);
+
+  return dynamic_cast<Vector&>(*owner);
 }
 
 std::vector<std::unique_ptr<DataArray>> NeuralNetwork::getLayerOutputs(const DataArray& input) const
@@ -331,7 +332,8 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   NeuralNetwork increment = NeuralNetwork::createLike(*this);
   
   float grad_norm = 1.;
-  
+  bool stop = false;
+
   for (size_t epoch = 0; epoch < options.epochs; ++epoch) {
     if (rank == 0)
       {      
@@ -375,12 +377,12 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       
       if(grad_norm < 1.e-8 || std::isnan(grad_norm))
         {
-	std::cerr << "WARNING: The norm of the gradient is " << grad_norm
-		<< ", so we might be stuck in a local minimum.\n";
-	// MPI_Finalize();
-	// exit(1);
-	// TOOD: Think what to do in this case. Accept the current solution?
-	return;
+	if(rank == 0)
+	  std::cerr << "WARNING: The norm of the gradient is " << grad_norm
+		  << ", so we might be stuck in a local minimum. "
+		  << "Accepting the current solution.\n";
+	stop = true;
+	break;
         }
       
       // Console output
@@ -408,6 +410,9 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
         std::cout << "Avg. loss value: " << loss_value / total_batches << std::endl;
         std::cout << "Avg. gradient norm: " << total_grad_norm / total_batches << std::endl;
       }
+
+    if(stop)
+      break;
   }
   if(rank == 0)
     os.close();
