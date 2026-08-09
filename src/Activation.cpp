@@ -76,7 +76,10 @@ float Dactivate(float x, ActivationFunction act=ActivationFunction::SIGMOID)
         return sig * (1.0f - sig);
       }
     case ActivationFunction::TANH:
-      return 4.0f*exp(-2.0f*x)/pow(1.+exp(-2.0f*x), 2.0f);
+      {
+        float t = tanh(x);
+        return 1.0f - t*t;
+      }
     case ActivationFunction::RELU:
       return x < 0.0f ? 0.0f : 1.0f;
     default:
