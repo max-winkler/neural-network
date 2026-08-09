@@ -24,11 +24,18 @@ Vector activate(const Vector& x, ActivationFunction act=ActivationFunction::SIGM
 
   if(act == ActivationFunction::SOFTMAX)
     {
+      float max_val = x[0];
+      for(size_t i=1; i<x.length(); ++i)
+        max_val = std::max(max_val, x[i]);
+
       float sum = 0.0f;
       for(size_t i=0; i<x.length(); ++i)
-        sum += exp(x[i]);
+        {
+          y[i] = exp(x[i]-max_val);
+          sum += y[i];
+        }
       for(size_t i=0; i<x.length(); ++i)
-        y[i] = exp(x[i])/sum;
+        y[i] /= sum;
     }
   else
     {
