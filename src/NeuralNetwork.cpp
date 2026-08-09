@@ -242,6 +242,20 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  size_t n_data = data.size();
+
+  if(options.batch_size == 0)
+    options.batch_size = n_data;
+
+  if (options.batch_size > n_data) {
+    if (rank == 0) {
+      std::cerr << "ERROR: batch_size (" << options.batch_size
+	      << ") must not exceed the number of samples (" << n_data << ")\n";
+    }
+    MPI_Finalize();
+    exit(-1);
+  }
+
   // Local batch size
   if (options.batch_size % size != 0) {
     if (rank == 0) {
@@ -256,12 +270,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
   
   // Parameters for momentum method
   float momentum = options.momentum;
-  
-  size_t n_data = data.size();
-  
-  if(options.batch_size == 0)
-    options.batch_size = n_data;
-      
+
   // Auxiliary variables reused in backpropagation
   std::vector<std::vector<DataArray*>> z(layers.size());
   std::vector<std::vector<DataArray*>> y(layers.size()+1);
