@@ -350,7 +350,7 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
     float loss_value = 0.;
     float total_grad_norm = 0.;
     
-    for (size_t start_idx = 0; start_idx < n_data - options.batch_size + 1;
+    for (size_t start_idx = 0; start_idx + options.batch_size <= n_data;
          start_idx += options.batch_size) {
       
       size_t local_start_idx = start_idx + (rank * local_batch_size);
