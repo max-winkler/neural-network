@@ -391,8 +391,8 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       // Console output
       if(i++%options.output_every == 0 && rank == 0)
         {
-	std::cout << std::setw(13) << start_idx / local_batch_size << " / "
-		<< std::setw(4) << n_data / local_batch_size
+	std::cout << std::setw(13) << start_idx / options.batch_size << " / "
+		<< std::setw(4) << n_data / options.batch_size
 		<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
         }
 
