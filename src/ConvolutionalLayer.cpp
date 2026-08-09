@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <cstdlib>
 
 #include "ConvolutionalLayer.h"
 
@@ -13,8 +14,14 @@ ConvolutionalLayer::ConvolutionalLayer(std::vector<size_t> in_dim, size_t F,
                                        ActivationFunction act)
   : Layer(std::vector<size_t>(3, 0), LayerType::CONVOLUTION),
     K(F), bias(F), act(act),      
-    k(k), S(S==0 ? k : S), P(P), in_dim(in_dim)    
+    k(k), S(S==0 ? 1 : S), P(P), in_dim(in_dim)
 {
+  if(this->S != 1)
+    {
+      std::cerr << "ERROR: Convolution with stride different than 1 not implemented yet.\n";
+      exit(-1);
+    }
+
   // Set up kernel tensors
   for(size_t i=0; i<F; ++i)
     K[i] = Tensor(in_dim[0], k, k);
