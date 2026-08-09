@@ -357,11 +357,11 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
       // Compute gradient network
       NeuralNetwork grad_net = evalGradient(data, y, z, batch_data_idx, options);
 
-      // Norm of gradient      
-      float grad_norm_local_sq = pow(grad_net.norm(), 2.);
-      MPI_Allreduce(&grad_norm_local_sq, &grad_norm, 1, MPI_FLOAT, MPI_SUM,
-                    MPI_COMM_WORLD);
-      grad_norm = sqrt(grad_norm);
+      // Reduce local gradients
+      grad_net.synchronize_sum();
+
+      // Norm of gradient
+      grad_norm = grad_net.norm();
       total_grad_norm += grad_norm;
       
       if(grad_norm < 1.e-8 || std::isnan(grad_norm))
@@ -382,9 +382,6 @@ void NeuralNetwork::train(const std::vector<TrainingData> &data,
 		<< std::setw(20) << f << std::setw(20) << grad_norm << std::endl;
         }
 
-      // Reduce local gradients
-      grad_net.synchronize_sum();
-        
       // Gradient Test for debugging
       // gradientTest(grad_net, data, batch_data_idx, options);	
       // exit(2);
