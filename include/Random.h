@@ -13,7 +13,7 @@ class Random
   
   float operator()();
 
-  std::mt19937 generator();
+  std::mt19937& generator();
   
   static Random create_uniform_random_generator();
   static Random create_normal_random_generator(float ex=0.0f, float stdev=1.0f);

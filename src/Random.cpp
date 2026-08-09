@@ -45,7 +45,7 @@ float Random::operator()()
   return 0.0f;
 }
 
-std::mt19937 Random::generator()
+std::mt19937& Random::generator()
 {
   return rnd_gen;
 }
