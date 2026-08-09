@@ -114,20 +114,16 @@ Matrix Dactivate(const Matrix& x, ActivationFunction act=ActivationFunction::SIG
 Matrix DactivateCoupled(const Vector& x, ActivationFunction act)
 {
   size_t n = x.nEntries();
-  Matrix J(n, n);
+  Matrix J = Matrix::uninitialized(n, n);
 
-  float e_sum = 0.;
+  const Vector p = activate(x, ActivationFunction::SOFTMAX);
+
   for(size_t i=0; i<n; ++i)
-    e_sum += exp(x[i]);
-
-  if(e_sum < 1.e-6f)
     {
-      std::cerr << "WARNING: Division by zero in Jacobi matrix of SOFTMAX activation function.\n";
+      const float p_i = p[i];
+      for(size_t j=0; j<n; ++j)
+        J(i,j) = p_i * ((i==j ? 1.0f : 0.0f) - p[j]);
     }
-  
-  for(size_t i=0; i<n; ++i)
-    for(size_t j=0; j<n; ++j)
-      J[i][j] = (exp(x[i]) / e_sum) * ((i==j ? 1.0f : 0.0f) - (exp(x[j]) / e_sum));
 
   return J;	       
 }
