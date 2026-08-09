@@ -46,8 +46,13 @@ Vector& Vector::operator=(Vector&& other) {
 
 Vector& Vector::operator=(std::initializer_list<float> val)
 {
-  size = val.size();
-  
+  if(size != val.size())
+    {
+      delete[] data;
+      size = val.size();
+      data = new float[size];
+    }
+
   size_t i=0;
   for(auto x = val.begin(); x!=val.end(); ++x, ++i)
     data[i] = *x;
