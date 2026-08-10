@@ -69,7 +69,7 @@ namespace linalg{
    * @param A The input matrix to which pooling should be applied.
    * @param type The type of pooling that should be done. Implemented are
    *        POOLING_MAX for max pooling and (soon) POOLING_AVG for average pooling.
-   * @param S The stride parameter for the pooling operation (default is 2).
+   * @param S The stride parameter for the pooling operation (default is the kernel size k).
    * @param P The padding to be added to the original matrix before pooling.
    */
   Matrix pool(const MatrixView&, size_t k, int type=POOLING_MAX, size_t S=0, size_t P=0);
@@ -82,10 +82,10 @@ namespace linalg{
    * @param A I forgot which matrix this was. See PoolingLayer::backward_propagate(...).
    * @param B The original matrix the pooling was applied to.
    * @param type The pooling type (POOLING_MAX or POOLING_AVG).
-   * @param S The stride parameter used for the pooling operation.
+   * @param S The stride parameter used for the pooling operation (default is the kernel size k).
    * @param P The padding that was added to the original matrix before pooling.
    */
-  Matrix unpool(const MatrixView&, const MatrixView&, size_t k, int type=POOLING_MAX, size_t S=2, size_t P=0);
+  Matrix unpool(const MatrixView&, const MatrixView&, size_t k, int type=POOLING_MAX, size_t S=0, size_t P=0);
 
   void matmul_into(const MatrixView&, const MatrixView&, float*, bool transA = false,
 	      bool transB = false); 
